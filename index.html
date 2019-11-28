@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+
+	<title>CSV/XLS to DocuXML Converter</title>
+
+	<!-- DOCUSKY WIDGET API -->
+	<script src="https://docusky.org.tw/docusky/js/jquery.min.js"></script>
+	<script src="https://docusky.org.tw/docusky/js/jquery-ui.min.js"></script>
+	<script src="https://docusky.org.tw/docusky/js.ui/docusky.ui.manageDbListSimpleUI.js"></script>
+</head>
+
+<body>
+
+	<!-- light box -->
+	<div id="lightbox">
+		<div id="lightbox-bg">
+			<div id="lightbox-content">
+				<div id="lightbox-filename">
+					<h1 class="text-center">Sheet Name</h1>
+				</div>
+				<div id="lightbox-close">
+					<span class="glyphicon glyphicon-remove text-center"></span>
+				</div>
+				<div id="lightbox-text">
+					<table border="1">
+						<thead>
+							<tr>
+								<th>header 1</th>
+								<th>header 2</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>row 1 col 1</td>
+								<td>row 1 col 2</td>
+							</tr>
+							<tr>
+								<td>row 2 col 1</td>
+								<td>row 2 col 2</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- tool content -->
+	<div id="topContainer">
+
+		<!-- page btn -->
+		<span id="prevPage" class="glyphicon glyphicon-chevron-left"></span>
+		<span id="nextPage" class="glyphicon glyphicon-chevron-right"></span>
+
+		<!-- header -->
+		<div id="toolName">
+			<h1 class="text-center">CSV/Excel to DocuXML 格式轉換工具</h1>
+			<hr>
+
+			<!-- page setting -->
+			<div id="progressBar">
+				
+				<div id="upload" class="text-center target"><span class="circle"></span></div>
+				<div id="upload-required"></div>
+				<div id="required" class="text-center"><span>2</span></div>
+				<div id="required-optional"></div>
+				<div id="optional" class="text-center"><span>3</span></div>
+				<div id="optional-content"></div>
+				<div id="content" class="text-center"><span>4</span></div>
+				<div id="content-download"></div>
+				<div id="download" class="text-center"><span>5</span></div>
+				
+			</div>
+		</div>
+
+		<!-- tool -->
+		<div id="toolWrapper">
+
+			<!-- step 1: -->
+			<div id="uploadInterface" class="panelWrapper current">
+				
+				<div class="explainPanel bg-warning">
+					<h2 class="text-center">Step 1: 上傳 CSV/Excel 檔案</h2>
+					<ul class="text-center">
+						<li>此工具接受 <strong class="text-info">.csv, .xls, .xlsx</strong> 格式之檔案。</li>
+						<li>請用 <strong class="text-danger">UTF-8</strong> 編碼格式儲存檔案，以避免出現亂碼。</li>
+						<li>若輸入含有<strong class="text-info">合併儲存格</strong>的檔案，除了第一個儲存格外，其他合併之儲存格將會是<strong class="text-danger">空白</strong>。</li>
+					</ul>
+				</div>
+
+				<div id="fileManager" class="contentPanel">
+					<label class="uploadCover emptyCover">
+						<input id="uploadInput" type="file" name="uploadInput" accept=".csv, .xls, .xlsx" multiple/>
+						<span class="glyphicon glyphicon-cloud-upload"></span>
+						<span class="coverText">新增檔案</span>
+					</label>
+				</div>
+				
+			</div>
+
+			<!-- step 2 -->
+			<div id="requiredInterface" class="panelWrapper">
+				
+				<div class="explainPanel bg-warning">
+					<h2 class="text-center">Step 2: 詮釋資料<strong class="text-danger">必填</strong>欄位對應設定</h2>
+					<ul class="text-center">
+						<li>請確實填寫本頁再繼續。</li>
+						<li>每份文件之檔名須<strong class="text-danger">唯一</strong>。</li>
+					</ul>
+				</div>
+
+				<div class="contentPanel multisetting">
+
+					<div class="tableList">
+						<ul class="list-group text-center"></ul>
+					</div>
+
+					<div class="settingPanel"></div>
+
+				</div>
+				
+			</div>
+
+			<!-- step 3 -->
+			<div id="optionalInterface" class="panelWrapper">
+				<div class="explainPanel bg-warning">
+					<h2 class="text-center">Step 3: 詮釋資料<strong class="text-danger">選填</strong>欄位對應設定</h2>
+					<ul class="text-center">
+						<li>若不對欄位做對應設定，請維持<strong class="text-info">請選擇</strong>的選項。</li>
+						<li>自訂欄位請使用<strong class="text-danger">半形英文</strong>輸入。</li>
+					</ul>
+				</div>
+
+				<div class="contentPanel multisetting">
+					
+					<div class="tableList">
+						<ul class="list-group text-center"></ul>
+					</div>
+
+					<div class="settingPanel"></div>
+				</div>
+				
+			</div>
+
+			<!-- step 4 -->
+			<div id="contentInterface" class="panelWrapper">
+				<div class="explainPanel bg-warning">
+					<h2 class="text-center">Step 4: 添加文件內文</h2>
+					<ul class="text-center">
+						<li>接受 <strong class="text-info">.txt</strong> 純文字檔。</li>
+						<li>請用 <strong class="text-danger">UTF-8</strong> 編碼格式儲存檔案，以避免出現亂碼。</li>
+						<li>僅將所提供之文檔併入 XML 中，多值欄位、註解、事件之編寫，使用者須自行符合 <a href="https://docusky.org.tw/DocuSky/documentation/docs/DocuXml-1.2-Scheme.html#%E5%85%A7%E6%96%87XML" target="_blank">DocuXML</a> 標準。</li>
+						<li>按下一步即開始轉換，若檔案較大，需稍等一陣。</li>
+					</ul>
+				</div>
+
+				<div class="contentPanel multisetting">
+
+					<div class="tableList">
+						<ul class="list-group text-center"></ul>
+					</div>
+
+					<div class="settingPanel">
+						<div class="txtFilesHeader fixed">
+							<span>檔名</span>
+							<span>狀態</span>
+							<span>檢視</span>
+							<span>操作</span>
+						</div>
+						<input id="singleTXT" type="file" accept=".txt" onchange="uploadSingleTXT(this)" style="display: none;"/>
+						<input id="multiTXT" type="file" accept=".txt" onchange="test(this)" style="display: none;"/>
+					</div>
+
+				</div>
+				
+			</div>
+
+			<!-- step 5 -->
+			<div id="downloadInterface" class="panelWrapper">
+				<div class="explainPanel bg-warning">
+					<h2 class="text-center">Step 5: 輸出 DocuXML 檔案</h2>
+				</div>
+
+				<div class="contentPanel">
+					
+					<div id="ouputFilename" class="input">
+						<h3>輸出檔案名稱</h3>
+						<input type="text" name="ouputFilename" value="我的文獻集">
+						<button type="button" class="btn btn-default">下載</button>
+					</div>
+
+					<div id="databaseName" class="input">
+						<h3>資料庫名稱</h3>
+						<input type="text" name="databaseName">
+						<button type="button" class="btn btn-default">建庫到 DocuSky 上</button>
+					</div>
+
+					<div class="output">
+						<h3>XML 預覽</h3>
+						<p id="XMLoutput" class="text-muted"></p>
+					</div>
+
+				</div>
+				
+			</div>
+			
+		</div>
+
+	</div>
+	
+</body>
+
+<!-- ASSETS -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="http://oss.sheetjs.com/sheetjs/xlsx.full.min.js"></script>
+
+<!-- JAVASCRIPT FILE -->
+<script src="js/globalVar.js"></script>
+<script src="js/dataProcess.js"></script>
+<script src="js/display.js"></script>
+<script src="js/interaction.js"></script>
+
+<!-- CSS FILE -->
+<link href="css/main-style.css" type="text/css" rel="stylesheet">
+<link href="css/detail-style.css" type="text/css" rel="stylesheet">
+<link href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+</html>

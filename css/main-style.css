@@ -1,0 +1,310 @@
+html, body {
+	height: 100%;
+}
+
+table {
+	min-width: 100%;
+	border: none;
+}
+
+thead {
+	background-color: gainsboro;
+}
+
+tbody tr:nth-child(even) {
+	background-color: whitesmoke;
+}
+
+table th, table td {
+	padding: 5px;
+	line-height: 2em;
+	white-space: nowrap;
+	word-break: keep-all;
+	border-bottom: solid 1px gainsboro;
+}
+
+.fixed {
+	position: fixed;
+}
+
+#lightbox {
+	display: none;
+	position: fixed;
+	height: 100%;
+	width: 100%;
+	z-index: 30;
+}
+
+#topContainer {
+	height: 100%;
+	display: grid;
+	grid-template-columns: 1fr 13fr 1fr;
+	grid-template-rows: 1fr 9fr;
+	grid-template-areas: "prev header next"
+						 "prev tool next";
+}
+
+/* ----- SWITCH BUTTON ----- */
+
+#topContainer > span {
+	z-index: 25;
+	color: gray;
+	background-color: white;
+	display: grid;
+	align-items: center;
+	text-align: center;
+	font-size: xx-large;
+}
+
+#topContainer > span:hover {
+	color: darkgray;
+	cursor: pointer;
+}
+
+#prevPage {
+	grid-area: prev;
+}
+
+#nextPage {
+	grid-area: next;
+}
+
+/* ----- HEADER ----- */
+
+#toolName {
+	display: grid;
+	grid-area: header;
+	align-items: center;
+}
+
+#toolName hr {
+	margin: 0;
+}
+
+#progressBar {
+	display: grid;
+	margin-top: 1%;
+	grid-template-columns: 40px auto 40px auto 40px auto 40px auto 40px;
+}
+
+#progressBar div {
+	color: darkgray;
+	background-color: gainsboro;
+}
+
+#progressBar div:nth-child(odd) {
+	height: 40px;
+	display: grid;
+	font-size: medium;
+	border-radius: 999em;
+}
+
+#progressBar div:nth-child(even) {
+	width: 105%;
+	height: 20px;
+	align-self: center;
+	transform: translateX(-2.5%);
+	z-index: -5;
+}
+
+
+#progressBar div.target {
+	color: white;
+	background-color: darkgray;
+}
+
+#progressBar .text-center {
+	display: grid;
+	align-items: center;
+	justify-content: center;
+}
+
+.circle {
+	width: 20px;
+	height: 20px;
+	border-radius: 999em;
+	background-color: white;
+}
+
+/* ----- MAIN TOOL ----- */
+
+#toolWrapper {
+	grid-area: tool;
+}
+
+.panelWrapper {
+	width: 85vw;
+	height: 85vh;
+	margin: 0 1%;
+	display: none;
+	position: absolute;
+	flex-flow: column nowrap;
+}
+
+.explainPanel {
+	border-radius: 20px;
+	margin-top: 1%;
+	padding: 1%;
+	font-size: medium;
+}
+
+.explainPanel ul {
+	list-style-position: inside;
+	margin: 1% auto;
+	padding: 0;
+}
+
+.contentPanel {
+	margin: 1% 0;
+	padding: 1%;
+	flex: 1;
+	overflow: scroll;
+}
+
+.contentPanel.multisetting {
+	display: grid;
+	grid-template-columns: 1fr 2fr;
+	grid-gap: 2%;
+}
+
+.settingPanel {
+	position: relative;
+	overflow: scroll;
+}
+
+.settingTab {
+	display: none;
+}
+
+.settingTab.target {
+	display: block;
+}
+
+.settingTab .tagTab {
+	display: none;
+}
+
+.settingTab .tagTab.target {
+	display: block;
+}
+
+/* ----- SWITCH INTERFACE ----- */
+
+.panelWrapper.current, .panelWrapper.exit, .panelWrapper.enter{
+	display: flex;
+}
+
+.animating .exit, .animating .enter {
+	transition: all .3s ease-in-out;
+}
+
+.exit.prev {
+	transform: translateX(0%);
+}
+.animating .exit.prev {
+	transform: translateX(105%);
+}
+
+.exit.next {
+	transform: translateX(0%);
+}
+.animating .exit.next {
+	transform: translateX(-105%);
+}
+
+.enter.prev {
+	transform: translateX(-105%);
+}
+.animating .enter.prev {
+	transform: translateX(0%);
+}
+
+.enter.next {
+	transform: translateX(105%);
+}
+.animating .enter.next {
+	transform: translateX(0%);
+}
+
+/* ----- LIGHTBOX ----- */
+
+
+#lightbox-bg {
+	height: 100%;
+	width: 100%;
+	padding: 5%;
+	display: flex;
+	align-items: center;
+	background-color: rgba(0, 0, 0, 0.7);
+}
+
+#lightbox-content {
+	height: 100%;
+	width: 100%;
+	margin: auto;
+	display: grid;
+	border-radius: 20px;
+	background-color: white;
+	grid-template-columns: 14fr 1fr;
+	grid-template-rows: 1fr 9fr;
+	grid-template-areas: "filename close"
+						 "text text";
+}
+
+#lightbox-filename {
+	display: grid;
+	grid-area: filename;
+	align-items: center;
+	background-color: aliceblue;
+	border-top-left-radius: 20px;
+}
+
+#lightbox-close {
+	grid-area: close;
+	display: grid;
+	color: white;
+	align-items: center;
+	font-size: xx-large;
+	background-color: steelblue;
+	border-top-right-radius: 20px;
+}
+
+#lightbox-close:hover {
+	background-color: lightsteelblue;
+	cursor: pointer;
+}
+
+#lightbox-text {
+	grid-area: text;
+	padding: 2%;
+	overflow: scroll;
+}
+
+/* ----- POP OUT ANIMATE ----- */
+
+.animating .popOut {
+	transition: all 0.5s ease-in-out;
+}
+
+.popOut.fade {
+	opacity: 0;
+}
+
+.animating .popOut.fade {
+	opacity: 1;
+}
+
+.popOut.scale {
+	max-height: 0%;
+	max-width: 0%;
+}
+
+.animating .popOut.scale {
+	max-height: 100%;
+	max-width: 100%;
+}
+
+
+
+
+
