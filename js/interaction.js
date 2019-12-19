@@ -77,6 +77,10 @@ $('#nextPage').click(function() {
 
 	// switch limit
 	if (_current === _procedure[0]) {
+		if (_inputFiles.length == 0) {
+			alert("請先上傳 Excel 檔案。");
+			return;
+		}
 		displayTableList();
 		displayRequiredPage();
 		displayOptionalPage();
@@ -97,6 +101,12 @@ $('#nextPage').click(function() {
 	if (interfacePos === _procedure.length-1) return;
 	else switchTo(_procedure[interfacePos+1], 'next');
 
+});
+
+
+$('#usage').click(function() {
+	var explainContent = $('#explainText').html();
+	showLightBox('使用說明', explainContent);
 });
 
 
@@ -176,8 +186,8 @@ function deleteUploadSheet($this) {
 	var sheetObj = $this.parentElement.parentElement;
 	var sheet = $(sheetObj).find('.coverText')[0].innerText;
 	var pos = sheet.indexOf('-');
-	var filename = sheet.substring(0, pos - 1);
-	var sheetName = sheet.substring(pos + 2, sheet.length-1);
+	var filename = sheet.substring(0, pos);
+	var sheetName = sheet.substring(pos + 1, sheet.length-1);
 
 	// pop out confirm box
 	if (confirm("確定刪除" + sheet + "?")) {

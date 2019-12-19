@@ -14,6 +14,20 @@
 
 <body>
 
+	<!-- explain -->
+	<div id="explainText" style="display: none;">
+		<h2>介面介紹</h2>
+		<hr style="margin: 0;">
+
+		<h2>使用步驟</h2>
+		<hr style="margin: 0;">
+		<h3>Step 1: 上傳 CSV/Excel 檔案</h3>
+		<h3>Step 2: 詮釋資料<strong class="text-danger">必填</strong>欄位對應設定</h3>
+		<h3>Step 3: 詮釋資料<strong class="text-danger">選填</strong>欄位對應設定</h3>
+		<h3>Step 4: 添加文件內文</h3>
+		<h3>Step 5: 輸出 DocuXML 檔案</h3>
+	</div>
+
 	<!-- light box -->
 	<div id="lightbox">
 		<div id="lightbox-bg">
@@ -52,6 +66,7 @@
 	<div id="topContainer">
 
 		<!-- page btn -->
+		<span id="usage" class="glyphicon glyphicon-question-sign"></span>
 		<span id="prevPage" class="glyphicon glyphicon-chevron-left"></span>
 		<span id="nextPage" class="glyphicon glyphicon-chevron-right"></span>
 
@@ -170,8 +185,8 @@
 							<span>檢視</span>
 							<span>操作</span>
 						</div>
-						<input id="singleTXT" type="file" accept=".txt" onchange="uploadSingleTXT(this)" style="display: none;"/>
-						<input id="multiTXT" type="file" accept=".txt" onchange="test(this)" style="display: none;"/>
+						<input id="singleTXT" type="file" accept=".txt" onchange="uploadSingleTXT(this, undefined, true)" style="display: none;"/>
+						<input id="multiTXT" type="file" accept=".txt" onchange="uploadMultiTXT(this)" style="display: none;" multiple/>
 					</div>
 
 				</div>

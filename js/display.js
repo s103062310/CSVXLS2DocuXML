@@ -179,22 +179,23 @@ function displayContentPage() {
 		// content mapping
 		let contentMapping = "<div class=\"contentMapping\"><h3>對應欄位</h3><div class=\"selectObj\">" + buttonGroup + "</div><div class=\"newSelect\" onclick=\"addNewSelect(this)\"><span class=\"glyphicon glyphicon-plus\"></span><span>新增一項對應欄位...</span></div></div>";
 
-		// header
-		let header = "<div class=\"txtFilesHeader\"><span>檔名</span><span>狀態</span><span>檢視</span><span>操作</span></div>";
-
-		// file status
-		let fileStatus = "<div>" + header + "<div class=\"txtFiles\"></div></div>";
-
-		// files
-		let files = "<div>" + fileStatus + "<div class=\"notMatch\"></div></div>";
-
-		// import txt
-		let importTXT = "<div class=\"importTXT\"><h3>上傳純文字檔</h3>" + files + "</div>";
-
 		// content elements
 		let content = "";
 		let third = true;
 		for (let tag in _contentTags) {
+
+			// header
+			let header = "<div class=\"txtFilesHeader\"><span>檔名</span><span>狀態</span><span>檢視</span><span>操作 <span class=\"glyphicon glyphicon-cloud-upload\" onclick=\"uploadTXT('" + table + "', undefined, '" + tag + "', false)\"></span></span></div>";
+
+			// file status
+			let fileStatus = "<div>" + header + "<div class=\"txtFiles\"></div></div>";
+
+			// files
+			let files = "<div>" + fileStatus + "<div class=\"notMatch\"></div></div>";
+
+			// import txt
+			let importTXT = "<div class=\"importTXT\"><h3>上傳純文字檔</h3>" + files + "</div>";
+
 			let classname = (third) ?"tagTab target" :"tagTab";
 			let tagTab = "<div key=\"" + tag + "\" name=\"" + tag + "\" class=\"" + classname + "\">" + sourceHTML + contentMapping + importTXT + "</div>";
 			content += tagTab;
@@ -215,15 +216,25 @@ function displayImportTXT() {
 		for (let tag in _contentTags) {
 
 			// filenames
-			let filenames = "";
 			for (let filename in _txtData[table]) {
-				let row = "<div name=\"" + filename + "\" class=\"rowFile\"><span func=\"name\">" + filename + ".txt</span><span func=\"status\">無</span><span func=\"view\" class=\"glyphicon glyphicon-eye-open\" onclick=\"showTXT(this)\"></span><span func=\"manipulate\" class=\"glyphicon glyphicon-cloud-upload\" onclick=\"uploadTXT('" + table + "', '" + filename + "', '" + tag + "')\"></span></div>";
-				filenames += row;
-			}
+				let row = "<div name=\"" + filename + "\" class=\"rowFile\"><span func=\"name\">" + filename + ".txt</span><span func=\"status\">無</span><span func=\"view\" class=\"glyphicon glyphicon-eye-open\" onclick=\"showTXT(this)\"></span><span func=\"manipulate\" class=\"glyphicon glyphicon-cloud-upload\" onclick=\"uploadTXT('" + table + "', '" + filename + "', '" + tag + "', true)\"></span></div>";
+				
+				$('#contentInterface .settingTab[key=\'' + table + '\'] .tagTab[key=' + tag + '] .txtFiles').append(row);
 
-			$('#contentInterface .settingTab[key=\'' + table + '\'] .tagTab[key=' + tag + '] .txtFiles').append(filenames);
+				let dropTarget = document.querySelector('#contentInterface .settingTab[key=\'' + table + '\'] .tagTab[key=' + tag + '] .rowFile[name=\'' + filename + '\']');
+				dropTarget.addEventListener('drop', dropNotMatchFile);
+				dropTarget.addEventListener('dragenter', dragNotMatchFileEnter);
+				dropTarget.addEventListener('dragover', dragNotMatchFileOver);
+				dropTarget.addEventListener('dragleave', dragNotMatchFileLeave);
+			}
 		}
 	}
+}
+
+
+function displayNoMatchTXT($filename, $table, $tag) {
+	$('#contentInterface .settingTab[key=\'' + $table + '\'] .tagTab[key=' + $tag + '] .notMatch').append("<div name=\"" + $filename + "\" class=\"notMatchFile\" draggable=\"true\">" + $filename + ".txt</div>");
+	document.querySelector('#contentInterface .settingTab[key=\'' + $table + '\'] .tagTab[key=' + $tag + '] .notMatch div[name=\'' + $filename + '\']').addEventListener('dragstart', dragNotMatchFileStart);
 }
 
 
@@ -265,7 +276,7 @@ function displayDeleteTXT($table, $filename, $tag) {
 	$(status).append('無');
 
 	$(manipulate).attr('class', 'glyphicon glyphicon-cloud-upload');
-	$(manipulate).attr('onclick', 'uploadTXT(\'' + $table + '\', \'' + $filename + '\', \'' + $tag + '\');');
+	$(manipulate).attr('onclick', 'uploadTXT(\'' + $table + '\', \'' + $filename + '\', \'' + $tag + '\', true);');
 }
 
 

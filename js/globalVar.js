@@ -30,6 +30,7 @@ var _customMeta = ['自訂', '自動產生檔名', '自訂欄位', '為自訂欄
 // content
 var _contentTags = {doc_content: '內文', MetaTags: '多值欄位', Comment: '註解', Events: '事件'};
 var _txtData = [];		// tablename >> filename(.txt) >> content of each tag
+var _txtBuffer = [];	// not matching blob
 
 // fixed constant
 var _headerY = 0;
@@ -85,8 +86,9 @@ function filterEmpty($array) {
 
 function generateFilename($prefix, $index) {
 	var index = $index.toString();
-	if (index.length < 5) {
-		for (let i=0; i<5-index.length; i++) index = '0' + index;
+	var oriLen = index.length;
+	if (index.length < 4) {
+		for (let i=0; i<4-oriLen; i++) index = '0' + index;
 	}
 	return $prefix + '_' + index;
 }

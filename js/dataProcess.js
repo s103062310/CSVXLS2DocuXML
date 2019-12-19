@@ -17,6 +17,10 @@ function load($type, $file, $function) {
 function uploadFile($event) {
 	var files = $event.target.files;
 	filesHandler(files);
+
+	// update input
+	$('#fileManager input').replaceWith('<input id="uploadInput" type="file" name="uploadInput" accept=".csv, .xls, .xlsx" multiple/>');
+	document.getElementById('uploadInput').addEventListener('change', uploadFile, false);
 }
 
 function dragFileEnter($event) {
@@ -45,6 +49,53 @@ function dropFile($event) {
 	var files = dt.files;
 	filesHandler(files);
 }
+
+
+
+function dragNotMatchFileStart($event) {
+	$event.dataTransfer.setData('text/plain', $event.target.innerText.split('.')[0]);
+}
+
+
+function dragNotMatchFileEnter ($event) {
+	$event.preventDefault();
+	$event.stopPropagation();
+	this.classList.add('notMatchHover');
+}
+
+function dragNotMatchFileOver ($event) {
+	$event.preventDefault();
+	$event.stopPropagation();
+}
+
+function dragNotMatchFileLeave ($event) {
+	$event.preventDefault();
+	$event.stopPropagation();
+	this.classList.remove('notMatchHover');
+}
+
+
+function dropNotMatchFile($event) {
+	$event.preventDefault();
+	$event.stopPropagation();
+	this.classList.remove('notMatchHover');
+
+	// access data
+	var filename = $event.dataTransfer.getData('text/plain');
+	var table = $(this.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement).attr('key');
+	var tag = $(this.parentElement.parentElement.parentElement.parentElement.parentElement).attr('key');
+
+	// load txt
+	$('#singleTXT').attr('target-table', table);
+	$('#singleTXT').attr('target-tag', tag);
+	load('text', _txtBuffer[filename], loadTXT($(this).attr('name')));
+
+	// remove html
+	$('#contentInterface .settingTab[key=\'' + table + '\'] .tagTab[key=' + tag + '] .notMatch div[name=' + filename + ']').remove();
+	delete _txtBuffer[filename];
+}
+
+
 
 function filesHandler($files) {
 
@@ -120,7 +171,7 @@ function loadFile($file, $suffix) {
 function generateTXTData() {
 
 	// construct data container
-	_txtData = [], allFiles = [];
+	_txtData = [], allFiles = [], index = [];
 	for (let table in _data) {
 
 		// access information
@@ -137,7 +188,11 @@ function generateTXTData() {
 		if (barIndex == -1) {
 			let inputSetting = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=filename] input');
 			let prefix = $(inputSetting)[0].value;
-			for (let i=0; i<_data[table].length-1; i++) _txtData[table][generateFilename(prefix, i+1)] = {};
+			if (!(prefix in index)) index[prefix] = 1;
+			for (let i=0; i<_data[table].length-1; i++) {
+				_txtData[table][generateFilename(prefix, index[prefix])] = {};
+				index[prefix]++;
+			}
 			
 		// header
 		} else {
@@ -164,11 +219,12 @@ function generateTXTData() {
 
 
 
-function uploadTXT($table, $filename, $tag) {
+function uploadTXT($table, $filename, $tag, $single) {
 	$('#singleTXT').attr('target-table', $table);
 	$('#singleTXT').attr('target-filename', $filename);
 	$('#singleTXT').attr('target-tag', $tag);
-	$('#singleTXT').click();
+	if ($single) $('#singleTXT').click();
+	else $('#multiTXT').click();
 }
 
 
@@ -178,7 +234,26 @@ function deleteTXT($table, $filename, $tag) {
 }
 
 
-function uploadSingleTXT($event) {
+function uploadMultiTXT($event) {
+	for (let i=0; i<$event.files.length; i++) {
+		let event = {'files': { 'length': 1, 0: $event.files[i] } };
+		let filename = $event.files[i].name.split('.')[0];
+		let table = $('#singleTXT').attr('target-table');
+		let tag = $('#singleTXT').attr('target-tag');
+		if (filename in _txtData[table]) uploadSingleTXT(event, filename, false);
+		else {
+			alert("上傳檔案 " + filename + ".txt 不在檔名列表內。");
+			_txtBuffer[filename] = $event.files[i];
+			displayNoMatchTXT(filename, table, tag);
+		}
+	}
+
+	// update input
+	$('#multiTXT').replaceWith('<input id="multiTXT" type="file" accept=".txt" onchange="uploadMultiTXT(this)" style="display: none;" multiple/>');
+}
+
+
+function uploadSingleTXT($event, $filename, $update) {
 	if ($event.files.length == 0) return;
 	var file = $event.files[0];
 	
@@ -186,36 +261,41 @@ function uploadSingleTXT($event) {
 	var fileTypePos = file.name.indexOf('.');
 	var fileType = file.name.substring(fileTypePos+1, file.name.length);
 	if (fileType !== 'txt') {
-		alert("上傳檔案" + file.name + "不符合檔案類型要求，請上傳副檔名為 .txt 的檔案。");
+		alert("上傳檔案 " + file.name + " 不符合檔案類型要求，請上傳副檔名為 .txt 的檔案。");
 		return;
 	}
 
 	// make sure user upload the right file
-	var filename = $('#singleTXT').attr('target-filename');
+	var filename = ($filename == undefined) ?$('#singleTXT').attr('target-filename') :$filename;
 	if (file.name.split('.')[0] !== filename) {
 		if (confirm("欲上傳的檔案 " + file.name + " 與所選檔名 " + filename + ".txt 不符，要繼續上傳嗎？")) {
-			load('text', file, loadTXT());
+			load('text', file, loadTXT(filename));
 		}
 
 	// upload directly
 	} else {
-		load('text', file, loadTXT());
+		load('text', file, loadTXT(filename));
 	}
 
+	// update input
+	if ($update) {
+		$('#singleTXT').replaceWith('<input id="singleTXT" type="file" accept=".txt" onchange="uploadSingleTXT(this, undefined, true)" style="display: none;"/>');
+	}
 }
 
 
-function loadTXT() {
+function loadTXT($filename) {
 	return function($event) {
 		var data = $event.target.result;
 		var table = $('#singleTXT').attr('target-table');
-		var filename = $('#singleTXT').attr('target-filename');
 		var tag = $('#singleTXT').attr('target-tag');
 
+		// TODO: check well-form
+
 		for (let file in _txtData[table]) {
-			if (file === filename) {
+			if (file === $filename) {
 				_txtData[table][file][tag] = data;
-				displayUploadTXT(table, filename, tag);
+				displayUploadTXT(table, $filename, tag);
 			}
 		}
 	}

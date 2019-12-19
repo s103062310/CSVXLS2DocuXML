@@ -366,6 +366,25 @@ li.selected:hover {
 .notMatch {
 	border: solid 1px gainsboro;
 	border-radius: 4px;
+	padding: 5%;
+	overflow: scroll;
+}
+
+.notMatchFile {
+	color: gray;
+	text-align: center;
+	font-size: medium;
+	padding: 5%;
+	cursor: pointer;
+}
+
+.notMatchFile:hover {
+	color: black;
+	background-color: whitesmoke;
+}
+
+.notMatchHover {
+	border: solid red 1px;
 }
 
 .txtFilesHeader {
@@ -409,7 +428,8 @@ li.selected:hover {
 
 .rowFile span.glyphicon-cloud-upload:hover,
 .rowFile span.glyphicon-trash:hover,
-.rowFile span.glyphicon-eye-open:hover {
+.rowFile span.glyphicon-eye-open:hover,
+.txtFilesHeader span.glyphicon-cloud-upload:hover {
 	color: gray;
 }
 

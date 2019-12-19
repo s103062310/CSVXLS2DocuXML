@@ -32,7 +32,7 @@ table th, table td {
 	position: fixed;
 	height: 100%;
 	width: 100%;
-	z-index: 30;
+	z-index: 35;
 }
 
 #topContainer {
@@ -40,7 +40,7 @@ table th, table td {
 	display: grid;
 	grid-template-columns: 1fr 13fr 1fr;
 	grid-template-rows: 1fr 9fr;
-	grid-template-areas: "prev header next"
+	grid-template-areas: "prev header exp"
 						 "prev tool next";
 }
 
@@ -67,6 +67,10 @@ table th, table td {
 
 #nextPage {
 	grid-area: next;
+}
+
+#usage {
+	grid-area: exp;
 }
 
 /* ----- HEADER ----- */
