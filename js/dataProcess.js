@@ -1,177 +1,99 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+This file defined the functions that used file data or setting 
+data to process output result, including generating and checking.
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 
-
-document.getElementById('uploadInput').addEventListener('change', uploadFile, false);
-document.getElementById('fileManager').addEventListener('dragenter', dragFileEnter, false);
-document.getElementById('fileManager').addEventListener('dragleave', dragFileLeave, false);
-document.getElementById('fileManager').addEventListener('dragover', dragFileOver, false);
-document.getElementById('fileManager').addEventListener('drop', dropFile, false);
-
-function load($type, $file, $function) {
-	var reader = new FileReader();
-	reader.onload = $function;
-	if ($type === 'excel') reader.readAsBinaryString($file);
-	else if ($type === 'text') reader.readAsText($file);
-}
-
-function uploadFile($event) {
-	var files = $event.target.files;
-	filesHandler(files);
-
-	// update input
-	$('#fileManager input').replaceWith('<input id="uploadInput" type="file" name="uploadInput" accept=".csv, .xls, .xlsx" multiple/>');
-	document.getElementById('uploadInput').addEventListener('change', uploadFile, false);
-}
-
-function dragFileEnter($event) {
-	$event.stopPropagation();
-	$event.preventDefault();
-	this.classList.add('managerHover');
-}
-
-function dragFileLeave($event) {
-	$event.stopPropagation();
-	$event.preventDefault();
-	this.classList.remove('managerHover');
-}
-
-function dragFileOver($event) {
-	$event.stopPropagation();
-	$event.preventDefault();
-}
-
-function dropFile($event) {
-	$event.stopPropagation();
-	$event.preventDefault();
-	this.classList.remove('managerHover');
-
-	var dt = $event.dataTransfer;
-	var files = dt.files;
-	filesHandler(files);
-}
+// * * * * * * * * * * * * * * * * upload * * * * * * * * * * * * * * * * *
 
 
+/* ---
+select target sheet from dataPool into data (used)
+INPUT: none
+OUTPUT: boolean, valid = true, no select sheet = false
+--- */
+function selectTable() {
 
-function dragNotMatchFileStart($event) {
-	$event.dataTransfer.setData('text/plain', $event.target.innerText.split('.')[0]);
-}
+	// no upload file
+	var sheetNum = $('.fileCover').length;
+	if (sheetNum == 0) {
+		alert("請先上傳 Excel 檔案。");
+		return false;
+	}
 
-
-function dragNotMatchFileEnter ($event) {
-	$event.preventDefault();
-	$event.stopPropagation();
-	this.classList.add('notMatchHover');
-}
-
-function dragNotMatchFileOver ($event) {
-	$event.preventDefault();
-	$event.stopPropagation();
-}
-
-function dragNotMatchFileLeave ($event) {
-	$event.preventDefault();
-	$event.stopPropagation();
-	this.classList.remove('notMatchHover');
-}
-
-
-function dropNotMatchFile($event) {
-	$event.preventDefault();
-	$event.stopPropagation();
-	this.classList.remove('notMatchHover');
-
-	// access data
-	var filename = $event.dataTransfer.getData('text/plain');
-	var table = $(this.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement).attr('key');
-	var tag = $(this.parentElement.parentElement.parentElement.parentElement.parentElement).attr('key');
-
-	// load txt
-	$('#singleTXT').attr('target-table', table);
-	$('#singleTXT').attr('target-tag', tag);
-	load('text', _txtBuffer[filename], loadTXT($(this).attr('name')));
-
-	// remove html
-	$('#contentInterface .settingTab[key=\'' + table + '\'] .tagTab[key=' + tag + '] .notMatch div[name=' + filename + ']').remove();
-	delete _txtBuffer[filename];
-}
-
-
-
-function filesHandler($files) {
-
-	// process for each selected file
-	for (let i=0; i<$files.length; i++) {
-
-		// filter non-ecxel files
-		let fileTypePos = $files[i].name.indexOf('.');
-		let fileType = $files[i].name.substring(fileTypePos+1, $files[i].name.length);
-		if (!itemInList(fileType, _allowedFileType)) {
-			alert("上傳檔案" + $files[i].name + "不符合檔案類型要求，請上傳副檔名為 .xls, .xlsx, .csv 的檔案。");
-			return;
+	// select green border sheet
+	for (let i = 0; i < $('.fileCover').length; i++) {
+		let tableName = $($('.fileCover')[i]).find('.coverText')[0].innerText;
+		let color = $($('.fileCover')[i]).attr('style').split(' ')[1].split(';')[0];
+		if (color === 'limegreen') {
+			_data[tableName] = _dataPool[tableName];
+			_data.length++;
 		}
+	}
 
-		// file hasn't loaded before - load the whole file
-		if (!fileInSystem($files[i].name)) {
-			load('excel', $files[i], loadFile($files[i], false));
+	// no select sheet
+	if (_data.length === 0) {
+		alert("請至少選擇一份資料表。");
+		return false;
+	}
 
-		// file has loaded before
-		} else {
-			if (confirm("已有相同檔名的檔案匯入本工具，確定繼續上傳" + $files[i].name + "?")) {
-				load('excel', $files[i], loadFile($files[i], true));
+	console.log(_data);
+	return true;
+}
+
+
+// * * * * * * * * * * * * * * * * required * * * * * * * * * * * * * * * * *
+
+
+/* ---
+check if user fill all blank in required metadata setting page
+INPUT: none
+OUTPUT: boolean, all filled = true, not completed = false
+--- */
+function checkRequiredPage() {
+	for (let table in _data) {
+
+		// corpus
+		let corpus = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=corpus] button.text-only')[0].innerText;
+		if (corpus === '--- 請選擇 ---') {
+			alert("請填寫資料表「" + table + "」的「文獻集名稱」。");
+			return false;
+		} else if (corpus === '自訂') {
+			let value = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=corpus] input')[0].value;
+			if (value === '') {
+				alert("請填寫資料表「" + table + "」自訂之「文獻集名稱」。");
+				return false;
 			}
 		}
 
-	}
-
-	console.log(_inputFiles);
-	console.log(_data);
-
-}
-
-
-function loadFile($file, $suffix) {
-	return function($event) {
-
-		// get file information
-		var filename = ($suffix) ? addSuffix($file.name.split('.')[0]) :$file.name.split('.')[0];
-		var data = $event.target.result;
-		var wb = XLSX.read(data, {type: 'binary'});
-
-		// record file in system
-		_inputFiles[filename] = wb.SheetNames;
-		_inputFiles.length++;
-		_sheetNum += wb.SheetNames.length;
-
-		// css row
-		var rowNum = Math.ceil((_sheetNum+1)/3).toString();
-		$('#fileManager').css('grid-template-rows', 'repeat(' + rowNum + ', 15vh)');
-
-		// build data structure and show UI
-		for (let i=0; i<wb.SheetNames.length; i++) {
-
-			// parse excel file
-			let sheet = filename + '-' + wb.SheetNames[i];
-			let header = XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[i]]).split('\n')[0].split(',');
-			let content = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[i]]);
-
-			// save file data in system
-			content.splice(0, 0, filterEmpty(header));
-			_data[sheet] = content;
-			_data.length++;
-
-			// UI
-			displayUploadSheet(sheet);
+		// filename
+		let filename = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=filename] button.text-only')[0].innerText;
+		if (filename === '--- 請選擇 ---') {
+			alert("請填寫資料表「" + table + "」的「文件檔案名稱」。");
+			return false;
+		} else if (filename === '自動產生檔名') {
+			let value = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=filename] input')[0].value;
+			if (value === '') {
+				alert("請填寫資料表「" + table + "」自訂之「文件檔案名稱」。");
+				return false;
+			}
 		}
-
 	}
+
+	return true;
 }
 
 
-
+/* ---
+generate filenames according to required metadata setting
+INPUT: none
+OUTPUT: boolean, filename legal = true, not legal = false
+--- */
 function generateTXTData() {
 
 	// construct data container
-	_txtData = [], allFiles = [], index = [];
+	_txtData = [];
+	var allFiles = [], index = [];
 	for (let table in _data) {
 
 		// access information
@@ -199,7 +121,13 @@ function generateTXTData() {
 			let header = choice.substring(barIndex + 2, choice.length);
 			for (let row in _data[table]) {
 				if (row == 0) continue;
-				filename = _data[table][row][header].split('.')[0];
+
+				// filename process
+				let filename = _data[table][row][header]
+				if (typeof filename == "string") filename = filename.split('.')[0];
+				else filename = filename.toString();
+
+				// check if filename legal
 				if (allFiles.indexOf(filename) >= 0) {
 					alert("檔名不唯一。");
 					return false;
@@ -216,109 +144,97 @@ function generateTXTData() {
 }
 
 
-
-
-
-function uploadTXT($table, $filename, $tag, $single) {
-	$('#singleTXT').attr('target-table', $table);
-	$('#singleTXT').attr('target-filename', $filename);
-	$('#singleTXT').attr('target-tag', $tag);
-	if ($single) $('#singleTXT').click();
-	else $('#multiTXT').click();
+/* ---
+auto generate filenames according to prefix
+INPUT: 1) string, prefix
+       2) int, index
+OUTPUT: string, filename e.g. - prefix_0001
+--- */
+function generateFilename($prefix, $index) {
+	var index = $index.toString();
+	var oriLen = index.length;
+	if (index.length < 4) {
+		for (let i=0; i<4-oriLen; i++) index = '0' + index;
+	}
+	return $prefix + '_' + index;
 }
 
 
-function deleteTXT($table, $filename, $tag) {
-	delete _txtData[$table][$filename][$tag];
-	displayDeleteTXT($table, $filename, $tag);
-}
+// * * * * * * * * * * * * * * * * optional * * * * * * * * * * * * * * * * *
 
 
-function uploadMultiTXT($event) {
-	for (let i=0; i<$event.files.length; i++) {
-		let event = {'files': { 'length': 1, 0: $event.files[i] } };
-		let filename = $event.files[i].name.split('.')[0];
-		let table = $('#singleTXT').attr('target-table');
-		let tag = $('#singleTXT').attr('target-tag');
-		if (filename in _txtData[table]) uploadSingleTXT(event, filename, false);
-		else {
-			alert("上傳檔案 " + filename + ".txt 不在檔名列表內。");
-			_txtBuffer[filename] = $event.files[i];
-			displayNoMatchTXT(filename, table, tag);
+/* ---
+check if user select the same metadata in optional setting page
+INPUT: none
+OUTPUT: boolean, valid = true, repeated = false
+--- */
+function checkOptionalPage() {
+	for (let table in _data) {
+
+		// check for each table
+		let selectMeta = {}, customMeta = {};
+		let blocks = $('#optionalInterface .settingTab[key=\'' + table + '\'] > div');
+		for (let i=0; i<blocks.length; i++) {
+
+			// information for each block
+			let blockName = $(blocks[i]).attr('name');
+			let metadata = $(blocks[i]).find('.text-only')[0].innerText;
+			if (metadata == '--- 請選擇 ---') continue;
+
+			// custom => metadata format & unique
+			else if (metadata == '自訂欄位') {
+				let meta = $(blocks[i]).find('input')[0].value;
+
+				// format
+				if (!checkStr(meta)) {
+					alert("在「" + blockName + "」的 metadata 「自訂欄位」設定中，請使用半形英文。");
+					return false;
+
+				// unique
+				} else if (meta in customMeta) {
+					alert("「" + customMeta[meta] + "」與「" + blockName + "」皆為自訂欄位「" + meta + "」。\n自訂欄位請取不同的名字。");
+					return false;
+
+				} else customMeta[meta] = blockName;
+
+			// normal => unique
+			} else if (metadata in selectMeta) {
+				alert("「" + selectMeta[metadata] + "」與「" + blockName + "」皆被選為「" + metadata + "」。\n每種 Metadata 只能被選擇一次。");
+				return false;
+
+			} else selectMeta[metadata] = blockName;
 		}
 	}
-
-	// update input
-	$('#multiTXT').replaceWith('<input id="multiTXT" type="file" accept=".txt" onchange="uploadMultiTXT(this)" style="display: none;" multiple/>');
-}
-
-
-function uploadSingleTXT($event, $filename, $update) {
-	if ($event.files.length == 0) return;
-	var file = $event.files[0];
 	
-	// fileter non-txt file
-	var fileTypePos = file.name.indexOf('.');
-	var fileType = file.name.substring(fileTypePos+1, file.name.length);
-	if (fileType !== 'txt') {
-		alert("上傳檔案 " + file.name + " 不符合檔案類型要求，請上傳副檔名為 .txt 的檔案。");
-		return;
-	}
-
-	// make sure user upload the right file
-	var filename = ($filename == undefined) ?$('#singleTXT').attr('target-filename') :$filename;
-	if (file.name.split('.')[0] !== filename) {
-		if (confirm("欲上傳的檔案 " + file.name + " 與所選檔名 " + filename + ".txt 不符，要繼續上傳嗎？")) {
-			load('text', file, loadTXT(filename));
-		}
-
-	// upload directly
-	} else {
-		load('text', file, loadTXT(filename));
-	}
-
-	// update input
-	if ($update) {
-		$('#singleTXT').replaceWith('<input id="singleTXT" type="file" accept=".txt" onchange="uploadSingleTXT(this, undefined, true)" style="display: none;"/>');
-	}
+	return true;
 }
 
 
-function loadTXT($filename) {
-	return function($event) {
-		var data = $event.target.result;
-		var table = $('#singleTXT').attr('target-table');
-		var tag = $('#singleTXT').attr('target-tag');
-
-		// TODO: check well-form
-
-		for (let file in _txtData[table]) {
-			if (file === $filename) {
-				_txtData[table][file][tag] = data;
-				displayUploadTXT(table, $filename, tag);
-			}
-		}
-	}
-}
+// * * * * * * * * * * * * * * * * content * * * * * * * * * * * * * * * * *
 
 
-
-
-
-
-
+/* ---
+convert excel to DocuXML according to settings in the tool
+INPUT: none
+OUTPUT: boolean, convert success = true, fail = false
+--- */
 function convertToXML() {
 
 	// reset
+	let info = {'sheetOrder': 0, 'sheetNum': _data.length};
 	_xml = '<?xml version=\'1.0\'?>\n<ThdlPrototypeExport>\n<documents>\n';
 	$('#XMLoutput').empty();
 
+	// process for each table
 	for (let table in _data) {
-
 		let corpusElement = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=corpus]');
 		let corpusSetting = $(corpusElement).find('button.text-only')[0].innerText;
 		let corpusSetType = corpusSetting.split('|')[0].trim();
 		let metadataElement = $('#optionalInterface .settingTab[key=\'' + table + '\'] > .menu');
+
+		// progress info
+		info['fileOrder'] = 0;
+		info['fileNum'] = _data[table].length;
 
 		// writing xml
 		for (let file in _data[table]) {
@@ -358,21 +274,22 @@ function convertToXML() {
 				let metaSetting = $($(metadataElement)[m]).find('button.text-only')[0].innerText;
 				if (metaSetting === '--- 請選擇 ---') continue;
 				
+				// single metadata
 				let metadata = '';
 				let metaType = metaSetting.split('|')[0].trim();
+				
 				if (metaType === '自訂欄位') {
 					metadata = $($(metadataElement)[m]).find('input')[0].value;
-					if (!checkStr(metadata)) {
-						alert("在 " + header + " 的 metadata 「自訂欄位」設定中，請使用半形英文。");
-						return false;
-					}
 					customMetaXML += '<' + metadata + '>' + metaValue + '</' + metadata + '>\n';
+				
 				} else if (metaType === '為自訂欄位加上超連結') {
 					let text = $($(metadataElement)[m]).find('input')[0].value;
-					linkText = (text == '') ?linkText :text; 
+					linkText = (text != '') ?text : linkText; 
 					linkHref = metaValue;
+				
 				} else if (metaType === '自訂欄位超連結的文字') {
 					linkText = metaValue;
+				
 				} else {
 					metadata = metaSetting.split('|')[1].trim();
 					_xml += '<' + metadata + '>' + metaValue + '</' + metadata + '>\n';
@@ -391,22 +308,47 @@ function convertToXML() {
 				// mapping
 				else if (source === 'CSV/Excel 欄位') {
 					let mappingElement = $('#contentInterface .settingTab[key=\'' + table + '\'] .tagTab[key=\'' + tag + '\'] .contentMapping .selectObj');
-					contentXML += beginTag(tag);
+					let content = "";
+
+					// concate content text
 					for (let m=0; m<mappingElement.length; m++) {
 						let header = $($(mappingElement)[m]).find('button.text-only')[0].innerText;
-						contentXML += _data[table][file][header];
+						let text = _data[table][file][header];
+						if (text !== undefined) {
+							if (mappingElement.length > 1 && tag === 'doc_content') content += '<Paragraph>' + text + '</Paragraph>\n';
+							else content += text + '\n';
+						}
 					}
-					contentXML += endTag(tag);
+
+					// check well form
+					if (content !== "") {
+						if (checkWellForm(content)) contentXML += beginTag(tag) + content + endTag(tag);
+						else {
+							alert("內文需是 well-form 格式。（位置：資料表 -> " + table + "；文件 -> " + file + "；內容 -> " + tag + "）");
+							return false;
+						}
+						
+					}
 
 				// import
 				} else if (source === '匯入純文字檔') {
 					let content = _txtData[table][filename][tag];
-					if ( content !== undefined) contentXML += beginTag(tag) + content + endTag(tag);
+					if ( content !== undefined) {
+						if (checkWellForm(content)) contentXML += beginTag(tag) + content + endTag(tag);
+						else {
+							alert("內文需是 well-form 格式。（位置：資料表 -> " + table + "；文件 -> " + file + "；內容 -> " + tag + "）");
+							return false;
+						}
+					}
 				}
 			}
 
 			_xml += '<doc_content>\n' + contentXML + '</doc_content>\n</document>\n';
+			updateProgress(info, 'content');
+			info['fileOrder']++;
 		}
+
+		info['sheetOrder']++;
 	}
 
 	_xml += '</documents>\n</ThdlPrototypeExport>\n';
@@ -417,6 +359,11 @@ function convertToXML() {
 }
 
 
+/* ---
+generate begin segment of specific tag
+INPUT: string, tag type
+OUTPUT: string, corresponsed begin segment
+--- */
 function beginTag($tag) {
 	if ($tag === 'doc_content') return '';
 	else if ($tag === 'MetaTags') return '<MetaTags NoIndex="1">\n';
@@ -425,72 +372,48 @@ function beginTag($tag) {
 }
 
 
+/* ---
+generate end segment of specific tag
+INPUT: string, tag type
+OUTPUT: string, corresponsed end segment
+--- */
 function endTag($tag) {
-	if ($tag === 'doc_content') return '\n';
-	else if ($tag === 'MetaTags') return '\n</MetaTags>\n';
-	else if ($tag === 'Comment') return '\n</Comment>\n';
-	else if ($tag === 'Events') return '\n</Events>\n';
+	if ($tag === 'doc_content') return '';
+	else if ($tag === 'MetaTags') return '</MetaTags>\n';
+	else if ($tag === 'Comment') return '</Comment>\n';
+	else if ($tag === 'Events') return '</Events>\n';
 }
 
 
+/* ---
+check if content text is well form
+INPUT: string, content text
+OUTPUT: boolean, well form = true, not well form = false
+--- */
+function checkWellForm($content) {
+	var stack = [];
+	var i = $content.indexOf('<', 0);
 
-function checkRequirePage() {
-	for (let table in _data) {
+	// go through whole 
+	while (i < $content.length && i !== -1) {
+		let tagPosEnd = $content.indexOf('>', i);
+		let tagStr = $content.substring(i + 1, tagPosEnd).trim();
+		let tagName = tagStr.split(' ')[0];
+		i = $content.indexOf('<', tagPosEnd);
 
-		// corpus
-		let corpus = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=corpus] button.text-only')[0].innerText;
-		if (corpus === '--- 請選擇 ---') {
-			alert("請填寫資料表「" + table + "」的「文獻集名稱」。");
-			return false;
-		} else if (corpus === '自訂') {
-			let value = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=corpus] input')[0].value;
-			if (value === '') {
-				alert("請填寫資料表「" + table + "」自訂之「文獻集名稱」。");
-				return false;
-			}
-		}
-
-		// filename
-		let filename = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=filename] button.text-only')[0].innerText;
-		if (filename === '--- 請選擇 ---') {
-			alert("請填寫資料表「" + table + "」的「文件檔案名稱」。");
-			return false;
-		} else if (filename === '自動產生檔名') {
-			let value = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=filename] input')[0].value;
-			if (value === '') {
-				alert("請填寫資料表「" + table + "」自訂之「文件檔案名稱」。");
-				return false;
-			}
+		// <xxx/>
+		if (tagStr[tagStr.length-1] !== '/') {
+			
+			// </xxx>
+			if (tagName[0] === '/') {
+				let tag = stack.pop();
+				if ('/'+tag !== tagName) return false;
+			
+			// <xxx>
+			} else stack.push(tagName);
 		}
 	}
+
 	return true;
 }
-
-
-
-function uploadXML2DocuSky($dbTitle) {
-	
-	_uploadStatus = false;
-
-	// xml info
-	var formData = { dummy: {name: 'dbTitleForImport', value: $dbTitle }, file: {value: _xml, filename: $dbTitle + '.xml', name: 'importedFiles[]'}};
-
-	_docuSkyObj.uploadMultipart(formData, succUploadFun);
-
-	setTimeout(function() {
-		if (_uploadStatus) alert("已成功上傳檔案至 DocuSky。");
-		else alert("上傳失敗，建議將已製作完畢檔案先下載至本機。");
-	}, 600);
-}
-
-
-function succUploadFun() {
-	_docuSkyObj.hideWidget();
-	_uploadStatus = true;
-}
-
-
-
-
-
 

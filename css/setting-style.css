@@ -1,0 +1,181 @@
+input, button, .btn.btn-default:focus {
+	outline: none;
+}
+
+input::placeholder {
+	color: silver;
+}
+
+/* ----- TABLE LIST ----- */
+
+.tableList {
+	overflow: scroll;
+}
+
+.tableList li {
+	display: grid;
+	grid-template-columns: 5fr 1fr 5fr;
+	font-size: medium;
+	word-break: break-all;
+	cursor: pointer;
+	color: gray;
+}
+
+.tableList li:hover {
+	color: black;
+	background-color: whitesmoke;
+}
+
+.tableList li span {
+	align-self: center;
+}
+
+.tableList li span:first-child {
+	text-align: right;
+}
+
+.tableList li span:nth-child(3) {
+	text-align: left;
+}
+
+.tableList .target {
+	color: black;
+	background-color: gainsboro;
+}
+
+.tableList .target:hover {
+	color: black;
+	background-color: gainsboro;
+	cursor: default;
+}
+
+/* ----- BTN GROUP ----- */
+
+.btn-group button {
+	color: gray;
+	background-color: white;
+	font-size: medium;
+}
+
+.btn-group ul {
+	width: 100%;
+	max-height: 30vh;
+	overflow: scroll;
+	margin: 5px;
+}
+
+.btn-group li {
+	display: grid;
+	grid-template-columns: 5fr 1fr 5fr;
+	text-align: center;
+	font-size: medium;
+	cursor: pointer;
+	word-break: break-all;
+}
+
+.btn-group li span {
+	align-self: center;
+}
+
+.btn-group li span:first-child {
+	text-align: right;
+}
+
+.btn-group li span:last-child {
+	text-align: left;
+}
+
+.btn-group li:hover {
+	background-color: whitesmoke;
+}
+
+.btn-group .caret, .btn-group.dropup .caret{
+	border-top: 1rem solid;
+	border-bottom: 0;
+	border-right: 0.8rem solid transparent;
+	border-left: 0.8rem solid transparent;
+}
+
+/* ----- SELECT ----- */
+
+.menu {
+	padding: 1%;
+	display: grid;
+	grid-gap: 1%;
+	grid-template-rows: 3fr 2fr;
+	grid-template-columns: 1fr 1fr;
+	grid-template-areas: "title empty"
+						 "choose text";
+}
+
+.menu h4 {
+	vertical-align: bottom;
+}
+
+.menu div {
+	grid-area: choose;
+}
+
+.text-only {
+	width: 85%;
+}
+
+.icon-only {
+	width: 15%;
+}
+
+.selected {
+	color: white;
+	background-color: gray;
+}
+
+li.selected:hover {
+	background-color: gray;
+}
+
+.menu input {
+	grid-area: text;
+	font-size: medium;
+	padding: 5px;
+	display: none;
+}
+
+li.postClass {
+	background: ivory;
+}
+
+li.postClass:hover {
+	background: seashell;
+}
+
+li.postClass.selected {
+	color: black;
+	background-color: antiquewhite;
+}
+
+li.postClass.selected:hover {
+	background-color: antiquewhite;
+}
+
+/* ----- TEXT INPUT ----- */
+
+.input {
+	padding: 1%;
+	display: grid;
+	grid-gap: 1%;
+	grid-template-rows: 3fr 2fr;
+	grid-template-columns: 7fr 3fr;
+	grid-template-areas: "title empty"
+						 "text button";
+}
+
+.input input {
+	grid-area: text;
+	font-size: medium;
+}
+
+.input button {
+	grid-area: button;
+	font-size: medium;
+	color: gray;
+}

@@ -1,0 +1,123 @@
+
+/* ----- LIGHTBOX ----- */
+
+#lightbox {
+	display: none;
+	position: fixed;
+	height: 100%;
+	width: 100%;
+	z-index: 35;
+}
+
+#lightbox-bg {
+	height: 100%;
+	width: 100%;
+	padding: 5%;
+	display: flex;
+	align-items: center;
+	background-color: rgba(0, 0, 0, 0.7);
+}
+
+#lightbox-content {
+	height: 100%;
+	width: 100%;
+	margin: auto;
+	display: grid;
+	border-radius: 20px;
+	background-color: white;
+	grid-template-columns: 14fr 1fr;
+	grid-template-rows: 1fr 9fr;
+	grid-template-areas: "filename close"
+						 "text text";
+}
+
+#lightbox-filename {
+	display: grid;
+	grid-area: filename;
+	align-items: center;
+	background-color: aliceblue;
+	border-top-left-radius: 20px;
+}
+
+#lightbox-close {
+	grid-area: close;
+	display: grid;
+	color: white;
+	align-items: center;
+	font-size: xx-large;
+	background-color: steelblue;
+	border-top-right-radius: 20px;
+}
+
+#lightbox-close:hover {
+	background-color: lightsteelblue;
+	cursor: pointer;
+}
+
+#lightbox-text {
+	grid-area: text;
+	padding: 2%;
+	overflow: scroll;
+}
+
+/* ----- POP OUT ANIMATE ----- */
+
+.animating .popOut {
+	transition: all 0.5s ease-in-out;
+}
+
+.popOut.fade {
+	opacity: 0;
+}
+
+.animating .popOut.fade {
+	opacity: 1;
+}
+
+.popOut.scale {
+	max-height: 0%;
+	max-width: 0%;
+}
+
+.animating .popOut.scale {
+	max-height: 100%;
+	max-width: 100%;
+}
+
+/* ----- SWITCH INTERFACE ----- */
+
+.panelWrapper.current, .panelWrapper.exit, .panelWrapper.enter{
+	display: flex;
+}
+
+.animating .exit, .animating .enter {
+	transition: all .3s ease-in-out;
+}
+
+.exit.prev {
+	transform: translateX(0%);
+}
+.animating .exit.prev {
+	transform: translateX(105%);
+}
+
+.exit.next {
+	transform: translateX(0%);
+}
+.animating .exit.next {
+	transform: translateX(-105%);
+}
+
+.enter.prev {
+	transform: translateX(-105%);
+}
+.animating .enter.prev {
+	transform: translateX(0%);
+}
+
+.enter.next {
+	transform: translateX(105%);
+}
+.animating .enter.next {
+	transform: translateX(0%);
+}

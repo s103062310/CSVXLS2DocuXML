@@ -14,50 +14,80 @@
 
 <body>
 
-	<!-- explain -->
+	<!-- usage explain -->
 	<div id="explainText" style="display: none;">
-		<h2>介面介紹</h2>
+		<h2>一、介面介紹</h2>
+		<hr style="margin: 0;">
+		<img src="images/interface.jpeg" style="width: 70%; margin: 1%;">
+		<p style="opacity: 0;"> --- 加大間隔用 --- </p>
+
+		<h2>二、使用步驟</h2>
 		<hr style="margin: 0;">
 
-		<h2>使用步驟</h2>
-		<hr style="margin: 0;">
-		<h3>Step 1: 上傳 CSV/Excel 檔案</h3>
-		<h3>Step 2: 詮釋資料<strong class="text-danger">必填</strong>欄位對應設定</h3>
-		<h3>Step 3: 詮釋資料<strong class="text-danger">選填</strong>欄位對應設定</h3>
-		<h3>Step 4: 添加文件內文</h3>
-		<h3>Step 5: 輸出 DocuXML 檔案</h3>
+		<p style="margin-top: 20px; font-size: larger; color: gray; border: silver 2px dashed; padding: 2%;">若需<strong class="text-info">觀看處理進度</strong>，請打開瀏覽器的開發人員工具觀看。<br><span class="glyphicon glyphicon-star"></span> chrome: 網址列右側按鈕 > 更多工具 > 開發人員工具 > console 分頁</p>
+
+		<h3 style="margin-top: 30px;">Step 1: 上傳 CSV/Excel 檔案</h3>
+		<div style="display: grid; grid-template-columns: 3fr 7fr; place-items: center;">
+			<ul style="font-size: medium;">
+				<li>此工具接受 <strong class="text-info">.csv, .xls, .xlsx</strong> 格式之檔案。</li>
+				<li>請用 <strong class="text-danger">UTF-8</strong> 編碼格式儲存檔案，以避免出現亂碼。</li>
+				<li>若輸入含有<strong class="text-info">合併儲存格</strong>的檔案，除了第一個儲存格外，其他合併之儲存格將會是<strong class="text-danger">空白</strong>。</li>
+			</ul>
+			<img src="images/step1.jpeg" style="width: 100%; margin: 1%;">
+		</div>
+
+		<h3 style="margin-top: 30px;">Step 2: 詮釋資料<strong class="text-danger">必填</strong>欄位對應設定</h3>
+		<div style="display: grid; grid-template-columns: 3fr 7fr; place-items: center;">
+			<ul style="font-size: medium;">
+				<li>每份文件之檔名須<strong class="text-danger">唯一</strong>。</li>
+				<li>請確實填寫本頁再繼續，所有項目填寫完畢才能進行下一步。</li>
+				<li>此頁送出後<strong class="text-danger">不可隨意更改</strong>，煩請再三確認。</li>
+				<li>按下一步進行後續設定，若檔案數量眾多，需稍等一陣。</li>
+			</ul>
+			<img src="images/step2.jpeg" style="width: 100%; margin: 1%;">
+		</div>
+
+		<h3 style="margin-top: 30px;">Step 3: 詮釋資料<strong class="text-danger">選填</strong>欄位對應設定</h3>
+		<div style="display: grid; grid-template-columns: 3fr 7fr; place-items: center;">
+			<ul style="font-size: medium;">
+				<li>若不對欄位做對應設定，請維持<strong class="text-info">請選擇</strong>的選項。</li>
+				<li>自訂欄位請使用<strong class="text-danger">半形英文</strong>輸入。</li>
+				<li>詮釋資料詳細說明請見 <a href="https://docs.google.com/spreadsheets/d/1G7UPZv-G1D7Yowwj_r7pO7rZXmr16PrxEZQ22_bqFIw/edit#gid=0" target="_blank">Metadata 規範表</a>。</li>
+				<li>具底色之選項表示，建庫後具備<strong class="text-danger">後分類</strong>功能。</li>
+			</ul>
+			<img src="images/step3.jpeg" style="width: 100%; margin: 1%;">
+		</div>
+
+		<h3 style="margin-top: 30px;">Step 4: 添加文件內文</h3>
+		<div style="display: grid; grid-template-columns: 3fr 7fr; place-items: center;">
+			<ul style="font-size: medium;">
+				<li>僅將所提供之文檔併入 XML 中，多值欄位、註解、事件之編寫，使用者須自行符合 <a href="https://docusky.org.tw/DocuSky/documentation/docs/DocuXml-1.2-Scheme.html#%E5%85%A7%E6%96%87XML" target="_blank">DocuXML</a> 標準。</li>
+				<li>按下一步即開始轉換，若檔案較大，需稍等一陣。</li>
+			</ul>
+			<img src="images/step4.jpeg" style="width: 100%; margin: 1%;">
+			<ul style="font-size: medium;">
+				<li>方式一：從資料表中提取。</li>
+			</ul>
+			<img src="images/step4-1.jpeg" style="width: 50%; margin: 1%;">
+			<ul style="font-size: medium;">
+				<li>方式一：另外匯入 txt 檔案。</li>
+				<li>接受 <strong class="text-info">.txt</strong> 純文字檔。</li>
+				<li>請用 <strong class="text-danger">UTF-8</strong> 編碼格式儲存檔案，以避免出現亂碼。</li>
+			</ul>
+			<img src="images/step4-2.jpeg" style="width: 70%; margin: 1%;">
+		</div>
+
+		<h3 style="margin-top: 30px;">Step 5: 輸出 DocuXML 檔案</h3>
+		<img src="images/step5.jpeg" style="width: 70%; margin: 1%;">
 	</div>
 
 	<!-- light box -->
 	<div id="lightbox">
 		<div id="lightbox-bg">
 			<div id="lightbox-content">
-				<div id="lightbox-filename">
-					<h1 class="text-center">Sheet Name</h1>
-				</div>
-				<div id="lightbox-close">
-					<span class="glyphicon glyphicon-remove text-center"></span>
-				</div>
-				<div id="lightbox-text">
-					<table border="1">
-						<thead>
-							<tr>
-								<th>header 1</th>
-								<th>header 2</th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr>
-								<td>row 1 col 1</td>
-								<td>row 1 col 2</td>
-							</tr>
-							<tr>
-								<td>row 2 col 1</td>
-								<td>row 2 col 2</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
+				<div id="lightbox-filename"><h1 class="text-center">Sheet Name</h1></div>
+				<div id="lightbox-close"><span class="glyphicon glyphicon-remove text-center"></span></div>
+				<div id="lightbox-text"></div>
 			</div>
 		</div>
 	</div>
@@ -77,7 +107,6 @@
 
 			<!-- page setting -->
 			<div id="progressBar">
-				
 				<div id="upload" class="text-center target"><span class="circle"></span></div>
 				<div id="upload-required"></div>
 				<div id="required" class="text-center"><span>2</span></div>
@@ -87,7 +116,6 @@
 				<div id="content" class="text-center"><span>4</span></div>
 				<div id="content-download"></div>
 				<div id="download" class="text-center"><span>5</span></div>
-				
 			</div>
 		</div>
 
@@ -104,6 +132,12 @@
 						<li>請用 <strong class="text-danger">UTF-8</strong> 編碼格式儲存檔案，以避免出現亂碼。</li>
 						<li>若輸入含有<strong class="text-info">合併儲存格</strong>的檔案，除了第一個儲存格外，其他合併之儲存格將會是<strong class="text-danger">空白</strong>。</li>
 					</ul>
+					<img src="images/progress.gif" style="display: none; margin: 0 30%; width: 40%;">
+				</div>
+
+				<div id="uploadToolBar">
+					<button id="selectAll" type="button" class="btn btn-default">全選</button>
+					<button id="selectReverse" type="button" class="btn btn-default">反向選取</button>
 				</div>
 
 				<div id="fileManager" class="contentPanel">
@@ -122,9 +156,11 @@
 				<div class="explainPanel bg-warning">
 					<h2 class="text-center">Step 2: 詮釋資料<strong class="text-danger">必填</strong>欄位對應設定</h2>
 					<ul class="text-center">
-						<li>請確實填寫本頁再繼續。</li>
 						<li>每份文件之檔名須<strong class="text-danger">唯一</strong>。</li>
+						<li>請確實填寫本頁再繼續。</li>
+						<li>此頁送出後<strong class="text-danger">不可隨意更改</strong>，煩請再三確認。</li>
 					</ul>
+					<img src="images/progress.gif" style="display: none; margin: 0 30%; width: 40%;">
 				</div>
 
 				<div class="contentPanel multisetting">
@@ -141,11 +177,14 @@
 
 			<!-- step 3 -->
 			<div id="optionalInterface" class="panelWrapper">
+
 				<div class="explainPanel bg-warning">
 					<h2 class="text-center">Step 3: 詮釋資料<strong class="text-danger">選填</strong>欄位對應設定</h2>
 					<ul class="text-center">
 						<li>若不對欄位做對應設定，請維持<strong class="text-info">請選擇</strong>的選項。</li>
 						<li>自訂欄位請使用<strong class="text-danger">半形英文</strong>輸入。</li>
+						<li>詮釋資料詳細說明請見 <a href="https://docs.google.com/spreadsheets/d/1G7UPZv-G1D7Yowwj_r7pO7rZXmr16PrxEZQ22_bqFIw/edit#gid=0" target="_blank">Metadata 規範表</a>。</li>
+						<li>具底色之選項表示，建庫後具備<strong class="text-danger">後分類</strong>功能。</li>
 					</ul>
 				</div>
 
@@ -156,20 +195,22 @@
 					</div>
 
 					<div class="settingPanel"></div>
+
 				</div>
 				
 			</div>
 
 			<!-- step 4 -->
 			<div id="contentInterface" class="panelWrapper">
+
 				<div class="explainPanel bg-warning">
 					<h2 class="text-center">Step 4: 添加文件內文</h2>
 					<ul class="text-center">
 						<li>接受 <strong class="text-info">.txt</strong> 純文字檔。</li>
 						<li>請用 <strong class="text-danger">UTF-8</strong> 編碼格式儲存檔案，以避免出現亂碼。</li>
 						<li>僅將所提供之文檔併入 XML 中，多值欄位、註解、事件之編寫，使用者須自行符合 <a href="https://docusky.org.tw/DocuSky/documentation/docs/DocuXml-1.2-Scheme.html#%E5%85%A7%E6%96%87XML" target="_blank">DocuXML</a> 標準。</li>
-						<li>按下一步即開始轉換，若檔案較大，需稍等一陣。</li>
 					</ul>
+					<img src="images/progress.gif" style="display: none; margin: 0 30%; width: 40%;">
 				</div>
 
 				<div class="contentPanel multisetting">
@@ -183,7 +224,7 @@
 							<span>檔名</span>
 							<span>狀態</span>
 							<span>檢視</span>
-							<span>操作</span>
+							<span>操作 <span class="glyphicon glyphicon-cloud-upload"></span></span>
 						</div>
 						<input id="singleTXT" type="file" accept=".txt" onchange="uploadSingleTXT(this, undefined, true)" style="display: none;"/>
 						<input id="multiTXT" type="file" accept=".txt" onchange="uploadMultiTXT(this)" style="display: none;" multiple/>
@@ -195,6 +236,7 @@
 
 			<!-- step 5 -->
 			<div id="downloadInterface" class="panelWrapper">
+
 				<div class="explainPanel bg-warning">
 					<h2 class="text-center">Step 5: 輸出 DocuXML 檔案</h2>
 				</div>
@@ -211,6 +253,12 @@
 						<h3>資料庫名稱</h3>
 						<input type="text" name="databaseName">
 						<button type="button" class="btn btn-default">建庫到 DocuSky 上</button>
+					</div>
+
+		            <div class="progress" style="height: 5%; margin: 1%; display: none;">
+						<div class="progress-bar progress-bar-info" role="progressbar" style="width: 0%; display: grid; align-items: center;">
+							<span style="font-size: medium;">0 %</span>
+						</div>
 					</div>
 
 					<div class="output">
@@ -234,13 +282,17 @@
 
 <!-- JAVASCRIPT FILE -->
 <script src="js/globalVar.js"></script>
+<script src="js/fileLoading.js"></script>
 <script src="js/dataProcess.js"></script>
 <script src="js/display.js"></script>
 <script src="js/interaction.js"></script>
 
 <!-- CSS FILE -->
 <link href="css/main-style.css" type="text/css" rel="stylesheet">
-<link href="css/detail-style.css" type="text/css" rel="stylesheet">
+<link href="css/animating-style.css" type="text/css" rel="stylesheet">
+<link href="css/IO-style.css" type="text/css" rel="stylesheet">
+<link href="css/setting-style.css" type="text/css" rel="stylesheet">
+<link href="css/content-style.css" type="text/css" rel="stylesheet">
 <link href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
