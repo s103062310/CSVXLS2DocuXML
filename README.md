@@ -4,6 +4,7 @@
 > 2019.11.28 | v.1.0  
 > 2019.12.19 | v.1.1, add: upload multiple txt at once  
 > 2020.02.10 | v.2.0  
+> 2020.04.08 | v.2.1, add: functions in upload .xls and .txt  
 
 ## Introduction of Interface (page)
 1. **upload** => load csv/excel files
@@ -21,12 +22,10 @@
 
 ## Javascripts Files
 1. **globalVar.js** =>
-
-> * defined all used data structures and global variables  
-> * initialization of the program  
-> * getter (get some information) and checker (return a boolean value)  
-> * other small tools  
-
+* defined all used data structures and global variables  
+* initialization of the program  
+* getter (get some information) and checker (return a boolean value)  
+* other small tools  
 2. **fileLoading.js** => defined the functions that used to load files from computer and parse the data in files
 3. **dataProcess.js** => defined the functions that used file data or setting data to process output result, including generating and checking
 4. **display.js** => defined the functions that used to display html page

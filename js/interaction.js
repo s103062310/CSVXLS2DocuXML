@@ -242,6 +242,36 @@ $('#selectReverse').click(function() {
 
 
 /* ---
+delete all button in tool bar of upload interface
+--- */
+$('#deleteAll').click(function() {
+	if (confirm("確定刪除所有資料嗎?")) {
+		_dataPool = [];
+		_dataPool.length = 0;
+		_inputFiles = []
+		_inputFiles.length = 0;
+		$('.fileCover').remove();
+	}
+
+	//console.log(_inputFiles);
+	//console.log(_dataPool);
+});
+
+
+/* ---
+delete select button in tool bar of upload interface
+--- */
+$('#deleteSelect').click(function() {
+	if (confirm("確定刪除所有已選取的資料嗎?")) {
+		for (let i = 0; i < $('.fileCover').length; i++) {
+			let color = $($('.fileCover')[i]).attr('style').split(' ')[1].split(';')[0];
+			if (color === 'limegreen') deleteUploadSheet($($('.fileCover')[i]), false);
+		}
+	}
+});
+
+
+/* ---
 toggle sheet item
 INPUT: sheet item html element
 --- */
@@ -264,26 +294,32 @@ function toggleUsed($this) {
 
 /* ---
 delete uploaded sheet
-INPUT: deleted html element
+INPUT: 1) deleted html element
+       2) boolean, if need confirm
 --- */
-function deleteUploadSheet($this) {
+function deleteUploadSheet($this, $confirm) {
 
 	// get sheet information
-	var sheetObj = $this.parentElement.parentElement;
-	var sheet = $(sheetObj).find('.coverText')[0].innerText;
+	var sheet = $($this).find('.coverText')[0].innerText;
 	var pos = sheet.indexOf('-');
 	var filename = sheet.substring(0, pos);
 	var sheetName = sheet.substring(pos + 1, sheet.length);
 
 	// pop out confirm box
-	if (confirm("確定刪除" + sheet + "?")) {
+	var del = false;
+	if ($confirm) {
+		if (confirm("確定刪除 " + sheet + " ?")) del = true;
+	} else del = true;
+
+	// delete
+	if (del) {
 
 		// remove
 		delete _dataPool[sheet];
 		_dataPool.length--;
 		let itemPos = _inputFiles[filename].indexOf(sheetName);
 		if (itemPos >= 0) _inputFiles[filename].splice(itemPos, 1);
-		$(sheetObj).remove();
+		$($this).remove();
 
 		// check input files
 		if (_inputFiles[filename].length === 0) {
@@ -410,14 +446,15 @@ upload a txt file to content (onclick)
 INPUT: 1) string, table name
        2) string, filename
        3) string, tag name
-       4) boolean, single txt = true, multi txt = false
+       4) string, single txt = 'single', multi txt = 'multi', whole corpus in a txt = 'whole'
 --- */
-function uploadTXT($table, $filename, $tag, $single) {
-	$('#singleTXT').attr('target-table', $table);
-	$('#singleTXT').attr('target-filename', $filename);
-	$('#singleTXT').attr('target-tag', $tag);
-	if ($single) $('#singleTXT').click();
-	else $('#multiTXT').click();
+function uploadTXT($table, $filename, $tag, $mode) {
+	_temp['target-table'] = $table;
+	_temp['target-filename'] = $filename;
+	_temp['target-tag'] = $tag;
+	if ($mode === 'single') $('#singleTXT').click();
+	else if ($mode === 'multi') $('#multiTXT').click();
+	else if ($mode === 'whole') $('#wholeTXT').click();
 }
 
 
@@ -426,10 +463,29 @@ delete a txt file in content (onclick)
 INPUT: 1) string, table name
        2) string, filename
        3) string, tag name
+       4) boolean, if need to confirm with user
 --- */
-function deleteTXT($table, $filename, $tag) {
-	delete _txtData[$table][$filename][$tag];
-	displayDeleteTXT($table, $filename, $tag);
+function deleteTXT($table, $filename, $tag, $confirm) {
+	var del = false;
+	if ($confirm) {
+		if (confirm("確定刪除 " + $filename + ".txt 嗎？")) del = true
+	} else del = true;
+	
+	if (del) {
+		delete _txtData[$table][$filename][$tag];
+		displayDeleteTXT($table, $filename, $tag);
+	}
+}
+
+/* ---
+delete all txt file in content of one setting tab (onclick)
+INPUT: 1) string, table name
+       2) string, tag name
+--- */
+function deleteAllTXT($table, $tag) {
+	if (confirm("確定刪除所有檔案嗎？")) {
+		for (let file in _txtData[$table]) deleteTXT($table, file, $tag, false);
+	}
 }
 
 

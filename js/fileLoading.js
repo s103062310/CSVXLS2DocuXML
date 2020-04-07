@@ -185,39 +185,32 @@ function loadFile($file, $suffix, $info) {
 
 
 /* ---
-trigger when user upload files by input element in header of table of content interface
-extract uploaded files and update used input by new input
-INPUT: event object
+process single file data
 --- */
-function uploadMultiTXT($event) {
+function loadTXT($filename) {
+	return function($event) {
+		var data = $event.target.result;
+		var table = _temp['target-table'];
+		var tag = _temp['target-tag'];
 
-	// process for each files
-	for (let i=0; i<$event.files.length; i++) {
-		let event = {'files': { 'length': 1, 0: $event.files[i] } };
-		let filename = $event.files[i].name.split('.')[0];
-		let table = $('#singleTXT').attr('target-table');
-		let tag = $('#singleTXT').attr('target-tag');
-
-		// see if uploaded filename match with the one excel provided
-		if (filename in _txtData[table]) uploadSingleTXT(event, filename, false);
-		else {
-			alert("上傳檔案 " + filename + ".txt 不在檔名列表內。");
-			_txtBuffer[filename] = $event.files[i];
-			displayNotMatchTXT(filename, table, tag);
+		for (let file in _txtData[table]) {
+			if (file === $filename) {
+				_txtData[table][file][tag] = data;
+				displayUploadTXT(table, $filename, tag);
+				return;
+			}
 		}
 	}
-
-	// update input
-	$('#multiTXT').replaceWith('<input id="multiTXT" type="file" accept=".txt" onchange="uploadMultiTXT(this)" style="display: none;" multiple/>');
 }
 
 
 /* ---
 trigger when user upload files by input element in row of table of content interface
 extract uploaded files and update used input by new input
-INPUT: event object
+INPUT: 1) event object
+       2) boolean, if input element need to update
 --- */
-function uploadSingleTXT($event, $filename, $update) {
+function uploadSingleTXT($event, $update) {
 	if ($event.files.length == 0) return;
 	var file = $event.files[0];
 	
@@ -230,7 +223,7 @@ function uploadSingleTXT($event, $filename, $update) {
 	}
 
 	// make sure user upload the right file
-	var filename = ($filename == undefined) ?$('#singleTXT').attr('target-filename') :$filename;
+	var filename = _temp['target-filename'];
 	if (file.name.split('.')[0] !== filename) {
 		if (confirm("欲上傳的檔案 " + file.name + " 與所選檔名 " + filename + ".txt 不符，要繼續上傳嗎？")) {
 			load('text', file, loadTXT(filename));
@@ -249,21 +242,78 @@ function uploadSingleTXT($event, $filename, $update) {
 
 
 /* ---
-process single file data
-INPUT: string, filename
+trigger when user upload files by input element in header of table of content interface
+extract uploaded files and update used input by new input
+INPUT: event object
 --- */
-function loadTXT($filename) {
+function uploadMultiTXT($event) {
+
+	// process for each files
+	for (let i=0; i<$event.files.length; i++) {
+		let event = {'files': { 'length': 1, 0: $event.files[i] } };
+		let table = _temp['target-table'];
+		let tag = _temp['target-tag'];
+		let filename = $event.files[i].name.split('.')[0];
+		_temp['target-filename'] = filename;
+
+		// see if uploaded filename match with the one excel provided
+		if (filename in _txtData[table]) uploadSingleTXT(event, false);
+		else {
+			alert("上傳檔案 " + filename + ".txt 不在檔名列表內。");
+			_txtBuffer[filename] = $event.files[i];
+			displayNotMatchTXT(filename, table, tag);
+		}
+	}
+
+	// update input
+	$('#multiTXT').replaceWith('<input id="multiTXT" type="file" accept=".txt" onchange="uploadMultiTXT(this)" style="display: none;" multiple/>');
+}
+
+
+/* ---
+trigger when user upload files by 'single file for whole database' button
+extract uploaded files and update used input by new input
+INPUT: event object
+--- */
+function uploadWholeTXT($event) {
+	if ($event.files.length == 0) return;
+	var file = $event.files[0];
+
+	// fileter non-txt file
+	var fileTypePos = file.name.indexOf('.');
+	var fileType = file.name.substring(fileTypePos+1, file.name.length);
+	if (fileType !== 'txt') {
+		alert("上傳檔案 " + file.name + " 不符合檔案類型要求，請上傳副檔名為 .txt 的檔案。");
+		return;
+	}
+
+	// load
+	load('text', file, loadWholeTXT());
+
+	// update input
+	$('#wholeTXT').replaceWith('<input id="wholeTXT" type="file" accept=".txt" onchange="uploadWholeTXT(this)" style="display: none;"/>');
+}
+
+
+/* ---
+process data of single file for whole database
+--- */
+function loadWholeTXT() {
 	return function($event) {
-		var data = $event.target.result;
-		var table = $('#singleTXT').attr('target-table');
-		var tag = $('#singleTXT').attr('target-tag');
+		var table = _temp['target-table'];
+		var tag = _temp['target-tag'];
+		var data = $event.target.result.trim().split('\n\n');
+		var i = 0;
 
 		for (let file in _txtData[table]) {
-			if (file === $filename) {
-				_txtData[table][file][tag] = data;
-				displayUploadTXT(table, $filename, tag);
-				return;
+			let dataStr = data[i].trim();
+			if (dataStr !== '-') {
+				_txtData[table][file][tag] = dataStr;
+				displayUploadTXT(table, file, tag);
 			}
+
+			if (i >= data.length-1) break;
+			i++;
 		}
 	}
 }

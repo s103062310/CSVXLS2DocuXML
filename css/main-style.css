@@ -2,6 +2,14 @@ html, body {
 	height: 100%;
 }
 
+p {
+	text-indent: 2em;
+}
+
+h4 {
+	text-align: center;
+}
+
 table {
 	min-width: 100%;
 	border: none;

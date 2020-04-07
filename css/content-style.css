@@ -98,6 +98,16 @@
 	grid-gap: 1%;
 }
 
+.importTXTtoolBar {
+	margin: 1% 0;
+	display: grid;
+	grid-gap: 5px;
+	grid-template-rows: 1fr 1fr;
+	grid-template-columns: 1fr 1fr;
+	grid-template-areas: "whole whole"
+						 "multi delete";
+}
+
 .notMatch {
 	border: solid 1px gainsboro;
 	border-radius: 4px;

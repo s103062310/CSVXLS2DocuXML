@@ -1,4 +1,29 @@
 
+/* ----- EXPLAIN ----- */
+
+.explainBlock {
+	margin: 2%;
+	display: grid;
+	grid-template-columns: 4fr 6fr; 
+	place-items: center;
+}
+
+.explainBlock > div {
+	padding: 3%;
+}
+
+.explainBlock > img {
+	width: 100%;
+	padding: 3%;
+}
+
+.explainBlock .stepOverview {
+	padding: 3%;
+	color: indianred;
+	font-size: medium; 
+	border: indianred 2px dashed; 
+}
+
 /* ----- LIGHTBOX ----- */
 
 #lightbox {

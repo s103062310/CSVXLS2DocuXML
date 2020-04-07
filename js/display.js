@@ -45,7 +45,7 @@ block that represents one sheet
 INPUT: string, sheet name
 --- */
 function displayUploadSheet($sheet) {
-	let fileBlock = "<label class=\"uploadCover fileCover\" style=\"border-color: indianred;\"><div class=\"usualFile\"><span class=\"glyphicon glyphicon-file\"></span><span class=\"coverText\">" + $sheet + "</span></div><div class=\"hoverFile\"><span class=\"glyphicon glyphicon-trash\" onclick=\"deleteUploadSheet(this)\"></span><span class=\"glyphicon glyphicon-eye-open\" onclick=\"showSheet(this)\"></span><span class=\"glyphicon glyphicon-remove\" onclick=\"toggleUsed(this.parentElement.parentElement)\"></span></div></label>";
+	let fileBlock = "<label class=\"uploadCover fileCover\" style=\"border-color: indianred;\"><div class=\"usualFile\"><span class=\"glyphicon glyphicon-file\"></span><span class=\"coverText\">" + $sheet + "</span></div><div class=\"hoverFile\"><span class=\"glyphicon glyphicon-trash\" onclick=\"deleteUploadSheet(this.parentElement.parentElement, true)\"></span><span class=\"glyphicon glyphicon-eye-open\" onclick=\"showSheet(this)\"></span><span class=\"glyphicon glyphicon-remove\" onclick=\"toggleUsed(this.parentElement.parentElement)\"></span></div></label>";
 	$('.emptyCover').before(fileBlock);	
 }
 
@@ -188,7 +188,7 @@ function displayContentPage() {
 	var sourceHTML = "<div name=\"contentSource\" class=\"menu\"><h3>來源</h3><div class=\"btn-group\"><button type=\"button\" class=\"btn btn-default dropdown-toggle text-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\">--- 請選擇 ---</button><button type=\"button\" class=\"btn btn-default dropdown-toggle icon-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\"><span class=\"caret\"></span></button><ul class=\"dropdown-menu\" role=\"menu\"><li role=\"presentation\" onclick=\"selectItem(this)\" class=\"selected\" style=\"display: block;\">--- 請選擇 ---</li><li role=\"presentation\" onclick=\"selectItem(this)\" style=\"display: block;\">CSV/Excel 欄位</li><li role=\"presentation\" onclick=\"selectItem(this)\" style=\"display: block;\">匯入純文字檔</li></ul></div><input type=\"text\" name=\"contentSource\"></div>";
 
 	// scan all table
-	var first = true, globalUp = true;;
+	var first = true;
 	for (let table in _data) {
 
 		// pagination
@@ -217,15 +217,18 @@ function displayContentPage() {
 		let third = true;
 		for (let tag in _contentTags) {
 
-			// global uploader
-			if (globalUp) $('.txtFilesHeader.fixed .glyphicon').attr('onclick', "uploadTXT('" + table + "', undefined, '" + tag + "', false)");
-			globalUp = false;
+			// tool bar
+			let wholeUpload = "<button type=\"button\" class=\"btn btn-default\" onclick=\"uploadTXT('" + table + "', undefined, '" + tag + "', 'whole')\" style=\"grid-area: whole;\"><span class=\"glyphicon glyphicon-cloud-upload\"></span> 使用單一文字檔案，並以「空行」分件</button>";
+			let multiUpload = "<button type=\"button\" class=\"btn btn-default\" onclick=\"uploadTXT('" + table + "', undefined, '" + tag + "', 'multi')\" style=\"grid-area: multi;\"><span class=\"glyphicon glyphicon-cloud-upload\"></span> 批次上傳</button>";
+			let deleteAll = "<button type=\"button\" class=\"btn btn-default\" onclick=\"deleteAllTXT('" + table + "', '" + tag + "')\" style=\"grid-area: delete;\"><span class=\"glyphicon glyphicon-trash\"></span> 刪除全部</button>";
+			let toolBar = "<div class=\"importTXTtoolBar\">" + wholeUpload + multiUpload + deleteAll + "</div><div></div>";
 
 			// header
-			let header = "<div class=\"txtFilesHeader\"><span>檔名</span><span>狀態</span><span>檢視</span><span>操作 <span class=\"glyphicon glyphicon-cloud-upload\" onclick=\"uploadTXT('" + table + "', undefined, '" + tag + "', false)\"></span></span></div>";
+			let header = "<div class=\"txtFilesHeader\"><span>檔名</span><span>狀態</span><span>檢視</span><span>操作</span></div>";
 
 			// import txt
-			let importTXT = "<div class=\"importTXT\"><h3>上傳純文字檔</h3><div><div>" + header + "<div class=\"txtFiles\"></div></div><div class=\"notMatch\"></div></div></div>";
+			let importTXT = "<div class=\"importTXT\"><h3>上傳純文字檔</h3><div>" 
+			+ toolBar + "<div>" + header + "<div class=\"txtFiles\"></div></div><div class=\"notMatch\"></div></div></div>";
 
 			// information
 			let classname = (third) ?"tagTab target" :"tagTab";
@@ -264,7 +267,7 @@ function displayImportTXT() {
 			for (let filename in _txtData[table]) {
 
 				// one file
-				let row = "<div name=\"" + filename + "\" class=\"rowFile\"><span func=\"name\">" + filename + ".txt</span><span func=\"status\">無</span><span func=\"view\" class=\"glyphicon glyphicon-eye-open\" onclick=\"showTXT(this)\"></span><span func=\"manipulate\" class=\"glyphicon glyphicon-cloud-upload\" onclick=\"uploadTXT('" + table + "', '" + filename + "', '" + tag + "', true)\"></span></div>";
+				let row = "<div name=\"" + filename + "\" class=\"rowFile\"><span func=\"name\">" + filename + ".txt</span><span func=\"status\">無</span><span func=\"view\" class=\"glyphicon glyphicon-eye-open\" onclick=\"showTXT(this)\"></span><span func=\"manipulate\" class=\"glyphicon glyphicon-cloud-upload\" onclick=\"uploadTXT('" + table + "', '" + filename + "', '" + tag + "', 'single')\"></span></div>";
 				$('#contentInterface .settingTab[key=\'' + table + '\'] .tagTab[key=' + tag + '] .txtFiles').append(row);
 
 				// add drag and drop listener
@@ -332,7 +335,7 @@ function displayUploadTXT($table, $filename, $tag) {
 
 	// modify manipulate function
 	$(manipulate).attr('class', 'glyphicon glyphicon-trash');
-	$(manipulate).attr('onclick', 'deleteTXT(\'' + $table + '\', \'' + $filename + '\', \'' + $tag + '\');');
+	$(manipulate).attr('onclick', 'deleteTXT(\'' + $table + '\', \'' + $filename + '\', \'' + $tag + '\', true);');
 }
 
 
@@ -350,11 +353,12 @@ function displayDeleteTXT($table, $filename, $tag) {
 	// modify status icon
 	$(status).removeClass();
 	$(status).attr('style', '');
+	$(status).empty();
 	$(status).append('無');
 
 	// modify manipulate function
 	$(manipulate).attr('class', 'glyphicon glyphicon-cloud-upload');
-	$(manipulate).attr('onclick', 'uploadTXT(\'' + $table + '\', \'' + $filename + '\', \'' + $tag + '\', true);');
+	$(manipulate).attr('onclick', 'uploadTXT(\'' + $table + '\', \'' + $filename + '\', \'' + $tag + '\', \'single\');');
 }
 
 
