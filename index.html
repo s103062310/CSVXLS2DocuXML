@@ -2,275 +2,33 @@
 <html>
 
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8;"/>
 
 	<title>CSV/XLS to DocuXML Converter</title>
 
-	<!-- DOCUSKY WIDGET API -->
-	<script src="https://docusky.org.tw/docusky/js/jquery.min.js"></script>
-	<script src="https://docusky.org.tw/docusky/js/jquery-ui.min.js"></script>
-	<script src="https://docusky.org.tw/docusky/js.ui/docusky.ui.manageDbListSimpleUI.js"></script>
+	<!-- ASSETS -->
+	<script src="assets/jquery.min.js"></script>
+	<script src="https://oss.sheetjs.com/sheetjs/xlsx.full.min.js"></script>
+
+	<!-- CSS FILE -->
+	<link href="css/main-style.css" type="text/css" rel="stylesheet">
+	<link href="css/animating-style.css" type="text/css" rel="stylesheet">
+	<link href="css/IO-style.css" type="text/css" rel="stylesheet">
+	<link href="css/setting-style.css" type="text/css" rel="stylesheet">
+	<link href="css/content-style.css" type="text/css" rel="stylesheet">
+	<link href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+	<script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+	<!-- DOCUSKY WIDGET API: https://cc.docusky.org.tw/docusky v.s. ../.. -->
+	<script src="../../js/jquery.min.js"></script>
+	<script src="../../js/jquery-ui.min.js"></script>
+	<script src="../../js.ui/docusky.ui.manageDbListSimpleUI.js"></script>
 </head>
 
 <body>
 
 	<!-- usage explain -->
-	<div id="explainText" style="display: none;">
-		<h2 style="text-indent: 1em;">一、工具介紹</h2>
-		<hr style="width: 96%;">
-
-		<p style="padding: 0 3%;">DocuSky 數位人文平台提供「建立個人資料庫」的服務，並輔以各式資料分析與視覺化工具，讓人文研究得以更加方便、快速的進行。DocuSky 建庫使用 DocuXML 格式，為程式用的標記式語言，是一般使用者較不熟悉也不容易上手的編碼格式。此工具可以將整理好的 Excel 表格轉成 DocuXML 格式，使用者只需要在熟悉的格式下處理資料，接著透過本工具視覺化介面的設定，即可得到建庫用的 DocuXML 檔案。對於剛開始接觸 DocuSky 的使用者，這將是一個時常會使用到的入門工具。</p>
-		<br><br>
-
-		<h2 style="text-indent: 1em;">二、介面介紹</h2>
-		<hr style="width: 96%;">
-
-		<div class="explainBlock">
-			<div>
-				<p>此工具共分成五個步驟，每個步驟的介面皆有以下幾個共同的功能區塊：</p>
-				<ol>
-					<li><strong>進度條：</strong>顯示目前作業進行的進度。</li>
-					<li><strong>注意事項：</strong>與每個步驟相關的注意事項將會在此顯示。</li>
-					<li><strong>上一步：</strong>回到上一個步驟。</li>
-					<li><strong>下一步：</strong>繼續下一個步驟。</li>
-					<li><strong>操作區域：</strong>每個步驟所做的設定將在此操作。</li>
-					<li><strong>使用說明：</strong>打開使用說明。</li>
-				</ol>
-			</div>
-			<img src="images/0.jpeg">
-		</div>
-		<br><br>
-
-		<h2 style="text-indent: 1em;">三、使用步驟</h2>
-		<hr style="width: 96%;">
-
-		<div style="margin: 2%; font-size: medium; color: gray; border: silver 2px dashed; padding: 2%;">若需<strong class="text-info">觀看處理進度</strong>，請打開瀏覽器的開發人員工具觀看。<br><span class="glyphicon glyphicon-star"></span> chrome: 網址列右側按鈕 > 更多工具 > 開發人員工具 > console 分頁</div>
-
-		<br><h3 style="text-align: center;">Step 1: 上傳 CSV/Excel 檔案</h3>
-
-		<div class="explainBlock">
-			<p class="stepOverview">此介面用來上傳欲轉成 DocuXML 格式的 Excel 表格。</p>
-			<div>
-				<h4>注意事項</h4>
-				<ul>
-					<li>此工具接受 <strong class="text-info">.csv, .xls, .xlsx</strong> 格式之檔案。</li>
-					<li>請用 <strong class="text-danger">UTF-8</strong> 編碼格式儲存檔案，以避免出現亂碼。</li>
-					<li>若輸入含有<strong class="text-info">合併儲存格</strong>的檔案，除了第一個儲存格外，其他合併之儲存格將會是<strong class="text-danger">空白</strong>。</li>
-				</ul>
-			</div>
-
-			<div>
-				<h4>上傳資料表</h4>
-				<p>提供兩種上傳檔案的方式：</p>
-				<ol>
-					<li>點選「新增檔案」按鈕。</li>
-					<li>將檔案拖曳進虛線範圍。</li>
-				</ol>
-			</div>
-			<img src="images/1-1.jpeg">
-
-			<div>
-				<h4>資料表方塊</h4>
-				<p>上傳後，一個資料表以一個方塊顯示（ID：檔案名稱-資料表名稱）。<strong class="text-info">當鼠標滑過方塊，顯示可對資料表進行的操作的功能按鈕</strong>，包括：</p>
-				<ol>
-					<li><strong>垃圾桶圖標：</strong>刪除此資料表。</li>
-					<li><strong>眼睛圖標：</strong>檢視此資料表的內容。</li>
-					<li><strong>狀態標示：</strong>顯示此資料表是否被選取，點按可更改狀態。</li>
-				</ol>
-				<div style="border: black 1px dashed; padding: 3% 5%; font-style: italic;">
-					<div>※ 方塊的邊框為<strong class="text-danger">紅色</strong>、狀態標示為 <span class="glyphicon glyphicon-remove text-danger"></span> ：<strong class="text-danger">未選取</strong>，轉換時將<strong class="text-danger">不使用</strong>。</div>
-					<div>※ 方塊的邊框為<strong class="text-success">綠色</strong>、狀態標示為 <span class="glyphicon glyphicon-ok text-success"></span> ：<strong class="text-success">已選取</strong>，轉換時將<strong class="text-success">使用</strong>。</div>
-				</div>
-			</div>
-			<img src="images/1-2.jpeg">
-
-			<div>
-				<h4>工具列</h4>
-				<p>資料表上傳後，需選取轉檔時真正需要用到的內容，這裡提供四種功能方便操作</strong>，包括：</p>
-				<ol>
-					<li><strong>全選：</strong>選取全部的資料表。</li>
-					<li><strong>反向選取：</strong>將選取與未選取的項目互換。</li>
-					<li><strong>全部刪除：</strong>刪除所有資料表。</li>
-					<li><strong>將選取者刪除</strong>。</li>
-				</ol>
-			</div>
-			<img src="images/1-3.jpeg">
-		</div>
-
-		<br><h3 style="text-align: center;">Step 2: 詮釋資料<strong class="text-danger">必填</strong>欄位對應設定</h3>
-
-		<div class="explainBlock">
-			<p class="stepOverview">「文獻集名稱」與「檔案名稱」為必填的 Metadata，此介面用來對此作設定。</p>
-			<div>
-				<h4>注意事項</h4>
-				<ul>
-					<li>每份文件之檔名須<strong class="text-danger">唯一</strong>。</li>
-					<li>請確實填寫本頁再繼續，所有項目填寫完畢才能進行下一步。</li>
-					<li>此頁送出後<strong class="text-danger">不可隨意更改</strong>，煩請再三確認。</li>
-					<li>按下一步進行後續設定，若檔案數量眾多，需稍等一陣。</li>
-				</ul>
-			</div>
-
-			<div>
-				<h4>設定介面</h4>
-				<p>因應「多資料表」的需求，使用者可以在不同資料表做不一樣的設定。</p>
-				<ol>
-					<li><strong>資料表列表：</strong>點選以切換設定的資料表。</li>
-					<li><strong>資料表名稱：</strong>顯示目前所在的資料表。</li>
-					<li><strong>設定區域</strong>。</li>
-				</ol>
-			</div>
-			<img src="images/2-1.jpeg">
-
-			<div>
-				<h4>文獻集名稱設定</h4>
-				<p>點選下拉選單進行選擇，選項包括：</p>
-				<ul>
-					<li><strong>檔案名稱：</strong>資料表所屬的 excel 檔案名稱。</li>
-					<li><strong>資料表名稱：</strong>excel 內的分頁名稱。</li>
-					<li><strong>欄位名稱：</strong>資料表內的<strong class="text-info">標頭項目</strong>，選擇以哪一欄的內容作設定。</li>
-					<li><strong>自訂：</strong>在隨之出現的輸入框內<strong>填寫自訂名稱</strong>。</li>
-				</ul>
-			</div>
-			<img src="images/2-2.jpeg">
-
-			<div>
-				<h4>檔案名稱設定</h4>
-				<p>點選下拉選單進行選擇，選項包括：</p>
-				<ul>
-					<li><strong>欄位名稱：</strong>資料表內的<strong class="text-info">標頭項目</strong>，選擇以哪一欄的內容作設定。</li>
-					<li><strong>自動產生檔名：</strong>在隨之出現的輸入框內<strong>填寫檔名的前綴</strong>，工具將會對每份文件做自動編號。</li>
-				</ul>
-			</div>
-			<img src="images/2-3.jpeg">
-		</div>
-
-		<br><h3 style="text-align: center;">Step 3: 詮釋資料<strong class="text-danger">選填</strong>欄位對應設定</h3>
-
-		<div class="explainBlock">
-			<p class="stepOverview">其他 Metadata 為選填，故此介面<strong>以資料表中的標頭欄位為單位</strong>，為每欄的資料與相應的 Metadata 做配對。</p>
-			<div>
-				<h4>注意事項</h4>
-				<ul>
-					<li>詮釋資料詳細說明請見 <a href="https://docs.google.com/spreadsheets/d/1G7UPZv-G1D7Yowwj_r7pO7rZXmr16PrxEZQ22_bqFIw/edit#gid=0" target="_blank">Metadata 規範表</a>。</li>
-					<li>每種 Metadata 項目只能被選擇一次。</li>
-				</ul>
-			</div>
-
-			<div>
-				<h4>設定選項</h4>
-				<p>選項包括 DocuSky 官方發布之 Metadata 規範表中所有的項目，與其他滿足自訂需求的項目。</p>
-				<div style="border: black 1px dashed; padding: 3% 5%; font-style: italic;">※ <strong class="text-warning">黃色為底</strong>的選項代表其<strong class="text-warning">建庫後具備後分類的功能</strong>。</div>
-			</div>
-			<img src="images/3-1.jpeg">
-
-			<div>
-				<h4>設定介面</h4>
-				<p>以資料表中的標頭欄位為單位，為其配對相應的 Metadata 選項，種類包括：</p>
-				<ol>
-					<li><strong>請選擇：</strong>預設項目，代表不設定（例：內文）或已設定（文獻集名稱、檔案名稱）。</li>
-					<li><strong>Metadata 名稱：</strong>一般 Metadata 項目。</li>
-					<li><strong>自訂欄位：</strong>若所需之 Metadata 不在規範表內，可自訂 Metadata，須在隨之出現的輸入框內輸入<strong class="text-danger">半形英文</strong>的 Metadata 名稱。</li>
-					<li><strong>為自訂欄位加上超連結：</strong>給內容為超連結的自訂 Metadata 使用的欄位，隨之出現的輸入框內可輸入欲顯示的超連結文字（選填）。</li>
-					<li><strong>自訂欄位超連結的文字：</strong>給內容為超連結文字的自訂 Metadata 使用的欄位。</li>
-				</ol>
-			</div>
-			<img src="images/3-2.jpeg">			
-		</div>
-
-		<br><h3 style="text-align: center;">Step 4: 添加文件內文</h3>
-
-		<div class="explainBlock">
-			<p class="stepOverview">此介面將為每份文件添加 Metadata 以外的內容。</p>
-			<div>
-				<h4>注意事項</h4>
-				<ul>
-					<li>此步驟僅將所提供之文檔併入 XML 中，內文、多值欄位、註解、事件之編寫，使用者須自行符合 <a href="https://docusky.org.tw/DocuSky/documentation/docs/DocuXml-1.2-Scheme.html#%E5%85%A7%E6%96%87XML" target="_blank">DocuXML</a> 標準。</li>
-					<li>按下一步即開始轉換，若檔案較大，需稍等一陣。</li>
-				</ul>
-			</div>
-
-			<div>
-				<h4>添加的項目與來源</h4>
-				<ol>
-					<li><strong>分頁按鈕：</strong>切換添加的項目，項目包括：內文、多值欄位、註解、事件。</li>
-					<li><strong>來源選單：</strong>選擇添加的方式。</li>
-				</ol>
-			</div>
-			<img src="images/4-1.jpeg">
-
-			<div>
-				<h4>添加方式一：CSV/Excel 欄位</h4>
-				<ol>
-					<li><strong>欄位選單：</strong>選擇內容在資料表中的欄位。</li>
-					<li><strong>選項：</strong>為資料表所有的欄位標頭名稱。</li>
-					<li><strong>新增欄位：</strong>若內容不只一個欄位，可按此新增。</li>
-					<li><strong>垃圾桶圖標：</strong>刪除此欄位。</li>
-				</ol>
-			</div>
-			<img src="images/4-2.jpeg">
-
-			<div>
-				<h4>添加方式二：匯入純文字檔</h4>
-				<p>純文字檔的上傳透過一張綜合表格進行操作。</p>
-				<ol>
-					<li><strong>檔名：</strong>每列代表一份文件。</li>
-					<li><strong>狀態：</strong>每份文件的上傳狀態，未上傳顯示「無」，已上傳顯示 <span class="glyphicon glyphicon-ok text-success"></span>。</li>
-					<li><strong>檢視：</strong>可檢視已上傳文件的內容。</li>
-					<li><strong>操作：</strong>上傳（<span class="glyphicon glyphicon-cloud-upload"></span>）或刪除（<span class="glyphicon glyphicon-trash"></span>）此份文件的檔案。</li>
-				</ol>
-				<div style="border: black 1px dashed; padding: 3% 5%; font-style: italic;">※ 請用 <strong class="text-info">.txt</strong> 純文字檔，並以 <strong class="text-danger">UTF-8</strong> 編碼格式儲存檔案，避免出現亂碼。</div>
-			</div>
-			<img src="images/4-3.jpeg">
-
-			<div>
-				<p>這裡提供三種上傳檔案方式：</p>
-				<ol>
-					<li><strong>以檔案分件 — 單一檔案上傳：</strong>透過表格操作，一個一個檔案上傳。</li>
-					<li><strong>以檔案分件 — 批次上傳檔案：</strong>一次上傳多份檔案，但<strong>檔名需與表格內所列的名稱相同</strong>才能自動配對，不同者將會被放置到右側的暫存區（藍色範圍）。</li>
-					<li><strong>以空行分件：</strong>將所有資料放在同一個檔案上傳，需嚴格符合以下規範。</li>
-				</ol>
-				<div style="border: black 1px dashed; padding: 3% 5%; font-style: italic;">
-					<div>※ 每份文件的內容請用<strong class="text-danger">「恰好一行的空行」</strong>做區隔。</div>
-					<div>※ 文字檔內的<strong class="text-info">內容依照順序分配給所有檔名</strong>，<strong>多的內容會忽略，少的內容視為未上傳</strong>，請自行注意是否跳件。</div>
-					<div>※ 若文件無內文，使用<strong class="text-danger">「-」</strong>代替內文。</div>
-				</div>
-			</div>
-			<img src="images/4-4.jpeg">
-
-			<div>
-				<p>其他功能：</p>
-				<ol>
-					<li><strong>刪除全部：</strong>將所有已上傳的資料皆刪除。</li>
-					<li><strong>未配對檔案暫存區：</strong>這裡的檔案可以<strong class="text-danger">「手動拖曳」</strong>到相應的文件列中。</li>
-				</ol>
-			</div>
-			<img src="images/4-5.jpeg">
-		</div>
-
-		<br><h3 style="text-align: center;">Step 5: 輸出 DocuXML 檔案</h3>
-
-		<div class="explainBlock">
-			<p class="stepOverview">此介面將輸入的資料表與所做的設定結合，轉換成 DocuXML 格式。</p>
-			<div></div>
-
-			<div>
-				<h4>XML 預覽</h4>
-				<p>轉換之 DocuXML 預覽，可以稍微檢查是否是預想中的樣子。</p>
-			</div>
-			<img src="images/5-1.jpeg">
-
-			<div>
-				<h4>檔案輸出</h4>
-				<p>提供兩種輸出方式：</p>
-				<ol>
-					<li><strong>下載檔案：</strong>輸入檔案名稱後點擊下載按鈕，將 .xml 檔案下載到本地端電腦。</li>
-					<li><strong>直接建庫：</strong>輸入資料庫名稱後點擊建庫按鈕，可直接在 DocuSky 上建庫。</li>
-				</ol>
-			</div>
-			<img src="images/5-2.jpeg">
-		</div>
-	</div>
+	<div id="explainText" style="display: none;"></div>
 
 	<!-- light box -->
 	<div id="lightbox">
@@ -303,10 +61,12 @@
 				<div id="required" class="text-center"><span>2</span></div>
 				<div id="required-optional"></div>
 				<div id="optional" class="text-center"><span>3</span></div>
-				<div id="optional-content"></div>
-				<div id="content" class="text-center"><span>4</span></div>
+				<div id="optional-custom"></div>
+				<div id="custom" class="text-center"><span>4</span></div>
+				<div id="custom-content"></div>
+				<div id="content" class="text-center"><span>5</span></div>
 				<div id="content-download"></div>
-				<div id="download" class="text-center"><span>5</span></div>
+				<div id="download" class="text-center"><span>6</span></div>
 			</div>
 		</div>
 
@@ -347,11 +107,12 @@
 			<div id="requiredInterface" class="panelWrapper">
 				
 				<div class="explainPanel bg-warning">
-					<h2 class="text-center">Step 2: 詮釋資料<strong class="text-danger">必填</strong>欄位對應設定</h2>
+					<h2 class="text-center">Step 2: 詮釋資料<strong class="text-danger">必填</strong>欄位對應設定（選 EXCEL 欄位）</h2>
 					<ul class="text-center">
-						<li>每份文件之檔名須<strong class="text-danger">唯一</strong>。</li>
+						<li>每份文件必具備所屬的<strong class="text-info">文獻集名稱</strong>、<strong class="text-info">唯一編號</strong>。</li>
 						<li>請確實填寫本頁再繼續。</li>
-						<li>此頁送出後<strong class="text-danger">不可隨意更改</strong>，煩請再三確認。</li>
+						<li>此頁送出後<strong class="text-danger">不可更改</strong>，請確認後再移往下一步驟。</li>
+						<li>按下一步進行後續設定，若檔案數量眾多，需稍等候。</li>
 					</ul>
 					<img src="images/progress.gif" style="display: none; margin: 0 30%; width: 40%;">
 				</div>
@@ -372,12 +133,10 @@
 			<div id="optionalInterface" class="panelWrapper">
 
 				<div class="explainPanel bg-warning">
-					<h2 class="text-center">Step 3: 詮釋資料<strong class="text-danger">選填</strong>欄位對應設定</h2>
+					<h2 class="text-center">Step 3: 詮釋資料<strong class="text-danger">選填</strong>欄位對應設定（選系統預設欄位）</h2>
 					<ul class="text-center">
-						<li>詮釋資料詳細說明請見 <a href="https://docs.google.com/spreadsheets/d/1G7UPZv-G1D7Yowwj_r7pO7rZXmr16PrxEZQ22_bqFIw/edit#gid=0" target="_blank">Metadata 規範表</a>。</li>
-						<li>每種 Metadata 項目只能被選擇一次。</li>
-						<li>自訂欄位請使用<strong class="text-danger">半形英文</strong>輸入。</li>
-						<li>若不對欄位做對應設定，請維持<strong class="text-info">請選擇</strong>的選項。</li>
+						<li>詮釋資料系統預設欄位詳細說明請見 <a href="https://docs.google.com/spreadsheets/d/1G7UPZv-G1D7Yowwj_r7pO7rZXmr16PrxEZQ22_bqFIw/edit#gid=0" target="_blank">Metadata 規範表</a>。</li>
+						<li>每個系統預設欄位只能被選擇一次。</li>
 					</ul>
 				</div>
 
@@ -394,14 +153,38 @@
 			</div>
 
 			<!-- step 4 -->
+			<div id="customInterface" class="panelWrapper">
+
+				<div class="explainPanel bg-warning">
+					<h2 class="text-center">Step 4: 自訂詮釋資料</h2>
+					<ul class="text-center">
+						<li>若想讓 Metadata 在建庫後可以出現在 <strong class="text-info">DocMeta</strong> 裡，需在此以「新增一項自訂欄位」的方式再對應一次。</li>
+						<li>欄位名稱請以<strong class="text-danger">半形英文</strong>設定。</li>
+						<li><strong>「欄位名稱」</strong>與<strong>「欄位資料」</strong>為<strong class="text-danger">必填</strong>，「超連結資料」為選填。</li>
+					</ul>
+				</div>
+
+				<div class="contentPanel multisetting">
+					
+					<div class="tableList">
+						<ul class="list-group text-center"></ul>
+					</div>
+
+					<div class="settingPanel"></div>
+
+				</div>
+				
+			</div>
+
+			<!-- step 5 -->
 			<div id="contentInterface" class="panelWrapper">
 
 				<div class="explainPanel bg-warning">
-					<h2 class="text-center">Step 4: 添加文件內文</h2>
+					<h2 class="text-center">Step 5: 添加文件內文</h2>
 					<ul class="text-center">
-						<li>額外上傳之文件檔案，請用 <strong class="text-info">.txt</strong> 純文字檔，並用 <strong class="text-danger">UTF-8</strong> 編碼格式儲存檔案，以避免出現亂碼。</li>
-						<li>此步驟僅將所提供之文檔併入 XML 中，內文、多值欄位、註解、事件之編寫，使用者須自行符合 <a href="https://docusky.org.tw/DocuSky/documentation/docs/DocuXml-1.2-Scheme.html#%E5%85%A7%E6%96%87XML" target="_blank">DocuXML</a> 標準。</li>
-						<li>按下一步即開始轉換，若檔案較大，需稍等一陣。</li>
+						<li>額外上傳之文件檔案，請用 <strong class="text-info">.txt</strong> 純文字檔，並以 <strong class="text-danger">UTF-8</strong> 編碼格式儲存檔案，避免出現亂碼。</li>
+						<li>此步驟僅將所提供之文檔併入 XML 中，內文、多值欄位、註解、事件之編寫，欄位內容需符合 <a href="https://docusky.org.tw/DocuSky/documentation/docs/DocuXml-1.2-Scheme.html#%E5%85%A7%E6%96%87XML" target="_blank">DocuXML</a> 標準。</li>
+						<li>按下一步即開始轉換，若檔案較大，需稍等候。</li>
 					</ul>
 					<img src="images/progress.gif" style="display: none; margin: 0 30%; width: 40%;">
 				</div>
@@ -428,11 +211,11 @@
 				
 			</div>
 
-			<!-- step 5 -->
+			<!-- step 6 -->
 			<div id="downloadInterface" class="panelWrapper">
 
 				<div class="explainPanel bg-warning">
-					<h2 class="text-center">Step 5: 輸出 DocuXML 檔案</h2>
+					<h2 class="text-center">Step 6: 輸出 DocuXML 檔案</h2>
 				</div>
 
 				<div class="contentPanel">
@@ -470,24 +253,11 @@
 	
 </body>
 
-<!-- ASSETS -->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-<script src="http://oss.sheetjs.com/sheetjs/xlsx.full.min.js"></script>
-
 <!-- JAVASCRIPT FILE -->
 <script src="js/globalVar.js"></script>
 <script src="js/fileLoading.js"></script>
 <script src="js/dataProcess.js"></script>
 <script src="js/display.js"></script>
 <script src="js/interaction.js"></script>
-
-<!-- CSS FILE -->
-<link href="css/main-style.css" type="text/css" rel="stylesheet">
-<link href="css/animating-style.css" type="text/css" rel="stylesheet">
-<link href="css/IO-style.css" type="text/css" rel="stylesheet">
-<link href="css/setting-style.css" type="text/css" rel="stylesheet">
-<link href="css/content-style.css" type="text/css" rel="stylesheet">
-<link href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
 </html>

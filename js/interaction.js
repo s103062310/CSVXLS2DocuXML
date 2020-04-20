@@ -42,6 +42,7 @@ $('#nextPage').click(function() {
 		displayTableList();
 		displayRequiredPage();
 		displayOptionalPage();
+		displayCustomPage();
 		displayContentPage();
 
 		switchTo(_procedure[1], 'next');
@@ -61,22 +62,28 @@ $('#nextPage').click(function() {
 			switchTo(_procedure[2], 'next');
 		}, 100);
 
-	// optional -> content
+	// optional -> custom
 	} else if (_current === _procedure[2]) {
 		if (checkOptionalPage() == false) return;
 		switchTo(_procedure[3], 'next');
 
-	// content -> download
+	// custom -> content
 	} else if (_current === _procedure[3]) {
+		if (checkCustomPage() == false) return;
+		switchTo(_procedure[4], 'next');
+
+	// content -> download
+	} else if (_current === _procedure[4]) {
+		if (checkContentPage() == false) return;
+
 		_temp['percentage'] = 0;
 		$('#contentInterface img').show();
-
 		setTimeout(function(){
 			if (convertToXML()) {
 				let defaultDBName = now() + '-db';
 				$('#databaseName input').attr('value', defaultDBName);
 				$('#contentInterface img').hide();
-				switchTo(_procedure[4], 'next');
+				switchTo(_procedure[5], 'next');
 			}
 		}, 100);
 	}
@@ -178,7 +185,7 @@ function showTXT($this) {
 	// see if have uploaded
 	var status = $($this.parentElement).find('span[func=status]');
 	if ($(status)[0].innerText == '無') alert("請先上傳檔案。");
-	else showLightBox(filename, _txtData[table][filename][tag]);
+	else showLightBox(filename, '<plaintext>' + _txtData[table][filename][tag] + '</plaintext>');
 }
 
 
@@ -301,9 +308,9 @@ function deleteUploadSheet($this, $confirm) {
 
 	// get sheet information
 	var sheet = $($this).find('.coverText')[0].innerText;
-	var pos = sheet.indexOf('-');
+	var pos = sheet.indexOf('--');
 	var filename = sheet.substring(0, pos);
-	var sheetName = sheet.substring(pos + 1, sheet.length);
+	var sheetName = sheet.substring(pos + 2, sheet.length);
 
 	// pop out confirm box
 	var del = false;
@@ -347,7 +354,7 @@ function changeTableListItem($tableKey) {
 	$('#' + _current + 'Interface .settingTab[key=\'' + $tableKey + '\']').addClass('target');
 
 	// global uploader
-	if (_current === _procedure[3]) {
+	if (_current === _procedure[4]) {
 		let tag = $('#contentInterface .settingTab[key=\'' + $tableKey + '\'] .tab .target').attr('key');
 		$('.txtFilesHeader.fixed .glyphicon').attr('onclick', "uploadTXT('" + $tableKey + "', undefined, '" + tag + "', false)");
 	}
@@ -384,15 +391,16 @@ function selectClicked($this) {
 
 /* ---
 select specific item in menu list
-INPUT: item html element
+INPUT: 1) item html element
+	   2) hint info: metadata name
 --- */
-function selectItem($this) {
+function selectItem($this, $hint) {
 
 	// get information
 	var choice = $this.innerText;
 	var result = $($this.parentElement.parentElement).find('.text-only');
 	var selected = $($this.parentElement).find('.selected');
-	var input = $($this.parentElement.parentElement.parentElement).find('input');
+	var inputP = $this.parentElement.parentElement.parentElement;
 	var name = $($this.parentElement.parentElement.parentElement).attr('name');
 	var tab = $this.parentElement.parentElement.parentElement.parentElement;
 
@@ -402,14 +410,20 @@ function selectItem($this) {
 	$(selected).removeClass('selected');
 	$($this).addClass('selected');
 
+	// hint
+	if ($hint !== undefined) {
+		$('.hinttitle').empty();
+		$('.hinttitle').append(_optionalMeta[$hint][0] + ' | ' + $hint);
+		$('.hintcontent').empty();
+		$('.hintcontent').append(list2html(_hint[$hint]));
+	}
+
 	// show input UI
-	var pos = _customMeta.indexOf(choice);
-	if (pos >= 0) {
-		$(input).css('display', 'block');
-		if (pos === 2) $(input).attr('placeholder', '請輸入自訂欄位名稱...');
-		else if (pos === 3) $(input).attr('placeholder', '請輸入自訂欄位中超連結的文字...');
-	} else {
-		$(input).css('display', 'none');
+	if (_current === _procedure[1] || _current === _procedure[3]) {
+		let input = (_current === _procedure[1]) ?$(inputP).find('input') :$(inputP).find('input[name=linkText]');
+		let pos = _customMeta.indexOf(choice);
+		if (pos >= 0)  $(input).css('display', 'block');
+		else $(input).css('display', 'none');
 	}
 
 	// show content setting

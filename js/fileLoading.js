@@ -160,7 +160,7 @@ function loadFile($file, $suffix, $info) {
 		for (let i=0; i<wb.SheetNames.length; i++) {
 
 			// parse excel file
-			let sheet = filename + '-' + wb.SheetNames[i];
+			let sheet = filename + '--' + wb.SheetNames[i];
 			let header = XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[i]]).split('\n')[0].split(',');
 			let content = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[i]]);
 
@@ -192,6 +192,7 @@ function loadTXT($filename) {
 		var data = $event.target.result;
 		var table = _temp['target-table'];
 		var tag = _temp['target-tag'];
+		console.log(data);
 
 		for (let file in _txtData[table]) {
 			if (file === $filename) {
@@ -300,10 +301,16 @@ process data of single file for whole database
 --- */
 function loadWholeTXT() {
 	return function($event) {
+		var re = new RegExp(String.fromCharCode(13), 'g');
 		var table = _temp['target-table'];
 		var tag = _temp['target-tag'];
-		var data = $event.target.result.trim().split('\n\n');
+		var data = $event.target.result.replace(re, '').trim().split('\n\n');
 		var i = 0;
+		for (let c=0; c<30; c++) {
+			console.log($event.target.result[c]);
+			console.log($event.target.result[c].charCodeAt());
+
+		}
 
 		for (let file in _txtData[table]) {
 			let dataStr = data[i].trim();

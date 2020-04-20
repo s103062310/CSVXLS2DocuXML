@@ -1,13 +1,30 @@
-html, body {
+@font-face {
+	font-family: msjh;
+	src: url("../assets/msjh.eot"),
+		 url("../assets/msjh.woff") format("woff"), 
+		 url("../assets/msjh.ttf") format("truetype");
+}
+
+html {
 	height: 100%;
+}
+
+body {
+	height: 100%;
+	font-family: msjh!important;
 }
 
 p {
 	text-indent: 2em;
 }
 
+h1, h2, h3 {
+	font-weight: bold!important;
+}
+
 h4 {
 	text-align: center;
+	font-weight: bold!important;
 }
 
 table {
@@ -84,7 +101,7 @@ table th, table td {
 #progressBar {
 	display: grid;
 	margin-top: 1%;
-	grid-template-columns: 40px auto 40px auto 40px auto 40px auto 40px;
+	grid-template-columns: 40px auto 40px auto 40px auto 40px auto 40px auto 40px;
 }
 
 #progressBar div {

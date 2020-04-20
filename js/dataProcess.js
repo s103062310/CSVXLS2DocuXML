@@ -59,7 +59,7 @@ function checkRequiredPage() {
 			alert("請填寫資料表「" + table + "」的「文獻集名稱」。");
 			return false;
 		} else if (corpus === '自訂') {
-			let value = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=corpus] input')[0].value;
+			let value = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=corpus] input')[0].value.trim();
 			if (value === '') {
 				alert("請填寫資料表「" + table + "」自訂之「文獻集名稱」。");
 				return false;
@@ -72,7 +72,7 @@ function checkRequiredPage() {
 			alert("請填寫資料表「" + table + "」的「文件檔案名稱」。");
 			return false;
 		} else if (filename === '自動產生檔名') {
-			let value = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=filename] input')[0].value;
+			let value = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=filename] input')[0].value.trim();
 			if (value === '') {
 				alert("請填寫資料表「" + table + "」自訂之「文件檔案名稱」。");
 				return false;
@@ -109,7 +109,7 @@ function generateTXTData() {
 		// auto generate
 		if (barIndex == -1) {
 			let inputSetting = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=filename] input');
-			let prefix = $(inputSetting)[0].value;
+			let prefix = $(inputSetting)[0].value.trim();
 			if (!(prefix in index)) index[prefix] = 1;
 			for (let i=0; i<_data[table].length-1; i++) {
 				_txtData[table][generateFilename(prefix, index[prefix])] = {};
@@ -123,13 +123,11 @@ function generateTXTData() {
 				if (row == 0) continue;
 
 				// filename process
-				let filename = _data[table][row][header]
-				if (typeof filename == "string") filename = filename.split('.')[0];
-				else filename = filename.toString();
+				let filename = _data[table][row][header].toString().replace(/\n/g, '').trim().split('.')[0];
 
 				// check if filename legal
 				if (allFiles.indexOf(filename) >= 0) {
-					alert("檔名不唯一。");
+					alert("資料表「 " + table + " 」檔名不唯一。");
 					return false;
 				} else {
 					_txtData[table][filename] = {};
@@ -172,7 +170,7 @@ function checkOptionalPage() {
 	for (let table in _data) {
 
 		// check for each table
-		let selectMeta = {}, customMeta = {};
+		let selectMeta = {};
 		let blocks = $('#optionalInterface .settingTab[key=\'' + table + '\'] > div');
 		for (let i=0; i<blocks.length; i++) {
 
@@ -181,24 +179,8 @@ function checkOptionalPage() {
 			let metadata = $(blocks[i]).find('.text-only')[0].innerText;
 			if (metadata == '--- 請選擇 ---') continue;
 
-			// custom => metadata format & unique
-			else if (metadata == '自訂欄位') {
-				let meta = $(blocks[i]).find('input')[0].value;
-
-				// format
-				if (!checkStr(meta)) {
-					alert("在「" + blockName + "」的 metadata 「自訂欄位」設定中，請使用半形英文。");
-					return false;
-
-				// unique
-				} else if (meta in customMeta) {
-					alert("「" + customMeta[meta] + "」與「" + blockName + "」皆為自訂欄位「" + meta + "」。\n自訂欄位請取不同的名字。");
-					return false;
-
-				} else customMeta[meta] = blockName;
-
-			// normal => unique
-			} else if (metadata in selectMeta) {
+			// unique
+			if (metadata in selectMeta) {
 				alert("「" + selectMeta[metadata] + "」與「" + blockName + "」皆被選為「" + metadata + "」。\n每種 Metadata 只能被選擇一次。");
 				return false;
 
@@ -210,7 +192,96 @@ function checkOptionalPage() {
 }
 
 
+// * * * * * * * * * * * * * * * * custom * * * * * * * * * * * * * * * * *
+
+
+/* ---
+check if user fill complete information
+INPUT: none
+OUTPUT: boolean, filled = true, not completed = false
+--- */
+function checkCustomPage() {
+	for (let table in _data) {
+
+		// check for each table
+		customMeta = {};
+		let blocks = $('#customInterface .settingTab[key=\'' + table + '\'] .customObj');
+		for (let i=0; i<blocks.length; i++) {
+
+			// format
+			let name = $(blocks[i]).find('input[name=metaName]')[0].value.trim();
+			if (name === '') {
+				alert("請填寫第 " + (i+1).toString() + " 個自訂詮釋資料的欄位名稱。");
+				return false;
+			} else if (!checkStr(name)) {
+				alert("在第 " + (i+1).toString() + " 個自訂詮釋資料中，請使用半形英文定義欄位名稱。");
+				return false;
+			}
+
+			// unique
+			if (name in customMeta) {
+				alert("第 " + (customMeta[name]).toString() + " 、" + (i+1).toString() + " 個自訂詮釋資料名稱同為「" + name + "」。\n請取不同的名字。");
+				return false;
+			} else customMeta[name] = i + 1;
+
+			// data
+			let choicedata = $(blocks[i]).find('.text-only')[0].innerText;
+			if (choicedata === '--- 請選擇 ---') {
+				alert("請選擇第 " + (i+1).toString() + " 個自訂詮釋資料的資料對應欄位。");
+				return false;
+			}
+
+			// hyper link
+			if ($(blocks[i]).find('input[name=link]')[0].checked) {
+				let choicelink = $(blocks[i]).find('.text-only')[1].innerText;
+				if (choicelink === '--- 請選擇 ---') {
+					alert("請選擇第 " + (i+1).toString() + " 個自訂詮釋資料的超連結資料。");
+					return false;
+				}
+			}
+		}
+	}
+
+	return true;
+}
+
+
 // * * * * * * * * * * * * * * * * content * * * * * * * * * * * * * * * * *
+
+
+/* ---
+check if user fill complete information
+INPUT: none
+OUTPUT: boolean, filled = true, not completed = false
+--- */
+function checkContentPage() {
+	for (let table in _data) {
+
+		let panel = $('#contentInterface .settingTab[key="' + table + '"] .tagTab[key=MetaTags]');
+		if ($(panel).find('.contentMapping .text-only')[0].innerText === '--- 請選擇 ---') continue;
+
+		let blocks = $(panel).find('.contentMapping .selectObj > input');
+		for (let i=0; i<blocks.length; i++) {
+			let name = blocks[i].value.trim();
+			console.log(name);
+
+			// filled
+			if (name == '') {
+				alert("請填寫 MetaTags 標籤名稱。（位置：資料表 -> " + table + " 第 " + (i+1).toString() + " 項）");
+				return false;
+			}
+
+			// format
+			if (!checkStr(name)) {
+				alert("請使用半形英文填寫 MetaTags 標籤名稱。（位置：資料表 -> " + table + " 第 " + (i+1).toString() + " 項）");
+				return false;
+			}
+		}
+		
+	}
+
+	return true;
+}
 
 
 /* ---
@@ -231,6 +302,7 @@ function convertToXML() {
 		let corpusSetting = $(corpusElement).find('button.text-only')[0].innerText;
 		let corpusSetType = corpusSetting.split('|')[0].trim();
 		let metadataElement = $('#optionalInterface .settingTab[key=\'' + table + '\'] > .menu');
+		let customElement = $('#customInterface .settingTab[key="' + table + '"] .customObj');
 
 		// progress info
 		info['fileOrder'] = 0;
@@ -243,7 +315,7 @@ function convertToXML() {
 			// extract corpus name
 			let corpus = '';
 			if (corpusSetType === '自訂') {
-				corpus = $(corpusElement).find('input')[0].value;
+				corpus = $(corpusElement).find('input')[0].value.trim();
 			} else if (corpusSetType === '檔案名稱' || corpusSetType === '資料表名稱') {
 				corpus = corpusSetting.split('|')[1].trim();
 			} else if (corpusSetType === '欄位名稱') {
@@ -264,45 +336,45 @@ function convertToXML() {
 				return false;
 			}
 			
-			_xml += '<document filename="' + filename + '">\n<corpus>' + corpus + '</corpus>\n';
+			_xml += '<document filename="' + filterChar(filename) + '">\n<corpus>' + filterChar(corpus) + '</corpus>\n';
 
 			// extract metadata
-			let linkText = '連結', linkHref = '', customMetaXML = '';
 			for (let m=0; m<metadataElement.length; m++) {
-				let header = $($(metadataElement)[m]).attr('name');
-				let metaValue = _data[table][file][header];
 				let metaSetting = $($(metadataElement)[m]).find('button.text-only')[0].innerText;
 				if (metaSetting === '--- 請選擇 ---') continue;
+
+				let header = $($(metadataElement)[m]).attr('name');
+				let metaValue = _data[table][file][header];
+				if (metaValue === undefined) continue;
 				
-				// single metadata
-				let metadata = '';
-				let metaType = metaSetting.split('|')[0].trim();
-				
-				if (metaType === '自訂欄位') {
-					metadata = $($(metadataElement)[m]).find('input')[0].value;
-					customMetaXML += '<' + metadata + '>' + metaValue + '</' + metadata + '>\n';
-				
-				} else if (metaType === '為自訂欄位加上超連結') {
-					let text = $($(metadataElement)[m]).find('input')[0].value;
-					linkText = (text != '') ?text : linkText; 
-					linkHref = metaValue;
-				
-				} else if (metaType === '自訂欄位超連結的文字') {
-					linkText = metaValue;
-				
-				} else {
-					metadata = metaSetting.split('|')[1].trim();
-					_xml += '<' + metadata + '>' + metaValue + '</' + metadata + '>\n';
-				}
+				let metadata = filterChar(metaSetting.split('|')[1].trim());
+				_xml += '<' + metadata + '>' + filterChar(metaValue) + '</' + metadata + '>\n';
 			}
 
-			if (linkHref != '') customMetaXML += '<a href="' + linkHref + '" trget="_blank">' + linkText + '</a>\n';
+			// custom metadata
+			let customMetaXML = '';
+			for (let m=0; m<customElement.length; m++) {
+				let obj = $(customElement)[m];
+				let metadata = 'Udef_' + filterChar($(obj).find('input[name=metaName]')[0].value.trim());
+				let header = $(obj).find('.text-only')[0].innerText;
+				let value = filterChar(_data[table][file][header]);
+				if (value === undefined) continue;
+
+				// hyper link
+				if ($(obj).find('input[name=link]')[0].checked) {
+					let linkHeader = $(obj).find('.text-only')[1].innerText;
+					let linkValue = filterChar(_data[table][file][linkHeader]);
+					value = '<a href="' + linkValue + '" trget="_blank">' + value + '</a>';
+				}
+
+				customMetaXML += '<' + metadata + '>' + value + '</' + metadata + '>\n';
+			}
 			if (customMetaXML != '') _xml += '<xml_metadata>\n' + customMetaXML + '</xml_metadata>\n';
 
 			// append document content
 			let contentXML = ''
 			for (let tag in _contentTags) {
-				let source = $('#contentInterface .settingTab[key=\'' + table + '\'] .tagTab[key=\'' + tag + '\'] div[name=contentSource] button.text-only')[0].innerText;
+				let source = (tag === 'doc_content') ?$('#contentInterface .settingTab[key=\'' + table + '\'] .tagTab[key=doc_content] div[name=contentSource] button.text-only')[0].innerText :'CSV/Excel 欄位';
 				if (source === '--- 請選擇 ---') continue;
 				
 				// mapping
@@ -313,10 +385,27 @@ function convertToXML() {
 					// concate content text
 					for (let m=0; m<mappingElement.length; m++) {
 						let header = $($(mappingElement)[m]).find('button.text-only')[0].innerText;
-						let text = _data[table][file][header];
+						let text = filterChar(_data[table][file][header]);
 						if (text !== undefined) {
-							if (mappingElement.length > 1 && tag === 'doc_content') content += '<Paragraph>' + text + '</Paragraph>\n';
-							else content += text + '\n';
+							
+							if (tag === 'doc_content') {
+								if (mappingElement.length > 1) content += '<Paragraph>' + text + '</Paragraph>\n';
+								else content += text + '\n';
+
+							} else if (tag === 'MetaTags') {
+								let name = $(mappingElement).find('input')[m].value.trim();
+								content += generateTagContent(text, 'Udef_' + name, []);
+
+							} else if (tag === 'Comment') {
+								content += generateTagContent(text, 'CommentItem', ['Category']);
+
+							} else if (tag === 'Events') {
+								content += generateTagContent(text, 'Event', ['Title']);
+
+							} else {
+								alert("程式錯誤：偵測到未知 tag。\n請洽詢工程師。");
+								return false;
+							}
 						}
 					}
 
@@ -324,7 +413,7 @@ function convertToXML() {
 					if (content !== "") {
 						if (checkWellForm(content)) contentXML += beginTag(tag) + content + endTag(tag);
 						else {
-							alert("內文需是 well-form 格式。（位置：資料表 -> " + table + "；文件 -> " + file + "；內容 -> " + tag + "）");
+							alert("內文需是 well-form 格式。（位置：資料表 -> " + table + "；文件 -> " + file + "；項目 -> " + tag + "）");
 							return false;
 						}
 						
@@ -334,7 +423,7 @@ function convertToXML() {
 				} else if (source === '匯入純文字檔') {
 					let content = _txtData[table][filename][tag];
 					if ( content !== undefined) {
-						if (checkWellForm(content)) contentXML += beginTag(tag) + content + endTag(tag);
+						if (checkWellForm(content)) contentXML += beginTag(tag) + content.replace(/&/g, '&amp;') + endTag(tag);
 						else {
 							alert("內文需是 well-form 格式。（位置：資料表 -> " + table + "；文件 -> " + file + "；內容 -> " + tag + "）");
 							return false;
@@ -354,7 +443,7 @@ function convertToXML() {
 	_xml += '</documents>\n</ThdlPrototypeExport>\n';
 
 	// display
-	$('#XMLoutput').append('<xmp>' + _xml + '</xmp>');
+	$('#XMLoutput').append('<plaintext>' + _xml + '</plaintext>');
 	return true;
 }
 
@@ -382,6 +471,25 @@ function endTag($tag) {
 	else if ($tag === 'MetaTags') return '</MetaTags>\n';
 	else if ($tag === 'Comment') return '</Comment>\n';
 	else if ($tag === 'Events') return '</Events>\n';
+}
+
+
+/* ---
+generate tag content xml
+INPUT: 1) string, text
+	   2) string, tag name
+	   3) array, attributes
+OUTPUT: string, metatags xml
+--- */
+function generateTagContent($text, $tagName, $attrs) {
+	
+	attr = "";
+	for (a in $attrs) attr += ' ' + $attrs[a] + '="default"';
+
+	xml = "";
+	items = $text.split(';');
+	for (i in items) xml += '<' + $tagName + attr + '>' + items[i] + '</' + $tagName + '>\n';
+	return xml;
 }
 
 
@@ -417,3 +525,24 @@ function checkWellForm($content) {
 	return true;
 }
 
+
+/* ---
+generate tag content xml
+INPUT: string, text
+OUTPUT: string, metatags xml
+--- */
+function filterChar($str) {
+
+	// undefined
+	if ($str === undefined) return $str;
+
+	// check type
+	if (typeof $str != 'string') $str = $str.toString();
+
+	var str = $str.replace(/&/g, '&amp;')	// This MUST be the 1st replacement.
+				  .replace(/'/g, '&apos;')	// The 4 other predefined entities, required.
+				  .replace(/"/g, '&quot;')
+				  .replace(/</g, '&lt;')
+				  .replace(/>/g, '&gt;');
+	return str;
+}

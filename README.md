@@ -5,13 +5,18 @@
 > 2019.12.19 | v.1.1, add: upload multiple txt at once  
 > 2020.02.10 | v.2.0  
 > 2020.04.08 | v.2.1, add: functions in upload .xls and .txt  
+> 2020.07.03 | v.2.2, fix: bugs and update explanation, add: some functions in setting  
 
 ## Introduction of Interface (page)
 1. **upload** => load csv/excel files
 2. **required** => required metadata setting (corpus & filename)
 3. **optional** => optional metadata setting (refer to [specification table](https://docs.google.com/spreadsheets/d/1G7UPZv-G1D7Yowwj_r7pO7rZXmr16PrxEZQ22_bqFIw/edit#gid=0))
-4. **content** => add something in ```<doc_content></doc_content>```, including metaTags, Comments, and Events
-5. **download** => converting to DocuXML
+4. **custom** => define personal used metadata
+5. **content** => add something in ```<doc_content></doc_content>```, including metaTags, Comments, and Events
+6. **download** => converting to DocuXML
+
+## HTML File
+* explanation of tool
 
 ## CSS Files
 1. **main-style.css** => for main screen which won't switch as the process progresses

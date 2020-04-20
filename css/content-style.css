@@ -51,7 +51,6 @@
 /* ----- CONTENT MAPPING ----- */
 
 .contentMapping {
-	display: none;
 	grid-gap: 5px;
 	padding: 1%;
 }
@@ -73,16 +72,12 @@
 	cursor: pointer;
 }
 
-.newSelect {
-	display: inline-block;
-	padding: 1%;
-	color: silver;
+.selectObj > input {
 	font-size: medium;
-}
-
-.newSelect:hover {
-	color: gray;
-	cursor: pointer;
+	padding: 5px;
+	display: none;
+	border: 1px solid silver;
+	border-radius: 5px;
 }
 
 /* ----- IMPORT TXT ----- */
@@ -95,7 +90,7 @@
 .importTXT > div {
 	display: grid;
 	grid-template-columns: 2fr 1fr;
-	grid-gap: 1%;
+	grid-gap: 5px;
 }
 
 .importTXTtoolBar {

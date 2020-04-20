@@ -17,20 +17,22 @@ function displayTable($sheet) {
 
 	// table header
 	for (let item in _dataPool[$sheet][0]) {
-		let oneItem = "<th>" + $array[item] + "</th>";
+		let oneItem = "<th>" + _dataPool[$sheet][0][item] + "</th>";
 		table += oneItem;
 	}
-	table += "</tr></thead><tbody><tr>"
+	table += "</tr></thead><tbody>"
 
 	// table content
 	for (let row=1; row<_dataPool[$sheet].length; row++){
+		let rowText = "";
 		let header = _dataPool[$sheet][0];
 		for (let item in header) {
 			let text = (_dataPool[$sheet][row][header[item]] === undefined) ?"" :_dataPool[$sheet][row][header[item]];
-			table += "<td>" + text + "</td>";
+			rowText += "<td>" + text + "</td>";
 		}
+		table += "<tr>" + rowText + "</tr>";
 	}
-	table += "</tr></tbody></table>";
+	table += "</tbody></table>";
 
 	return table;
 	
@@ -74,7 +76,7 @@ function displayTableList() {
 	for (let table in _data) {
 
 		// information
-		let info = table.split('-');
+		let info = table.split('--');
 		let filename = "<span>" + info[0] + "</span>";
 		let splitIcon = "<span> | </span>";
 		let tablename = "<span>" + info[1] + "</span>";
@@ -110,7 +112,7 @@ function displayRequiredPage() {
 	var corpusHTMLend = "</ul></div><input type=\"text\" name=\"corpus\" placeholder=\"請輸入文獻集名稱...\"></div>";
 
 	// filename
-	var filenameHTMLstart = "<div name=\"filename\" class=\"menu\"><h3>文件檔案名稱 filename</h3><div class=\"btn-group\"><button type=\"button\" class=\"btn btn-default dropdown-toggle text-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\">--- 請選擇 ---</button><button type=\"button\" class=\"btn btn-default dropdown-toggle icon-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\"><span class=\"caret\"></span></button><ul class=\"dropdown-menu\" role=\"menu\"><li role=\"presentation\" onclick=\"selectItem(this)\" class=\"selected\" style=\"display: block;\">--- 請選擇 ---</li><li role=\"presentation\" onclick=\"selectItem(this)\" style=\"display: block;\">自動產生檔名</li>";
+	var filenameHTMLstart = "<div name=\"filename\" class=\"menu\"><h3>文件唯一編號 filename</h3><div class=\"btn-group\"><button type=\"button\" class=\"btn btn-default dropdown-toggle text-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\">--- 請選擇 ---</button><button type=\"button\" class=\"btn btn-default dropdown-toggle icon-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\"><span class=\"caret\"></span></button><ul class=\"dropdown-menu\" role=\"menu\"><li role=\"presentation\" onclick=\"selectItem(this)\" class=\"selected\" style=\"display: block;\">--- 請選擇 ---</li><li role=\"presentation\" onclick=\"selectItem(this)\" style=\"display: block;\">自動產生檔名</li>";
 	var filenameHTMLend = "</ul></div><input type=\"text\" name=\"filename\" placeholder=\"請輸入檔名前綴...\"></div>";
 
 	// scan all table
@@ -118,7 +120,7 @@ function displayRequiredPage() {
 	for (let table in _data) {
 
 		// information
-		let info = table.split('-');
+		let info = table.split('--');
 		let tablename = "<h2 class=\"text-center\">" + table + "</h2>";
 		let classname = (first) ?"settingTab target" :"settingTab";
 		first = false;
@@ -144,11 +146,15 @@ optional page
 --- */
 function displayOptionalPage() {
 
+	// hintbox
+	let hintbox = "<div class=\"metahintbox\" key=\"\"><div class=\"hinttitle\"></div><hr style=\"margin: 0 5%;\"><div class=\"hintcontent\"></div></div>"
+	$('#optionalInterface .settingPanel').append(hintbox);
+
 	// list
-	var choiceList = "<ul class=\"dropdown-menu\" role=\"menu\"><li role=\"presentation\" onclick=\"selectItem(this)\" class=\"selected\" style=\"display: block;\">--- 請選擇 ---</li><li role=\"presentation\" onclick=\"selectItem(this)\" style=\"display: block;\">自訂欄位</li><li role=\"presentation\" onclick=\"selectItem(this)\" style=\"display: block;\">為自訂欄位加上超連結</li><li role=\"presentation\" onclick=\"selectItem(this)\" style=\"display: block;\">自訂欄位超連結的文字</li>";
+	var choiceList = "<ul class=\"dropdown-menu\" role=\"menu\"><li role=\"presentation\" onclick=\"selectItem(this)\" class=\"selected\" style=\"display: block;\">--- 請選擇 ---</li>";
 	for (let meta in _optionalMeta) {
 		let classofPost = (_optionalMeta[meta][1]) ?"class=\"postClass\" " :""
-		choiceList += "<li " + classofPost + "role=\"presentation\" onclick=\"selectItem(this)\"><span>" + _optionalMeta[meta][0] + '</span><span> | </span><span>' + meta + "</span></li>";
+		choiceList += "<li " + classofPost + "role=\"presentation\" onclick=\"selectItem(this, '" + meta + "')\"><span>" + _optionalMeta[meta][0] + '</span><span> | </span><span>' + meta + "</span></li>";
 	}
 	choiceList += "</ul>";
 
@@ -160,7 +166,7 @@ function displayOptionalPage() {
 	for (let table in _data) {
 
 		// information
-		let info = table.split('-');
+		let info = table.split('--');
 		let tablename = "<h2 class=\"text-center\">" + table + "</h2>";
 		let classname = (first) ?"settingTab target" :"settingTab";
 		first = false;
@@ -173,6 +179,61 @@ function displayOptionalPage() {
 		let panel = "<div class=\"" + classname + "\" key=\"" + table + "\">" + tablename + blocks + "</div>";
 		$('#optionalInterface .settingPanel').append(panel);
 	}
+}
+
+
+// * * * * * * * * * * * * * * * * custom * * * * * * * * * * * * * * * * *
+
+
+/* ---
+custom page
+--- */
+function displayCustomPage() {
+
+	// scan all table
+	var first = true;
+	for (let table in _data) {
+
+		// information
+		let info = table.split('--');
+		let tablename = "<h2 class=\"text-center\">" + table + "</h2>";
+		let classname = (first) ?"settingTab target" :"settingTab";
+		first = false;
+
+		let addBtn = "<div class=\"newObj\" onclick=\"addNewCustom(this, '" + table + "')\"><span class=\"glyphicon glyphicon-plus\"></span><span> 新增一項自訂欄位...</span></div>";
+
+		// combine
+		let panel = "<div class=\"" + classname + "\" key=\"" + table + "\">" + tablename + addBtn + "</div>";
+		$('#customInterface .settingPanel').append(panel);
+	}
+}
+
+
+/* ---
+add a new slot in custom metadata
+INPUT: 1) add button html element
+	   2) string, table name
+--- */
+function addNewCustom($this, $table) {
+
+	// list
+	let listItem = "";
+	for (let header in _data[$table][0]) listItem += "<li role=\"presentation\" onclick=\"selectItem(this)\" style=\"display: block;\">" + _data[$table][0][header] + "</li>";
+	
+	// button
+	var buttonGroup = "<div class=\"btn-group\"><button type=\"button\" class=\"btn btn-default dropdown-toggle text-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\">--- 請選擇 ---</button><button type=\"button\" class=\"btn btn-default dropdown-toggle icon-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\"><span class=\"caret\"></span></button><ul class=\"dropdown-menu\" role=\"menu\"><li role=\"presentation\" onclick=\"selectItem(this)\" class=\"selected\" style=\"display: block;\">--- 請選擇 ---</li>" + listItem + "</ul></div>";
+
+	var block = "<div class=\"customObj\"><span>欄位名稱</span><input type=\"text\" name=\"metaName\"><span class=\"glyphicon glyphicon-trash\" onclick=\"deleteCustomObj(this)\"></span><span>欄位資料</span>" + buttonGroup + "<div></div><span>超連結資料</span>" + buttonGroup + "<label class=\"switch\"><input type=\"checkbox\" name=\"link\"><span class=\"slider\"></span></label></div>";
+	$($this).before(block);
+}
+
+
+/* ---
+delete a slot in custom metadata
+INPUT: delete button html element
+--- */
+function deleteCustomObj($this) {
+	$($this.parentElement).remove();
 }
 
 
@@ -210,32 +271,32 @@ function displayContentPage() {
 		let buttonGroup = "<div class=\"btn-group\"><button type=\"button\" class=\"btn btn-default dropdown-toggle text-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\">--- 請選擇 ---</button><button type=\"button\" class=\"btn btn-default dropdown-toggle icon-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\"><span class=\"caret\"></span></button>" + choiceList + "</div>";
 
 		// content mapping
-		let contentMapping = "<div class=\"contentMapping\"><h3>對應欄位</h3><div class=\"selectObj\">" + buttonGroup + "</div><div class=\"newSelect\" onclick=\"addNewSelect(this)\"><span class=\"glyphicon glyphicon-plus\"></span><span>新增一項對應欄位...</span></div></div>";
+		let contentMapping = "<h3>對應欄位</h3><div class=\"selectObj\">" + buttonGroup + "<input type=\"text\"></div><div class=\"newObj\" onclick=\"addNewSelect(this)\"><span class=\"glyphicon glyphicon-plus\"></span><span> 新增一項對應欄位...</span></div>";
+
+		// tool bar
+		let wholeUpload = "<button type=\"button\" class=\"btn btn-default\" onclick=\"uploadTXT('" + table + "', undefined, 'doc_content', 'whole')\" style=\"grid-area: whole;\"><span class=\"glyphicon glyphicon-cloud-upload\"></span> 使用單一文字檔案，並以「空行」分件</button>";
+		let multiUpload = "<button type=\"button\" class=\"btn btn-default\" onclick=\"uploadTXT('" + table + "', undefined, 'doc_content', 'multi')\" style=\"grid-area: multi;\"><span class=\"glyphicon glyphicon-cloud-upload\"></span> 批次上傳</button>";
+		let deleteAll = "<button type=\"button\" class=\"btn btn-default\" onclick=\"deleteAllTXT('" + table + "', 'doc_content')\" style=\"grid-area: delete;\"><span class=\"glyphicon glyphicon-trash\"></span> 刪除全部</button>";
+		let toolBar = "<div class=\"importTXTtoolBar\">" + wholeUpload + multiUpload + deleteAll + "</div><div></div>";
+
+		// header
+		let header = "<div class=\"txtFilesHeader\"><span>檔名</span><span>狀態</span><span>檢視</span><span>操作</span></div>";
+
+		// import txt
+		let importTXT = "<div class=\"importTXT\"><h3>上傳純文字檔</h3><div>" + toolBar + "<div>" + header + "<div class=\"txtFiles\"></div></div><div class=\"notMatch\"></div></div></div>";
 
 		// content elements
 		let content = "";
 		let third = true;
 		for (let tag in _contentTags) {
 
-			// tool bar
-			let wholeUpload = "<button type=\"button\" class=\"btn btn-default\" onclick=\"uploadTXT('" + table + "', undefined, '" + tag + "', 'whole')\" style=\"grid-area: whole;\"><span class=\"glyphicon glyphicon-cloud-upload\"></span> 使用單一文字檔案，並以「空行」分件</button>";
-			let multiUpload = "<button type=\"button\" class=\"btn btn-default\" onclick=\"uploadTXT('" + table + "', undefined, '" + tag + "', 'multi')\" style=\"grid-area: multi;\"><span class=\"glyphicon glyphicon-cloud-upload\"></span> 批次上傳</button>";
-			let deleteAll = "<button type=\"button\" class=\"btn btn-default\" onclick=\"deleteAllTXT('" + table + "', '" + tag + "')\" style=\"grid-area: delete;\"><span class=\"glyphicon glyphicon-trash\"></span> 刪除全部</button>";
-			let toolBar = "<div class=\"importTXTtoolBar\">" + wholeUpload + multiUpload + deleteAll + "</div><div></div>";
-
-			// header
-			let header = "<div class=\"txtFilesHeader\"><span>檔名</span><span>狀態</span><span>檢視</span><span>操作</span></div>";
-
-			// import txt
-			let importTXT = "<div class=\"importTXT\"><h3>上傳純文字檔</h3><div>" 
-			+ toolBar + "<div>" + header + "<div class=\"txtFiles\"></div></div><div class=\"notMatch\"></div></div></div>";
-
 			// information
 			let classname = (third) ?"tagTab target" :"tagTab";
 			third = false;
 
 			// content of one tag
-			content += "<div key=\"" + tag + "\" name=\"" + tag + "\" class=\"" + classname + "\">" + sourceHTML + contentMapping + importTXT + "</div>";
+			if (tag === 'doc_content') content += "<div key=\"" + tag + "\" name=\"" + tag + "\" class=\"" + classname + "\">" + sourceHTML + "<div class=\"contentMapping\" style=\"display: none;\">" + contentMapping + "</div>" + importTXT + "</div>";
+			else content += "<div key=\"" + tag + "\" name=\"" + tag + "\" class=\"" + classname + "\">"  + "<div class=\"contentMapping\">" + contentMapping + "</div></div>";
 		}
 
 		// information
@@ -247,6 +308,10 @@ function displayContentPage() {
 		let panel = "<div class=\"" + classname + "\" key=\"" + table + "\">" + tablename + pagination + content + "</div>";
 		$('#contentInterface .settingPanel').append(panel);
 	}
+
+	// show metatags input
+	$('.tagTab[key="MetaTags"] .selectObj > input').css('display', 'block');
+	$('.tagTab[key="MetaTags"] .selectObj > input').attr('placeholder', '請輸入標籤名稱（半形英文）');
 }
 
 
@@ -258,31 +323,25 @@ function displayImportTXT() {
 	var info = {'sheetOrder': 0, 'sheetNum': _txtData.length, 'tagNum': 4};
 	for (let table in _txtData) {
 
-		info['tagOrder'] = 0;
-		for (let tag in _contentTags) {
+		// filenames
+		info['fileOrder'] = 0;
+		info['fileNum'] = _txtData[table].length;
+		for (let filename in _txtData[table]) {
 
-			// filenames
-			info['fileOrder'] = 0;
-			info['fileNum'] = _txtData[table].length;
-			for (let filename in _txtData[table]) {
+			// one file
+			let row = "<div name=\"" + filename + "\" class=\"rowFile\"><span func=\"name\">" + filename + ".txt</span><span func=\"status\">無</span><span func=\"view\" class=\"glyphicon glyphicon-eye-open\" onclick=\"showTXT(this)\"></span><span func=\"manipulate\" class=\"glyphicon glyphicon-cloud-upload\" onclick=\"uploadTXT('" + table + "', '" + filename + "', 'doc_content', 'single')\"></span></div>";
+			$('#contentInterface .settingTab[key=\'' + table + '\'] .tagTab[key=doc_content] .txtFiles').append(row);
 
-				// one file
-				let row = "<div name=\"" + filename + "\" class=\"rowFile\"><span func=\"name\">" + filename + ".txt</span><span func=\"status\">無</span><span func=\"view\" class=\"glyphicon glyphicon-eye-open\" onclick=\"showTXT(this)\"></span><span func=\"manipulate\" class=\"glyphicon glyphicon-cloud-upload\" onclick=\"uploadTXT('" + table + "', '" + filename + "', '" + tag + "', 'single')\"></span></div>";
-				$('#contentInterface .settingTab[key=\'' + table + '\'] .tagTab[key=' + tag + '] .txtFiles').append(row);
-
-				// add drag and drop listener
-				let dropTarget = document.querySelector('#contentInterface .settingTab[key=\'' + table + '\'] .tagTab[key=' + tag + '] .rowFile[name=\'' + filename + '\']');
-				dropTarget.addEventListener('drop', dropNotMatchFile);
-				dropTarget.addEventListener('dragenter', dragNotMatchFileEnter);
-				dropTarget.addEventListener('dragover', dragNotMatchFileOver);
-				dropTarget.addEventListener('dragleave', dragNotMatchFileLeave);
-				
-				// progress
-				updateProgress(info, 'required');
-				info['fileOrder']++;
-			}
-
-			info['tagOrder']++;
+			// add drag and drop listener
+			let dropTarget = document.querySelector('#contentInterface .settingTab[key=\'' + table + '\'] .tagTab[key=doc_content] .rowFile[name=\'' + filename + '\']');
+			dropTarget.addEventListener('drop', dropNotMatchFile);
+			dropTarget.addEventListener('dragenter', dragNotMatchFileEnter);
+			dropTarget.addEventListener('dragover', dragNotMatchFileOver);
+			dropTarget.addEventListener('dragleave', dragNotMatchFileLeave);
+			
+			// progress
+			updateProgress(info, 'required');
+			info['fileOrder']++;
 		}
 
 		info['sheetOrder']++;

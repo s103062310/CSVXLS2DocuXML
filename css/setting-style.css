@@ -108,10 +108,6 @@ input::placeholder {
 						 "choose text";
 }
 
-.menu h4 {
-	vertical-align: bottom;
-}
-
 .menu div {
 	grid-area: choose;
 }
@@ -138,14 +134,16 @@ li.selected:hover {
 	font-size: medium;
 	padding: 5px;
 	display: none;
+	border: 1px solid silver;
+	border-radius: 5px;
 }
 
 li.postClass {
-	background: ivory;
+	background: #fcf8e3;
 }
 
 li.postClass:hover {
-	background: seashell;
+	background: bisque;
 }
 
 li.postClass.selected {
@@ -155,6 +153,27 @@ li.postClass.selected {
 
 li.postClass.selected:hover {
 	background-color: antiquewhite;
+}
+
+.metahintbox {
+	position: fixed;
+	width: 25vw;
+	margin: 13vh 0 0 28vw;
+	border: 1px solid silver;
+	border-radius: 5px;
+}
+
+.hinttitle {
+	display: grid;
+	margin: 5% 5% 2% 5%;
+	color: dimgray;
+	text-align: center;
+	font-size: medium;
+}
+
+.hintcontent {
+	margin: 5%;
+	color: gray;
 }
 
 /* ----- TEXT INPUT ----- */
@@ -172,10 +191,106 @@ li.postClass.selected:hover {
 .input input {
 	grid-area: text;
 	font-size: medium;
+	border: 1px solid silver;
+	border-radius: 5px;
 }
 
 .input button {
 	grid-area: button;
 	font-size: medium;
 	color: gray;
+}
+
+/* ----- CUSTOM ----- */
+
+.customObj {
+	display: grid;
+	grid-template-columns: 1fr 3fr 3fr;
+	grid-gap: 5px;
+	border: 1px solid silver;
+	border-radius: 5px;
+	margin: 2% 0;
+	padding: 2%;
+	font-size: medium;
+	text-align: center;
+	align-items: center;
+}
+
+.customObj input {
+	padding: 5px;
+	border: 1px solid silver;
+	border-radius: 5px;
+}
+
+.customObj > span:nth-child(3) {
+	color: darkgray;
+	font-size: large;
+	text-align: right;
+	padding: 5px;
+}
+
+.customObj > span:nth-child(3):hover {
+	color: gray;
+	cursor: pointer;
+}
+
+.switch {
+	position: relative;
+	display: inline-block;
+	width: 168px;
+	height: 34px;
+	margin: 3px;
+}
+
+.switch input {
+	display: none;
+}
+
+.slider {
+	position: absolute;
+	cursor: pointer;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: silver;
+	border-radius: 34px;
+	transition: .4s;
+}
+
+.slider:before {
+	position: absolute;
+	content: "超連結";
+	height: 26px;
+	width: 80px;
+	left: 4px;
+	bottom: 4px;
+	font-weight: normal;
+	background-color: white;
+	border-radius: 50px;
+	transition: .4s;
+}
+
+.switch input:checked + .slider {
+  background-color: limegreen;
+}
+
+.switch input:focus + .slider {
+  box-shadow: 0 0 1px limegreen;
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(80px);
+}
+
+.newObj {
+	display: inline-block;
+	padding: 1%;
+	color: silver;
+	font-size: medium;
+}
+
+.newObj:hover {
+	color: gray;
+	cursor: pointer;
 }
