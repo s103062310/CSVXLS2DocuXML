@@ -148,6 +148,7 @@ click close button in lightbox
 --- */
 $('#lightbox-close').click(function() {
 	if ($('.animating').length > 0) return;	// don't do anything if we are currently animating
+	$('#lightbox-text').removeClass('explainInterface');
 	$('#lightbox').css('display', 'none');
 });
 
@@ -157,6 +158,7 @@ click usage button in right-up screen and show usage document
 --- */
 $('#usage').click(function() {
 	var explainContent = $('#explainText').html();
+	$('#lightbox-text').addClass('explainInterface');
 	showLightBox('使用說明', explainContent);
 });
 
@@ -391,10 +393,9 @@ function selectClicked($this) {
 
 /* ---
 select specific item in menu list
-INPUT: 1) item html element
-	   2) hint info: metadata name
+INPUT: item html element
 --- */
-function selectItem($this, $hint) {
+function selectItem($this) {
 
 	// get information
 	var choice = $this.innerText;
@@ -410,18 +411,10 @@ function selectItem($this, $hint) {
 	$(selected).removeClass('selected');
 	$($this).addClass('selected');
 
-	// hint
-	if ($hint !== undefined) {
-		$('.hinttitle').empty();
-		$('.hinttitle').append(_optionalMeta[$hint][0] + ' | ' + $hint);
-		$('.hintcontent').empty();
-		$('.hintcontent').append(list2html(_hint[$hint]));
-	}
-
 	// show input UI
 	if (_current === _procedure[1] || _current === _procedure[3]) {
 		let input = (_current === _procedure[1]) ?$(inputP).find('input') :$(inputP).find('input[name=linkText]');
-		let pos = _customMeta.indexOf(choice);
+		let pos = _custom.indexOf(choice);
 		if (pos >= 0)  $(input).css('display', 'block');
 		else $(input).css('display', 'none');
 	}
@@ -439,6 +432,18 @@ function selectItem($this, $hint) {
 			_temp['headerY'] = $(tab).find('.txtFilesHeader')[0].offsetTop;
 		}
 	}
+}
+
+
+/* ---
+trigger when mouse is over a optional metadata item and put hint information in hintbox
+INPUT: string, active metadata
+--- */
+function setHint($metadata) {
+	$('.hinttitle').empty();
+	$('.hinttitle').append(_metadata[$metadata].chinese + ' | ' + $metadata);
+	$('.hintcontent').empty();
+	$('.hintcontent').append(list2html(_metadata[$metadata].hint));
 }
 
 

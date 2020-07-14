@@ -8,6 +8,10 @@
 	grid-template-columns: repeat(4, 1fr);
 }
 
+#uploadToolBar button {
+	font-size: medium;
+}
+
 #fileManager {
 	display: grid;
 	grid-gap: 1%;

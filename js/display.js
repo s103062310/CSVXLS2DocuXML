@@ -47,7 +47,7 @@ block that represents one sheet
 INPUT: string, sheet name
 --- */
 function displayUploadSheet($sheet) {
-	let fileBlock = "<label class=\"uploadCover fileCover\" style=\"border-color: indianred;\"><div class=\"usualFile\"><span class=\"glyphicon glyphicon-file\"></span><span class=\"coverText\">" + $sheet + "</span></div><div class=\"hoverFile\"><span class=\"glyphicon glyphicon-trash\" onclick=\"deleteUploadSheet(this.parentElement.parentElement, true)\"></span><span class=\"glyphicon glyphicon-eye-open\" onclick=\"showSheet(this)\"></span><span class=\"glyphicon glyphicon-remove\" onclick=\"toggleUsed(this.parentElement.parentElement)\"></span></div></label>";
+	let fileBlock = "<label class=\"uploadCover fileCover\" style=\"border-color: limegreen;\"><div class=\"usualFile\"><span class=\"glyphicon glyphicon-file\"></span><span class=\"coverText\">" + $sheet + "</span></div><div class=\"hoverFile\"><span class=\"glyphicon glyphicon-trash\" onclick=\"deleteUploadSheet(this.parentElement.parentElement, true)\"></span><span class=\"glyphicon glyphicon-eye-open\" onclick=\"showSheet(this)\"></span><span class=\"glyphicon glyphicon-ok\" onclick=\"toggleUsed(this.parentElement.parentElement)\"></span></div></label>";
 	$('.emptyCover').before(fileBlock);	
 }
 
@@ -152,9 +152,10 @@ function displayOptionalPage() {
 
 	// list
 	var choiceList = "<ul class=\"dropdown-menu\" role=\"menu\"><li role=\"presentation\" onclick=\"selectItem(this)\" class=\"selected\" style=\"display: block;\">--- 請選擇 ---</li>";
-	for (let meta in _optionalMeta) {
-		let classofPost = (_optionalMeta[meta][1]) ?"class=\"postClass\" " :""
-		choiceList += "<li " + classofPost + "role=\"presentation\" onclick=\"selectItem(this, '" + meta + "')\"><span>" + _optionalMeta[meta][0] + '</span><span> | </span><span>' + meta + "</span></li>";
+	for (let meta in _metadata) {
+		if (_metadata[meta].mustfill) continue;
+		let classofPost = (_metadata[meta].postclass) ?"class=\"postClass\" " :""
+		choiceList += "<li " + classofPost + "role=\"presentation\" onclick=\"selectItem(this)\" onmouseover=\"setHint('" + meta + "')\"><span>" + _metadata[meta].chinese + '</span><span> | </span><span>' + meta + "</span></li>";
 	}
 	choiceList += "</ul>";
 

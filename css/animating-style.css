@@ -1,6 +1,14 @@
 
 /* ----- EXPLAIN ----- */
 
+.explainInterface {
+	font-size: medium;
+}
+
+.explainInterface h4 {
+	font-size: larger;
+}
+
 .explainBlock {
 	margin: 2%;
 	display: grid;

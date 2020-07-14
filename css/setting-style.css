@@ -157,23 +157,26 @@ li.postClass.selected:hover {
 
 .metahintbox {
 	position: fixed;
-	width: 25vw;
-	margin: 13vh 0 0 28vw;
+	width: 20vw;
+	margin: 16vh 0 0 29vw;
 	border: 1px solid silver;
 	border-radius: 5px;
+	background-color: whitesmoke;
+}
+
+.metahintbox hr {
+	border-color: silver;
 }
 
 .hinttitle {
 	display: grid;
 	margin: 5% 5% 2% 5%;
-	color: dimgray;
 	text-align: center;
 	font-size: medium;
 }
 
 .hintcontent {
 	margin: 5%;
-	color: gray;
 }
 
 /* ----- TEXT INPUT ----- */

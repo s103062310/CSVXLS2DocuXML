@@ -6,6 +6,7 @@
 > 2020.02.10 | v.2.0  
 > 2020.04.08 | v.2.1, add: functions in upload .xls and .txt  
 > 2020.07.03 | v.2.2, fix: bugs and update explanation, add: some functions in setting  
+> 2020.07.14 | v.2.3, fix: hintbox, default adjust, and json file  
 
 ## Introduction of Interface (page)
 1. **upload** => load csv/excel files

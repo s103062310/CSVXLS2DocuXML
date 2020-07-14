@@ -1,0 +1,381 @@
+{
+	"corpus": {
+		"chinese": "文獻集名稱",
+		"mustfill": true,
+		"postclass": true,
+		"hint": [
+			"後分類：僅於多文獻集狀態作為後分類。",
+			"說明：文獻集的名稱。",
+			"請避免使用下列相關符號：「,」「-」「_」「‧」「;」。"
+		]
+	},
+
+	"filename": {
+		"chinese": "檔名",
+		"mustfill": true,
+		"postclass": false,
+		"hint": [
+			"說明：為文獻集中每一筆資料的唯一性編碼。"
+		]
+	}, 
+
+	"compilation_name":{
+		"chinese": "文件出處",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：COMP", 
+			"說明：該筆文件出處。"
+		]
+	},
+
+	"compilation_order": {
+		"chinese": "文件出處的次序",
+		"mustfill": false,
+		"postclass": false,
+		"hint": [
+			"後分類顯示：-",
+			"說明：文件出處的排序編號。", 
+			"如未設定，系統將自動給訂。",
+			"暫無作用。"
+		]
+	}, 
+
+	"compilation_vol": {
+		"chinese": "文件出處的冊數",
+		"mustfill": false,
+		"postclass": false,
+		"hint": [
+			"後分類顯示：-",
+			"說明：該筆文件出處。如有分冊，為所在冊數。"
+		]
+	},
+
+	"title": {
+		"chinese": "文件標題",
+		"mustfill": false,
+		"postclass": false,
+		"hint": [
+			"後分類顯示：-",
+			"說明：該筆文件標題。"
+		]
+	}, 
+	
+	"author": {
+		"chinese": "文件作者",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：AU",
+			"說明：該筆文件作者。"
+		]
+	}, 
+
+	"doc_topic_l1": {
+		"chinese": "文件主題階層一",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：TP",
+			"說明：該筆文件的第一層主題。",
+			"在後分類與其他階層主題一同顯示：主題階層一/主題階層二/主題階層三"
+		]
+	}, 
+
+	"doc_topic_l2": {
+		"chinese": "文件主題階層二",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：TP",
+			"說明：該筆文件的第二層主題。",
+			"在後分類與其他階層主題一同顯示：主題階層一/主題階層二/主題階層三"
+		]
+	}, 
+
+	"doc_topic_l3": {
+		"chinese": "文件主題階層三",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：TP",
+			"說明：該筆文件的第三層主題。",
+			"在後分類與其他階層主題一同顯示：主題階層一/主題階層二/主題階層三"
+		]
+	}, 
+
+	"geo_level1": {
+		"chinese": "文件地域階層一",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：GEO",
+			"說明：該筆文件的第一層地域。",
+			"在後分類與其他階層地域一同顯示：地域階層一/地域階層二/地域階層三"
+		]
+	}, 
+
+	"geo_level2": {
+		"chinese": "文件地域階層二",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：GEO",
+			"說明：該筆文件的第二層地域。",
+			"在後分類與其他階層地域一同顯示：地域階層一/地域階層二/地域階層三"
+		]
+	}, 
+
+	"geo_level3": {
+		"chinese": "文件地域階層三",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：GEO",
+			"說明：該筆文件的第三層地域。",
+			"在後分類與其他階層地域一同顯示：地域階層一/地域階層二/地域階層三"
+		]
+	}, 
+
+	"geo_longitude": {
+		"chinese": "文件所在經度",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：GEO_XY",
+			"說明：該筆文件所在經度。",
+			"在後分類與緯度一同顯示：（經度 X, 緯度 Y）"
+		]
+	}, 
+
+	"geo_latitude": {
+		"chinese": "文件所在緯度",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：GEO_XY",
+			"說明：該筆文件所在緯度。",
+			"在後分類與緯度一同顯示：（經度 X, 緯度 Y）"
+		]
+	}, 
+
+	"doc_category_l1": {
+		"chinese": "文件分類階層一",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：CAT",
+			"說明：該筆文件的第一層分類。",
+			"在後分類與其他階層分類一同顯示：分類階層一/分類階層二/分類階層三"
+		]
+	}, 
+
+	"doc_category_l2": {
+		"chinese": "文件分類階層二",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：CAT",
+			"說明：該筆文件的第二層分類。",
+			"在後分類與其他階層分類一同顯示：分類階層一/分類階層二/分類階層三"
+		]
+	}, 
+
+	"doc_category_l3": {
+		"chinese": "文件分類階層三",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：CAT",
+			"說明：該筆文件的第三層分類。",
+			"在後分類與其他階層分類一同顯示：分類階層一/分類階層二/分類階層三"
+		]
+	}, 
+
+	"docclass": {
+		"chinese": "文件類別",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：CLASS",
+			"說明：該筆文件所屬的集合類別。"
+		]
+	}, 
+
+	"docclass_aux": {
+		"chinese": "文件子類別",
+		"mustfill": false,
+		"postclass": false,
+		"hint": [
+			"後分類顯示：-",
+			"說明：該筆文件所屬的子集合類別。"
+		]
+	}, 
+
+	"doctype": {
+		"chinese": "文件型態",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：TYPE",
+			"說明：該筆文件的型態。"
+		]
+	}, 
+
+	"doctype_aux": {
+		"chinese": "文件子型態",
+		"mustfill": false,
+		"postclass": false,
+		"hint": [
+			"後分類顯示：-",
+			"說明：該筆文件的子型態。"
+		]
+	}, 
+
+	"book_code": {
+		"chinese": "文件書碼",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：BC",
+			"說明：該筆文件的書碼編號。"
+		]
+	}, 
+
+	"time_orig_str": {
+		"chinese": "文件時間(字串)",
+		"mustfill": false,
+		"postclass": false,
+		"hint": [
+			"後分類顯示：-",
+			"說明：該筆文件出現在文本的時間資訊，為文字串形式。"
+		]
+	}, 
+
+	"time_varchar": {
+		"chinese": "文件時間(西曆)",
+		"mustfill": false,
+		"postclass": false,
+		"hint": [
+			"後分類顯示：-",
+			"說明：該筆文件的時間，以西元日期填錄。",
+			"填錄格式：yyyymmdd",
+			"未知的部分請補 0，例如：19870500，為 1987 年 5 月，日期未知。"
+		]
+	}, 
+
+	"time_norm_year": {
+		"chinese": "文件時間(中曆)",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：CHNY",
+			"說明：該筆文件的時間，以中曆日期填錄。",
+			"填錄格式：一般為「年號00年00月00日」，但不限，仍可使用「不詳」或加「閏」。"
+		]
+	}, 
+
+	"era": {
+		"chinese": "文件時間(年號)",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：ERA",
+			"說明：該筆文件的中曆時間。",
+			"僅填錄年號，例如：乾隆。"
+		]
+	}, 
+
+	"time_norm_kmark": {
+		"chinese": "文件時間(帝號)",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：EMP",
+			"說明：該筆文件的中曆時間。",
+			"僅填錄帝號，例如：清高宗。"
+		]
+	}, 
+
+	"year_for_grouping": {
+		"chinese": "文件時間(西元年)",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：ADY",
+			"說明：該筆文件的西元年，僅填年。",
+			"西元前的年份，以「-」標示，例：-272，表示西元前 272 年。",
+			"年份未知或沒有年份，系統將自動給予「9999」的值。"
+		]
+
+	}, 
+
+	"time_dynasty": {
+		"chinese": "文件時間(朝代)",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：DYN",
+			"說明：該筆文件的中曆朝代。",
+			"朝代未知或沒有填錄，系統將自動給予「-」。"
+		]
+	}, 
+
+	"doc_seq_number": {
+		"chinese": "文件順序",
+		"mustfill": false,
+		"postclass": false,
+		"hint": [
+			"後分類顯示：-",
+			"說明：該文件標示的時間順序。",
+			"填錄整數，正負數均可。"
+		]
+	}, 
+
+	"timeseq_not_before": {
+		"chinese": "文件起始時間",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：TNB",
+			"後分類說明：計算該日期之後的所有文件。",
+			"說明：該文件標示的起始時間。",
+			"填錄格式：yyyymmdd 或 -yyyymmdd。未知或沒有則補 0。"
+		]
+	}, 
+
+	"timeseq_not_after": {
+		"chinese": "文件結束時間",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：TNA",
+			"後分類說明：計算該日期之前的所有文件",
+			"說明：該文件標示的結束時間。",
+			"填錄格式：yyyymmdd 或 -yyyymmdd。未知或沒有則補 0。"
+		]
+	}, 
+
+	"doc_source": {
+		"chinese": "文件來源",
+		"mustfill": false,
+		"postclass": true,
+		"hint": [
+			"後分類顯示：SRC",
+			"說明：該文件的來源，可能為某個文獻集。"
+		]
+	}, 
+
+	"doc_attachment": {
+		"chinese": "文件圖檔",
+		"mustfill": false,
+		"postclass": false,
+		"hint": [
+			"後分類顯示：-",
+			"說明：該文件的附圖。",
+			"允許多圖檔，需以半形「;」區隔。",
+			"填錄圖檔完整的 URI。",
+			"也可填錄圖檔名稱（須含附檔名），但該圖檔需上傳 DocuSky 主機才能顯示。（目前 DocuSky 圖檔上傳功能未開放）"
+		]
+	}
+}
