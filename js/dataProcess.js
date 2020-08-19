@@ -8,6 +8,51 @@ data to process output result, including generating and checking.
 
 
 /* ---
+filter empty element in table
+INPUT: object, excel table
+OUTPUT: object, clean excel table
+--- */
+function filterEmptyEntry($content) {
+	for (let i = $content.length-1; i >= 0; i--) {
+		$.each($content[i], function(key, value) {
+			$content[i][key] = value.toString().trim();
+			if ($content[i][key] === '') delete $content[i][key];
+		});
+		if (Object.keys($content[i]).length === 0) $content.splice(i, 1);
+	}
+
+	return $content;
+}
+
+
+/* ---
+extract header of excel table
+INPUT: object, excel table
+OUTPUT: array, header
+--- */
+function extractHeader($content) {
+	var header = [];
+
+	$content.forEach((entry, index) => {
+		$.each(entry, function(key, value) {
+
+			// correct key
+			let newKey = key.toString().replace(/[\s'"]/g, '');
+			if (header.indexOf(newKey) < 0) header.push(newKey);
+
+			// sync key and data
+			if (newKey !== key) {
+				$content[index][newKey] = $content[index][key];
+				delete $content[index][key];
+			}
+		});
+	});
+
+	return header;
+}
+
+
+/* ---
 select target sheet from dataPool into data (used)
 INPUT: none
 OUTPUT: boolean, valid = true, no select sheet = false
@@ -370,7 +415,7 @@ function convertToXML() {
 				customMetaXML += '<' + metadata + '>' + value + '</' + metadata + '>\n';
 			}
 			if (customMetaXML != '') _xml += '<xml_metadata>\n' + customMetaXML + '</xml_metadata>\n';
-
+			
 			// append document content
 			let contentXML = ''
 			for (let tag in _contentTags) {
@@ -421,9 +466,9 @@ function convertToXML() {
 
 				// import
 				} else if (source === '匯入純文字檔') {
-					let content = _txtData[table][filename][tag];
+					let content = filterChar(_txtData[table][filename][tag]);
 					if ( content !== undefined) {
-						if (checkWellForm(content)) contentXML += beginTag(tag) + content.replace(/&/g, '&amp;') + endTag(tag);
+						if (checkWellForm(content)) contentXML += beginTag(tag) + content + endTag(tag);
 						else {
 							alert("內文需是 well-form 格式。（位置：資料表 -> " + table + "；文件 -> " + file + "；內容 -> " + tag + "）");
 							return false;
@@ -431,7 +476,7 @@ function convertToXML() {
 					}
 				}
 			}
-
+			
 			_xml += '<doc_content>\n' + contentXML + '</doc_content>\n</document>\n';
 			updateProgress(info, 'content');
 			info['fileOrder']++;
@@ -443,7 +488,7 @@ function convertToXML() {
 	_xml += '</documents>\n</ThdlPrototypeExport>\n';
 
 	// display
-	$('#XMLoutput').append('<plaintext>' + _xml + '</plaintext>');
+	$('#XMLoutput').append('<xmp>' + _xml + '</xmp>');
 	return true;
 }
 
@@ -467,7 +512,7 @@ INPUT: string, tag type
 OUTPUT: string, corresponsed end segment
 --- */
 function endTag($tag) {
-	if ($tag === 'doc_content') return '';
+	if ($tag === 'doc_content') return '\n';
 	else if ($tag === 'MetaTags') return '</MetaTags>\n';
 	else if ($tag === 'Comment') return '</Comment>\n';
 	else if ($tag === 'Events') return '</Events>\n';

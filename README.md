@@ -1,5 +1,5 @@
 # CSVXLS2DocuXML
-[Develop Weekly Progress](https://hackmd.io/@biXGOo3kRWCSdIteN7NWmg/Hy8191XGH)
+[Develop Weekly Progress](https://hackmd.io/N1x-sTgeQGucbKUmJMZu5g)
 
 > 2019.11.28 | v.1.0  
 > 2019.12.19 | v.1.1, add: upload multiple txt at once  
@@ -7,6 +7,7 @@
 > 2020.04.08 | v.2.1, add: functions in upload .xls and .txt  
 > 2020.07.03 | v.2.2, fix: bugs and update explanation, add: some functions in setting  
 > 2020.07.14 | v.2.3, fix: hintbox, default adjust, and json file  
+> 2020.09.04 | v.2.4, fix: bugs & some UI  
 
 ## Introduction of Interface (page)
 1. **upload** => load csv/excel files

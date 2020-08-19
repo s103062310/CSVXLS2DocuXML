@@ -60,6 +60,9 @@ $(document).ready(function() {
 		$('#downloadInterface .progress-bar span').empty().append($percentage + ' %');
 	}
 
+	//
+	$(function () { $("[data-toggle='tooltip']").tooltip(); });
+
 	// explain
 	$('#explainText').load('html/explain.html');
 	setTimeout(function(){
@@ -136,23 +139,6 @@ function addSuffix($filename) {
 	}
 	if (count > 0) return $filename + '(' + count + ')';
 	else return $filename;
-}
-
-
-/* ---
-filter empty element in array
-INPUT: original array
-OUTPUT: filtered array
---- */
-function filterEmpty($array) {
-	for (let item in $array) {
-		$array[item] = $array[item].replace(/"/g, '').replace(/'/g, '');
-		if ($array[item] === "") {
-			delete $array[item];
-			$array.length--;
-		}
-	}
-	return $array;
 }
 
 

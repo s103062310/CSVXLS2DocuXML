@@ -161,11 +161,11 @@ function loadFile($file, $suffix, $info) {
 
 			// parse excel file
 			let sheet = filename + '--' + wb.SheetNames[i];
-			let header = XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[i]]).split('\n')[0].split(',');
-			let content = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[i]]);
+			let content = filterEmptyEntry(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[i]]));
+			let header = extractHeader(content);
 
 			// save file data in system
-			content.splice(0, 0, filterEmpty(header));
+			content.splice(0, 0, header);
 			_dataPool[sheet] = content;
 			_dataPool.length++;
 
@@ -192,7 +192,7 @@ function loadTXT($filename) {
 		var data = $event.target.result;
 		var table = _temp['target-table'];
 		var tag = _temp['target-tag'];
-		console.log(data);
+		//console.log(data);
 
 		for (let file in _txtData[table]) {
 			if (file === $filename) {

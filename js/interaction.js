@@ -159,7 +159,7 @@ click usage button in right-up screen and show usage document
 $('#usage').click(function() {
 	var explainContent = $('#explainText').html();
 	$('#lightbox-text').addClass('explainInterface');
-	showLightBox('使用說明', explainContent);
+	showLightBox('使用說明 <a href="assets/表格文本轉換工具操作手冊.pdf" download><span class="glyphicon glyphicon-cloud-download"></a></span>', explainContent);
 });
 
 
@@ -187,7 +187,7 @@ function showTXT($this) {
 	// see if have uploaded
 	var status = $($this.parentElement).find('span[func=status]');
 	if ($(status)[0].innerText == '無') alert("請先上傳檔案。");
-	else showLightBox(filename, '<plaintext>' + _txtData[table][filename][tag] + '</plaintext>');
+	else showLightBox(filename, '<xmp>' + _txtData[table][filename][tag] + '</xmp>');
 }
 
 

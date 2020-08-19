@@ -53,12 +53,26 @@ table th, table td {
 	display: grid;
 	grid-template-columns: 1fr 13fr 1fr;
 	grid-template-rows: 1fr 9fr;
-	grid-template-areas: "empty header exp"
+	grid-template-areas: "empty1 header empty2"
 						 "prev tool next";
 }
 
-/* ----- SWITCH BUTTON ----- */
+/* ----- SWITCH BUTTON & TOOL BAR ----- */
 
+#toolbar {
+	position: fixed;
+	top: 10px;
+	right: 10px;
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+}
+
+#toolbar > span {
+	margin: 5px;
+}
+
+#toolbar > span,
 #topContainer > span {
 	z-index: 25;
 	color: gray;
@@ -66,9 +80,14 @@ table th, table td {
 	display: grid;
 	align-items: center;
 	text-align: center;
-	font-size: xx-large;
+	font-size: x-large;
 }
 
+#toolbar > span:hover > .tooltip-box {
+	display: block;
+}
+
+#toolbar > span:hover,
 #topContainer > span:hover {
 	color: darkgray;
 	cursor: pointer;
@@ -82,8 +101,33 @@ table th, table td {
 	grid-area: next;
 }
 
-#usage {
-	grid-area: exp;
+.tooltip-box {
+	display: none;
+	position: absolute;
+	top: 30px;
+	left: -40px;
+	width: max-content;
+	height: max-content;
+	background: rgba(0,0,0,.75);
+	border-radius: 5px;
+}
+
+.tooltip-text {
+	display: grid;
+	margin: 10px;
+	font-size: medium;
+	color: white;
+}
+
+.arrow-t {
+	position: absolute;
+	top: -10px;
+	left: 48px;
+	width: 0px;
+	height: 0px;
+	border-width: 5px;
+	border-style: solid;
+	border-color: transparent transparent rgba(0,0,0,.75) transparent;
 }
 
 /* ----- HEADER ----- */
@@ -165,10 +209,10 @@ table th, table td {
 	font-size: medium;
 }
 
-.explainPanel ul {
-	list-style-position: inside;
-	margin: 1% auto;
-	padding: 0;
+.explainPanel div {
+	width: fit-content;
+	max-width: 65vw;
+	margin: 0 auto;
 }
 
 .contentPanel {

@@ -275,15 +275,15 @@ li.postClass.selected:hover {
 }
 
 .switch input:checked + .slider {
-  background-color: limegreen;
+	background-color: limegreen;
 }
 
 .switch input:focus + .slider {
-  box-shadow: 0 0 1px limegreen;
+	box-shadow: 0 0 1px limegreen;
 }
 
 .switch input:checked + .slider:before {
-  transform: translateX(80px);
+	transform: translateX(80px);
 }
 
 .newObj {
