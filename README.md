@@ -8,6 +8,7 @@
 > 2020.07.03 | v.2.2, fix: bugs and update explanation, add: some functions in setting  
 > 2020.07.14 | v.2.3, fix: hintbox, default adjust, and json file  
 > 2020.09.04 | v.2.4, fix: bugs & some UI  
+> 2020.11.18 | v.3.0
 
 ## Introduction of Interface (page)
 1. **upload** => load csv/excel files
@@ -18,7 +19,8 @@
 6. **download** => converting to DocuXML
 
 ## HTML File
-* explanation of tool
+1. **explain.html** => explanation of the tool
+2. **explainDir.html** => directory of explanation
 
 ## CSS Files
 1. **main-style.css** => for main screen which won't switch as the process progresses
@@ -29,13 +31,16 @@
 
 ## Javascripts Files
 1. **globalVar.js** =>
-* defined all used data structures and global variables  
-* initialization of the program  
-* getter (get some information) and checker (return a boolean value)  
-* other small tools  
-2. **fileLoading.js** => defined the functions that used to load files from computer and parse the data in files
-3. **dataProcess.js** => defined the functions that used file data or setting data to process output result, including generating and checking
-4. **display.js** => defined the functions that used to display html page
-5. **interaction.js** => defined the functions that interact with user
+* all used data structures and global variables
+* initialization of the program
+* getter (get some information)
+* other small tools
+2. **checker.js** => check functions (return a boolean value)
+3. **fileLoading.js** => functions that used to upload/download files to system or DocuSky
+4. **dataProcess.js** => functions that used file data or setting data to dynamicly process output data
+5. **display.js** => functions that used to display html page
+6. **interaction.js** => functions that interact with user
+7. **worker.js** => worker scripts to prevent UI blocked
+8. **meta.json** => metadata standard in json format
 
 

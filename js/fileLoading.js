@@ -1,10 +1,25 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-This file defined the functions that used to load files from
-computer and parse the data in files.
+This file defined the functions that used to upload/download
+files to system or DocuSky.
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 
- // * * * * * * * * * * * * * * * * excel upload * * * * * * * * * * * * * * * * *
+/* ---
+select API for loading single file
+INPUT: 1) string, file type, excel or text
+       2) object, uploaded file 
+       3) function, callback
+OUTPUT: none
+--- */
+function load($type, $file, $function) {
+	var reader = new FileReader();
+	reader.onload = $function;
+	if ($type === 'excel') reader.readAsBinaryString($file);
+	else if ($type === 'text') reader.readAsText($file);
+}
+
+
+// * * * * * * * * * * * * * * * * excel upload * * * * * * * * * * * * * * * * *
 
 
 // listener for loading files
@@ -16,9 +31,10 @@ document.getElementById('fileManager').addEventListener('drop', dropFile, false)
 
 
 /* ---
-trigger when user upload files by input element in upload interface
-extract uploaded files and update used input by new input
-INPUT: event object
+trigger when user upload files by input element in upload interface 
+- extract uploaded files and update used input by new input
+INPUT: object, event
+OUTPUT: none
 --- */
 function uploadFile($event) {
 	var files = $event.target.files;
@@ -31,8 +47,9 @@ function uploadFile($event) {
 
 
 /* ---
-trigger when user drag files and enter upload area (change css)
-INPUT: event object
+trigger when user drag files and enter upload area - change css
+INPUT: object, event
+OUTPUT: none
 --- */
 function dragFileEnter($event) {
 	$event.stopPropagation();
@@ -42,8 +59,9 @@ function dragFileEnter($event) {
 
 
 /* ---
-trigger when user drag files and leave upload area (change css)
-INPUT: event object
+trigger when user drag files and leave upload area - change css
+INPUT: object, event
+OUTPUT: none
 --- */
 function dragFileLeave($event) {
 	$event.stopPropagation();
@@ -54,7 +72,8 @@ function dragFileLeave($event) {
 
 /* ---
 trigger when user drag files and cover upload area
-INPUT: event object
+INPUT: object, event
+OUTPUT: none
 --- */
 function dragFileOver($event) {
 	$event.stopPropagation();
@@ -63,9 +82,9 @@ function dragFileOver($event) {
 
 
 /* ---
-trigger when user drop files in upload area
-change css and extract uploaded files
-INPUT: event object
+trigger when user drop files in upload area - change css and extract uploaded files
+INPUT: object, event
+OUTPUT: none
 --- */
 function dropFile($event) {
 	$event.stopPropagation();
@@ -80,103 +99,102 @@ function dropFile($event) {
 
 /* ---
 give appropriate way to process uploaded files
-INPUT: file object
+INPUT: object, uploaded files
+OUTPUT: none
 --- */
 function filesHandler($files) {
 
 	// reset progress bar
-	_temp['percentage'] = 0;
-	$('#uploadInterface img').show();
+	_progress = {};
+	updateProgress('#uploadInterface');
 
 	// process for each selected file
-	for (let i=0; i<$files.length; i++) {
+	for (let i = 0; i < $files.length; i++) {
+		let file = $files[i];
+
+		// parse filename
+		let filenameParts = file.name.split('.');
+		let fileType = filenameParts[filenameParts.length-1];
+		let filename = file.name.replace(`.${ fileType }`, '');
 
 		// filter non-ecxel files
-		let fileTypePos = $files[i].name.indexOf('.');
-		let fileType = $files[i].name.substring(fileTypePos+1, $files[i].name.length);
 		if (!itemInList(fileType, _allowedFileType)) {
-			alert("上傳檔案" + $files[i].name + "不符合檔案類型要求，請上傳副檔名為 .xls, .xlsx, .csv 的檔案。");
+			alert("上傳檔案" + file.name + "不符合檔案類型要求，請上傳副檔名為 .xls, .xlsx, .csv 的檔案。");
 			return;
 		}
 
 		// file hasn't loaded before - load the whole file
-		if (!fileInSystem($files[i].name)) {
-			load('excel', $files[i], loadFile($files[i], false, {'fileOrder': i, 'fileNum': $files.length}));
+		if (!(filename in _inputFiles)) {
+			load('excel', file, loadExcel(filename));
 
 		// file has loaded before
 		} else {
-			if (confirm("已有相同檔名的檔案匯入本工具，確定繼續上傳" + $files[i].name + "?")) {
-				load('excel', $files[i], loadFile($files[i], true, {'fileOrder': i, 'fileNum': $files.length}));
+			if (confirm("已有相同檔名的檔案匯入本工具，確定繼續上傳" + file.name + "？")) {
+				load('excel', file, loadExcel(strPlusNum(filename, getFileNum(filename, Object.keys(_inputFiles)), 0, 'bracket')));
 			}
 		}
-
 	}
-
-	console.log(_inputFiles);
-	console.log(_dataPool);
-
 }
 
 
 /* ---
-select API for loading single file
-INPUT: 1) string, file type, excel or text
-       2) file object
-       3) callback function
+load and store a excel file after getting its row data
+INPUT: string, filename of excel
+OUTPUT: none
 --- */
-function load($type, $file, $function) {
-	var reader = new FileReader();
-	reader.onload = $function;
-	if ($type === 'excel') reader.readAsBinaryString($file);
-	else if ($type === 'text') reader.readAsText($file);
-}
+function loadExcel($filename) {
+	return function($event1) {
+		var worker = new Worker('js/worker.js');
+		_progress[$filename] = 0;
 
+		// receive
+		worker.addEventListener('message', function($event2) {
 
-/* ---
-process single file data
-INPUT: 1) file object
-       2) string, filename suffix
-       3) object, progress info
---- */
-function loadFile($file, $suffix, $info) {
-	return function($event) {
+			/* data structure {
+				func: functions,
+				percentage: percentage, (func = progress)
+				sheetNum: sheet number of excel file, (func = sheetnum)
+				sheetName: one sheet name in excel file, (func = sheetcontent)
+				content: content of one sheet in excel file (func = sheetcontent)
+			} */
 
-		// get file information
-		var filename = ($suffix) ? addSuffix($file.name.split('.')[0]) :$file.name.split('.')[0];
-		var data = $event.target.result;
-		var wb = XLSX.read(data, {type: 'binary'});
+			let func = $event2.data.func;
 
-		// record file in system
-		_inputFiles[filename] = wb.SheetNames;
-		_inputFiles.length++;
-		_temp['sheetNum'] += wb.SheetNames.length;
-		$info['sheetNum'] = wb.SheetNames.length;
+			// display progress bar
+			if (func === 'progress') {
+				_progress[$filename] = $event2.data.percentage;
+				updateProgress('#uploadInterface');
+				return;
+			
+			// receive sheet names
+			} else if (func === 'sheetnum') {
 
-		// css row
-		var rowNum = Math.ceil((_temp['sheetNum']+1)/3).toString();
-		$('#fileManager').css('grid-template-rows', 'repeat(' + rowNum + ', 15vh)');
+				// record file in system
+				_inputFiles[$filename] = $event2.data.sheetNum;
 
-		// build data structure and show UI
-		for (let i=0; i<wb.SheetNames.length; i++) {
+				// css row
+				let rowNum = Math.ceil((getAllSheetNum() + 1) / 3);
+				$('#fileManager').css('grid-template-rows', `repeat(${ rowNum }, 15vh)`);
+			
+			// receive sheet content
+			} else if (func === 'sheetcontent') {
+				let sheetID = $filename + '--' + $event2.data.sheetName;
 
-			// parse excel file
-			let sheet = filename + '--' + wb.SheetNames[i];
-			let content = filterEmptyEntry(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[i]]));
-			let header = extractHeader(content);
+				// save file data in system
+				_dataPool[sheetID] = $event2.data.content;
+				_dataPool.length++;
 
-			// save file data in system
-			content.splice(0, 0, header);
-			_dataPool[sheet] = content;
-			_dataPool.length++;
+				// UI and next
+				displayUploadSheet(sheetID);
+			}
 
-			// UI
-			$info['sheetOrder'] = i;
-			updateProgress($info, 'upload');
-			displayUploadSheet(sheet);
-		}
+		}, false);
 
-		if ($info['fileOrder']==$info['fileNum']-1) $('#uploadInterface img').hide();
-
+		// send
+		worker.postMessage({ 
+			func: 'parseexcel',
+			content: $event1.target.result
+		});
 	}
 }
 
@@ -185,84 +203,44 @@ function loadFile($file, $suffix, $info) {
 
 
 /* ---
-process single file data
+trigger when user upload files by input element through row of table of content interface
+- extract uploaded files and update used input by new input
+INPUT: object, event
+OUTPUT: none
 --- */
-function loadTXT($filename) {
-	return function($event) {
-		var data = $event.target.result;
-		var table = _temp['target-table'];
-		var tag = _temp['target-tag'];
-		//console.log(data);
+function uploadSingleTXT($event) {
+	if ($event.files.length <= 0) return;	// do not choose file
 
-		for (let file in _txtData[table]) {
-			if (file === $filename) {
-				_txtData[table][file][tag] = data;
-				displayUploadTXT(table, $filename, tag);
-				return;
-			}
-		}
-	}
+	// check filename format and load
+	var filename = $event.files[0].name;
+	if (checkTXTFilename([filename], 'single')) load('text', $event.files[0], loadTXT(_matching[0], filename));
+
+	// update
+	$('#singleTXT').replaceWith('<input id="singleTXT" type="file" accept=".txt" onchange="uploadSingleTXT(this)" style="display: none;"/>');
+	$('#contentInterface .settingTab.target .rowFile.target').removeClass('target');
 }
 
 
 /* ---
-trigger when user upload files by input element in row of table of content interface
-extract uploaded files and update used input by new input
-INPUT: 1) event object
-       2) boolean, if input element need to update
---- */
-function uploadSingleTXT($event, $update) {
-	if ($event.files.length == 0) return;
-	var file = $event.files[0];
-	
-	// fileter non-txt file
-	var fileTypePos = file.name.indexOf('.');
-	var fileType = file.name.substring(fileTypePos+1, file.name.length);
-	if (fileType !== 'txt') {
-		alert("上傳檔案 " + file.name + " 不符合檔案類型要求，請上傳副檔名為 .txt 的檔案。");
-		return;
-	}
-
-	// make sure user upload the right file
-	var filename = _temp['target-filename'];
-	if (file.name.split('.')[0] !== filename) {
-		if (confirm("欲上傳的檔案 " + file.name + " 與所選檔名 " + filename + ".txt 不符，要繼續上傳嗎？")) {
-			load('text', file, loadTXT(filename));
-		}
-
-	// upload directly
-	} else {
-		load('text', file, loadTXT(filename));
-	}
-
-	// update input
-	if ($update) {
-		$('#singleTXT').replaceWith('<input id="singleTXT" type="file" accept=".txt" onchange="uploadSingleTXT(this, undefined, true)" style="display: none;"/>');
-	}
-}
-
-
-/* ---
-trigger when user upload files by input element in header of table of content interface
-extract uploaded files and update used input by new input
-INPUT: event object
+trigger when user upload files by input element through multiple button in tool bar of content interface
+- extract uploaded files and update used input by new input
+INPUT: object, event
+OUTPUT: none
 --- */
 function uploadMultiTXT($event) {
+	if ($event.files.length <= 0) return;	// do not choose file
 
-	// process for each files
-	for (let i=0; i<$event.files.length; i++) {
-		let event = {'files': { 'length': 1, 0: $event.files[i] } };
-		let table = _temp['target-table'];
-		let tag = _temp['target-tag'];
-		let filename = $event.files[i].name.split('.')[0];
-		_temp['target-filename'] = filename;
+	// get all uploaded filenames
+	var allFilenames = [];
+	for (let i = 0; i < $event.files.length; i++) {
+		allFilenames.push($event.files[i].name);
+	}
 
-		// see if uploaded filename match with the one excel provided
-		if (filename in _txtData[table]) uploadSingleTXT(event, false);
-		else {
-			alert("上傳檔案 " + filename + ".txt 不在檔名列表內。");
-			_txtBuffer[filename] = $event.files[i];
-			displayNotMatchTXT(filename, table, tag);
+	// check filename format and load
+	if (checkTXTFilename(allFilenames, 'multi')) {
+		for (let i = 0; i < $event.files.length; i++) {
+			if (_matching[i] === undefined) addNotMatchTXT($event.files[i]);
+			else load('text', $event.files[i], loadTXT(_matching[i], $event.files[i].name));
 		}
 	}
 
@@ -272,24 +250,16 @@ function uploadMultiTXT($event) {
 
 
 /* ---
-trigger when user upload files by 'single file for whole database' button
-extract uploaded files and update used input by new input
-INPUT: event object
+trigger when user upload files by input element through whole txt button in tool bar of content interface
+- extract uploaded files and update used input by new input
+INPUT: object, event
+OUTPUT: none
 --- */
 function uploadWholeTXT($event) {
-	if ($event.files.length == 0) return;
-	var file = $event.files[0];
+	if ($event.files.length == 0) return;	// do not choose file
 
-	// fileter non-txt file
-	var fileTypePos = file.name.indexOf('.');
-	var fileType = file.name.substring(fileTypePos+1, file.name.length);
-	if (fileType !== 'txt') {
-		alert("上傳檔案 " + file.name + " 不符合檔案類型要求，請上傳副檔名為 .txt 的檔案。");
-		return;
-	}
-
-	// load
-	load('text', file, loadWholeTXT());
+	// check filename format and load
+	if (checkTXTFilename([$event.files[0].name], 'whole')) load('text', $event.files[0], loadWholeTXT());
 
 	// update input
 	$('#wholeTXT').replaceWith('<input id="wholeTXT" type="file" accept=".txt" onchange="uploadWholeTXT(this)" style="display: none;"/>');
@@ -297,32 +267,146 @@ function uploadWholeTXT($event) {
 
 
 /* ---
-process data of single file for whole database
+load and store a txt file after getting its row data
+INPUT: 1) int/string, file unique index in system
+	   2) string, filename of txt
+OUTPUT: none
+--- */
+function loadTXT($index, $filename) {
+	return function($event) {
+		var content = $event.target.result;
+
+		// content not wellform
+		if (!checkWellForm(content)) {
+			alert(`上傳的檔案「 ${ $filename } 」不符合 well form 格式。`);
+			return;
+		}
+
+		_documents[$index].doc_content.doc_content.import[0] = normalizeContent(content);
+		$(`#contentInterface .settingTab.target .rowFile[key="${ $index }"]`).html(displayTXTFile($index));
+	}
+}
+
+
+/* ---
+load a txt file in specific format, and then process and store
+INPUT: none
+OUTPUT: none
 --- */
 function loadWholeTXT() {
 	return function($event) {
-		var re = new RegExp(String.fromCharCode(13), 'g');
-		var table = _temp['target-table'];
-		var tag = _temp['target-tag'];
-		var data = $event.target.result.replace(re, '').trim().split('\n\n');
-		var i = 0;
-		for (let c=0; c<30; c++) {
-			console.log($event.target.result[c]);
-			console.log($event.target.result[c].charCodeAt());
+		var data = $event.target.result.split(/\n\s{0,}\n/g);
+		var notpass = [];
 
-		}
+		// store each document content
+		$(`#contentInterface .settingTab.target .rowFile`).each(function(i) {
+			let j = $(this).attr('key');
+			let content = data[i];
 
-		for (let file in _txtData[table]) {
-			let dataStr = data[i].trim();
-			if (dataStr !== '-') {
-				_txtData[table][file][tag] = dataStr;
-				displayUploadTXT(table, file, tag);
+			// data
+			if (content === undefined || content.trim() === '-') _documents[j].doc_content.doc_content.import[0] = '';
+			else if (checkWellForm(content)) _documents[j].doc_content.doc_content.import[0] = normalizeContent(content);
+			else {
+				notpass.push(`${ i }: ${ _documents[j].attr.filename }.txt`);
+				_documents[j].doc_content.doc_content.import[0] = '';
 			}
 
-			if (i >= data.length-1) break;
-			i++;
-		}
+			// display
+			$(this).html(displayTXTFile(j));
+		});
+
+		// show warning
+		if (notpass.length > 0) alert(`上傳檔案的某些件數不符合 well form 格式：\n${ array2Str(notpass) }`);
 	}
+}
+
+
+/* ---
+create a not match file, including data and UI
+INPUT: object, uploaded file
+OUTPUT: none
+--- */
+function addNotMatchTXT($file) {
+	let name = $file.name;
+	let filenum = getFileNum(name, Object.keys(_notMatch[_sheet]));
+	let filename = (filenum > 0) ?strPlusNum(name, filenum, 0, 'bracket') :name;
+	_notMatch[_sheet][filename] = $file;
+	displayNotMatchTXT(filename);
+}
+
+
+/* ---
+trigger when user start to drag not match file in buffer area
+INPUT: object, event
+OUTPUT: none
+--- */
+function dragNotMatchFileStart($event) {
+	$event.dataTransfer.setData('text/plain', $($event.target).attr('name'));
+}
+
+
+/* ---
+trigger when user drag not match file and enter files table row - change css
+INPUT: object, event
+OUTPUT: none
+--- */
+function dragNotMatchFileEnter ($event) {
+	$event.preventDefault();
+	$event.stopPropagation();
+	this.classList.add('notMatchHover');
+}
+
+
+/* ---
+trigger when user drag not match file and cover files table row
+INPUT: object, event
+OUTPUT: none
+--- */
+function dragNotMatchFileOver ($event) {
+	$event.preventDefault();
+	$event.stopPropagation();
+}
+
+
+/* ---
+trigger when user drag not match file and leave files table row - change css
+INPUT: object, event
+OUTPUT: none
+--- */
+function dragNotMatchFileLeave ($event) {
+	$event.preventDefault();
+	$event.stopPropagation();
+	this.classList.remove('notMatchHover');
+}
+
+
+/* ---
+trigger when user drop not match file in table row of a file - change css and extract uploaded file
+INPUT: object, event
+OUTPUT: none
+--- */
+function dropNotMatchFile($event) {
+	$event.preventDefault();
+	$event.stopPropagation();
+	this.classList.remove('notMatchHover');
+
+	// access data
+	var key = $(this).attr('key');
+	var filename = _documents[key].attr.filename;
+	var uploaded = $event.dataTransfer.getData('text/plain');
+
+	// check cover
+	if ($(this).find('span[func="status"]').attr('class') !== undefined) {
+		if (!confirm(`所選檔名「 ${ filename } 」已有資料，確定要配對嗎？`)) return;
+	}
+
+	// save
+	load('text', _notMatch[_sheet][uploaded], loadTXT(key, uploaded));
+
+	// remove html and data
+	$(`#contentInterface .settingTab.target .notMatchFile[name="${ uploaded }"]`).remove();
+	$(`.notMatch.fixed .notMatchFile[name="${ uploaded }"]`).remove();
+	delete _notMatch[_sheet][uploaded];
 }
 
 
@@ -330,8 +414,9 @@ function loadWholeTXT() {
 
 
 /* ---
-callback function of widget function manageDbList()
-upload converted DocuXML to DocuSky directly
+callback function of widget function manageDbList() - upload converted DocuXML to DocuSky directly
+INPUT: none
+OUTPUT: none
 --- */
 function uploadXML2DocuSky() {
 	
@@ -340,12 +425,23 @@ function uploadXML2DocuSky() {
 
 	// info
 	var dbTitle = $("#databaseName input").val().trim();
-	var formData = { dummy: {name: 'dbTitleForImport', value: dbTitle }, file: {value: _xml, filename: dbTitle + '.xml', name: 'importedFiles[]'}};
+	if (dbTitle === '') dbTitle = 'DB-' + now();
+	var formData = { 
+		dummy: {
+			name: 'dbTitleForImport', 
+			value: dbTitle 
+		}, 
+		file: {
+			value: _xml, 
+			filename: dbTitle + '.xml', 
+			name: 'importedFiles[]'
+		}
+	};
 
 	// progress bar
-	_temp['progressID'] = _docuSkyObj.uploadProgressId;
+	_progress = _docuSkyObj.uploadProgressId;
 	_docuSkyObj.uploadProgressId = 'myUploadProgressId';
-	$("#downloadInterface .progress").show();
+	$("#downloadInterface .contentPanel .progress").show();
 
 	// upload
 	_docuSkyObj.uploadMultipart(formData, succUploadFunc, failUploadFunc);
@@ -354,12 +450,14 @@ function uploadXML2DocuSky() {
 
 /* ---
 success function of uploadXML2DocuSky()
+INPUT: none
+OUTPUT: none
 --- */
 function succUploadFunc() {
 	
 	// progress bar
-	_docuSkyObj.uploadProgressId = _temp['progressID'];
-	$("#downloadInterface .progress").hide();
+	_docuSkyObj.uploadProgressId = _progress;
+	$("#downloadInterface .contentPanel .progress").hide();
 
 	// message
 	alert("已成功上傳檔案至 DocuSky。");
@@ -368,6 +466,8 @@ function succUploadFunc() {
 
 /* ---
 fail function of uploadXML2DocuSky()
+INPUT: none
+OUTPUT: none
 --- */
 function failUploadFunc() {
 	alert("上傳失敗，建議將已製作完畢檔案先下載至本機。");

@@ -4,11 +4,10 @@
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8;"/>
 	<link rel="icon" href="images/docusky_icon.png">
-	<title>CSV/XLS to DocuXML Converter</title>
+	<title>表格文本轉換工具</title>
 
 	<!-- ASSETS -->
 	<script src="assets/jquery.min.js"></script>
-	<script src="https://oss.sheetjs.com/sheetjs/xlsx.full.min.js"></script>
 
 	<!-- CSS FILE -->
 	<link href="css/main-style.css" type="text/css" rel="stylesheet">
@@ -28,7 +27,10 @@
 <body>
 
 	<!-- usage explain -->
-	<div id="explainText" style="display: none;"></div>
+	<div id="explainText" style="display: none;">
+		<div class="explainDirectory tableList"></div>
+		<div class="explainContent"></div>
+	</div>
 
 	<!-- light box -->
 	<div id="lightbox">
@@ -49,13 +51,13 @@
 				<span class="tooltip-text">使用說明</span>
 			</span>
 		</span>
-		<span id="mydb" class="glyphicon glyphicon-cloud" onclick="window.open('https://docusky.org.tw/DocuSky/docuTools/userMain/')">
+		<span class="glyphicon glyphicon-cloud" onclick="window.open('../../docuTools/userMain/')">
 			<span class="tooltip-box">
 				<span class="arrow-t"></span>
 				<span class="tooltip-text">我的資料庫</span>
 			</span>
 		</span>
-		<span id="docusky" class="glyphicon glyphicon-home" onclick="window.open('https://docusky.org.tw/DocuSky/ds-01.home.html')">
+		<span class="glyphicon glyphicon-home" onclick="window.open('../../ds-01.home.html')">
 			<span class="tooltip-box">
 				<span class="arrow-t"></span>
 				<span class="tooltip-text">回首頁</span>
@@ -72,7 +74,7 @@
 
 		<!-- header -->
 		<div id="toolName">
-			<h1 class="text-center">CSV/Excel to DocuXML 格式轉換工具</h1>
+			<h1 class="text-center">表格文本轉換工具</h1>
 			<hr>
 
 			<!-- page setting -->
@@ -94,9 +96,10 @@
 		<!-- tool -->
 		<div id="toolWrapper">
 
-			<!-- step 1: -->
+			<!-- step 1 -->
 			<div id="uploadInterface" class="panelWrapper current">
 				
+				<!-- explain -->
 				<div class="explainPanel bg-warning">
 					<h2 class="text-center">Step 1: 上傳 CSV/Excel 檔案</h2>
 					<div>
@@ -106,9 +109,15 @@
 							<li>若輸入含有<b class="text-info">合併儲存格</b>的檔案，除了第一個儲存格外，其他合併之儲存格將會是<b class="text-danger">空白</b>。</li>
 						</ul>
 					</div>
-					<img src="images/progress.gif" style="display: none; margin: 0 30%; width: 40%;">
+					
+					<div class="progress progress-striped active" style="width: 60%; margin-bottom: 10px">
+						<div class="progress-bar progress-bar-info" role="progressbar" style="width: 50%;">
+							<span>50 %</span>
+						</div>
+					</div>
 				</div>
 
+				<!-- tool bar -->
 				<div id="uploadToolBar">
 					<button id="selectAll" type="button" class="btn btn-default">全選</button>
 					<button id="selectReverse" type="button" class="btn btn-default">反向選取</button>
@@ -116,6 +125,7 @@
 					<button id="deleteSelect" type="button" class="btn btn-default">將選取者刪除</button>
 				</div>
 
+				<!-- content -->
 				<div id="fileManager" class="contentPanel">
 					<label class="uploadCover emptyCover">
 						<input id="uploadInput" type="file" name="uploadInput" accept=".csv, .xls, .xlsx" multiple/>
@@ -129,6 +139,7 @@
 			<!-- step 2 -->
 			<div id="requiredInterface" class="panelWrapper">
 				
+				<!-- explain -->
 				<div class="explainPanel bg-warning">
 					<h2 class="text-center">Step 2: 詮釋資料<b class="text-danger">必填</b>欄位對應設定（選 EXCEL 欄位）</h2>
 					<div>
@@ -136,12 +147,11 @@
 							<li>每份文件必具備所屬的<b class="text-info">文獻集名稱</b>、<b class="text-info">唯一編號</b>。</li>
 							<li>請確實填寫本頁再繼續。</li>
 							<li>此頁送出後<b class="text-danger">不可更改</b>，請確認後再移往下一步驟。</li>
-							<li>按下一步進行後續設定，若檔案數量眾多，需稍等候。</li>
 						</ul>
 					</div>
-					<img src="images/progress.gif" style="display: none; margin: 0 30%; width: 40%;">
 				</div>
 
+				<!-- content -->
 				<div class="contentPanel multisetting">
 
 					<div class="tableList">
@@ -157,6 +167,7 @@
 			<!-- step 3 -->
 			<div id="optionalInterface" class="panelWrapper">
 
+				<!-- explain -->
 				<div class="explainPanel bg-warning">
 					<h2 class="text-center">Step 3: 詮釋資料<b class="text-danger">選填</b>欄位對應設定（選系統預設欄位）</h2>
 					<div>
@@ -167,6 +178,7 @@
 					</div>
 				</div>
 
+				<!-- content -->
 				<div class="contentPanel multisetting">
 					
 					<div class="tableList">
@@ -182,6 +194,7 @@
 			<!-- step 4 -->
 			<div id="customInterface" class="panelWrapper">
 
+				<!-- explain -->
 				<div class="explainPanel bg-warning">
 					<h2 class="text-center">Step 4: 自訂詮釋資料</h2>
 					<div>
@@ -193,6 +206,7 @@
 					</div>
 				</div>
 
+				<!-- content -->
 				<div class="contentPanel multisetting">
 					
 					<div class="tableList">
@@ -208,35 +222,25 @@
 			<!-- step 5 -->
 			<div id="contentInterface" class="panelWrapper">
 
+				<!-- explain -->
 				<div class="explainPanel bg-warning">
 					<h2 class="text-center">Step 5: 添加文件內文</h2>
 					<div>
 						<ul>
 							<li>額外上傳之文件檔案，請用 <b class="text-info">.txt</b> 純文字檔，並以 <b class="text-danger">UTF-8</b> 編碼格式儲存檔案，避免出現亂碼。</li>
 							<li>此步驟僅將所提供之文檔併入 XML 中，內文、多值欄位、註解、事件之編寫，欄位內容需符合 <a href="https://docusky.org.tw/DocuSky/documentation/docs/DocuXml-1.2-Scheme.html#%E5%85%A7%E6%96%87XML" target="_blank">DocuXML</a> 標準。</li>
-							<li>按下一步即開始轉換，若檔案較大，需稍等候。</li>
 						</ul>
 					</div>
-					<img src="images/progress.gif" style="display: none; margin: 0 30%; width: 40%;">
 				</div>
 
+				<!-- content -->
 				<div class="contentPanel multisetting">
 
 					<div class="tableList">
 						<ul class="list-group text-center"></ul>
 					</div>
 
-					<div class="settingPanel">
-						<div class="txtFilesHeader fixed">
-							<span>檔名</span>
-							<span>狀態</span>
-							<span>檢視</span>
-							<span>操作</span>
-						</div>
-						<input id="singleTXT" type="file" accept=".txt" onchange="uploadSingleTXT(this, true)" style="display: none;"/>
-						<input id="multiTXT" type="file" accept=".txt" onchange="uploadMultiTXT(this)" style="display: none;" multiple/>
-						<input id="wholeTXT" type="file" accept=".txt" onchange="uploadWholeTXT(this)" style="display: none;"/>
-					</div>
+					<div class="settingPanel"></div>
 
 				</div>
 				
@@ -245,6 +249,7 @@
 			<!-- step 6 -->
 			<div id="downloadInterface" class="panelWrapper">
 
+				<!-- explain -->
 				<div class="explainPanel bg-warning">
 					<h2 class="text-center">Step 6: 輸出 DocuXML 檔案</h2>
 					<div>
@@ -252,25 +257,32 @@
 							<li><b class="text-danger">請記得下載一份檔案到本地端做備份。</b></li>
 						</ul>
 					</div>
+
+					<div class="progress progress-striped active" style="width: 60%; margin-bottom: 10px">
+						<div class="progress-bar progress-bar-info" role="progressbar" style="width: 50%;">
+							<span>50 %</span>
+						</div>
+					</div>
 				</div>
 
-				<div class="contentPanel">
+				<!-- content -->
+				<div class="contentPanel" style="margin-top: 1%; overflow-y: scroll;">
 					
-					<div id="ouputFilename" class="input">
+					<div id="outputFilename" class="input">
 						<h3>輸出檔案名稱</h3>
-						<input type="text" name="ouputFilename" value="我的文獻集">
+						<input type="text">
 						<button type="button" class="btn btn-default">下載</button>
 					</div>
 
 					<div id="databaseName" class="input">
 						<h3>資料庫名稱</h3>
-						<input type="text" name="databaseName">
+						<input type="text">
 						<button type="button" class="btn btn-default">建庫到 DocuSky 上</button>
 					</div>
 
-		            <div class="progress" style="height: 5%; margin: 1%; display: none;">
-						<div class="progress-bar progress-bar-info" role="progressbar" style="width: 0%; display: grid; align-items: center;">
-							<span style="font-size: medium;">0 %</span>
+		            <div class="progress progress-striped active" style="margin: 1%;">
+						<div class="progress-bar progress-bar-info" role="progressbar" style="width: 0%;">
+							<span>0 %</span>
 						</div>
 					</div>
 
@@ -300,6 +312,7 @@
 
 	<!-- JAVASCRIPT FILE -->
 	<script src="js/globalVar.js"></script>
+	<script src="js/checker.js"></script>
 	<script src="js/fileLoading.js"></script>
 	<script src="js/dataProcess.js"></script>
 	<script src="js/display.js"></script>

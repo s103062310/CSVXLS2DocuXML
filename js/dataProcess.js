@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 This file defined the functions that used file data or setting 
-data to process output result, including generating and checking.
+data to dynamicly process output data.
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 
@@ -8,82 +8,44 @@ data to process output result, including generating and checking.
 
 
 /* ---
-filter empty element in table
-INPUT: object, excel table
-OUTPUT: object, clean excel table
---- */
-function filterEmptyEntry($content) {
-	for (let i = $content.length-1; i >= 0; i--) {
-		$.each($content[i], function(key, value) {
-			$content[i][key] = value.toString().trim();
-			if ($content[i][key] === '') delete $content[i][key];
-		});
-		if (Object.keys($content[i]).length === 0) $content.splice(i, 1);
-	}
-
-	return $content;
-}
-
-
-/* ---
-extract header of excel table
-INPUT: object, excel table
-OUTPUT: array, header
---- */
-function extractHeader($content) {
-	var header = [];
-
-	$content.forEach((entry, index) => {
-		$.each(entry, function(key, value) {
-
-			// correct key
-			let newKey = key.toString().replace(/[\s'"]/g, '');
-			if (header.indexOf(newKey) < 0) header.push(newKey);
-
-			// sync key and data
-			if (newKey !== key) {
-				$content[index][newKey] = $content[index][key];
-				delete $content[index][key];
-			}
-		});
-	});
-
-	return header;
-}
-
-
-/* ---
-select target sheet from dataPool into data (used)
+create initialize data in _fileindex, _documents, _corpusSetting
 INPUT: none
-OUTPUT: boolean, valid = true, no select sheet = false
+OUTPUT: none
 --- */
-function selectTable() {
+function generateXMLContainer() {
 
-	// no upload file
-	var sheetNum = $('.fileCover').length;
-	if (sheetNum == 0) {
-		alert("請先上傳 Excel 檔案。");
-		return false;
-	}
+	// each sheet
+	_selectedSheet.forEach(sheet => {
+		_notMatch[sheet] = {};
+		_fileindex[sheet] = {};
 
-	// select green border sheet
-	for (let i = 0; i < $('.fileCover').length; i++) {
-		let tableName = $($('.fileCover')[i]).find('.coverText')[0].innerText;
-		let color = $($('.fileCover')[i]).attr('style').split(' ')[1].split(';')[0];
-		if (color === 'limegreen') {
-			_data[tableName] = _dataPool[tableName];
-			_data.length++;
+		// corpus setting
+		_corpusSetting[sheet] = {
+			corpus: [],
+			metadata: {},
+			tag: []
+		};
+
+		// each document
+		for (let i = 1; i < _dataPool[sheet].length; i++) {
+
+			// record index relationship between _dataPool and _documents
+			_fileindex[sheet][i] = _documents.length;
+
+			// add an empty document
+			_documents.push({
+				attr: { filename: '' },
+				corpus: '',
+				doc_content: { 
+					source: 'null',
+					doc_content: { mapping: [], import: [''] },
+					MetaTags: [],
+					Comment: [],
+					Events: []
+				}
+			});
 		}
-	}
-
-	// no select sheet
-	if (_data.length === 0) {
-		alert("請至少選擇一份資料表。");
-		return false;
-	}
-
-	console.log(_data);
-	return true;
+	});
 }
 
 
@@ -91,115 +53,60 @@ function selectTable() {
 
 
 /* ---
-check if user fill all blank in required metadata setting page
-INPUT: none
-OUTPUT: boolean, all filled = true, not completed = false
---- */
-function checkRequiredPage() {
-	for (let table in _data) {
-
-		// corpus
-		let corpus = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=corpus] button.text-only')[0].innerText;
-		if (corpus === '--- 請選擇 ---') {
-			alert("請填寫資料表「" + table + "」的「文獻集名稱」。");
-			return false;
-		} else if (corpus === '自訂') {
-			let value = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=corpus] input')[0].value.trim();
-			if (value === '') {
-				alert("請填寫資料表「" + table + "」自訂之「文獻集名稱」。");
-				return false;
-			}
-		}
-
-		// filename
-		let filename = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=filename] button.text-only')[0].innerText;
-		if (filename === '--- 請選擇 ---') {
-			alert("請填寫資料表「" + table + "」的「文件檔案名稱」。");
-			return false;
-		} else if (filename === '自動產生檔名') {
-			let value = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=filename] input')[0].value.trim();
-			if (value === '') {
-				alert("請填寫資料表「" + table + "」自訂之「文件檔案名稱」。");
-				return false;
-			}
-		}
-	}
-
-	return true;
-}
-
-
-/* ---
-generate filenames according to required metadata setting
+fill in corpus and filename in each document (filename must be unique in whole xml)
 INPUT: none
 OUTPUT: boolean, filename legal = true, not legal = false
 --- */
-function generateTXTData() {
+function fillRequiredData() {
+	var allFilenames = [];
+	var serial = {};
+	var pass = true;
 
-	// construct data container
-	_txtData = [];
-	var allFiles = [], index = [];
-	for (let table in _data) {
+	// each sheet
+	$('#requiredInterface .settingTab').each(function() {
+		let sheet = $(this).attr('name');
+		let corpusChoice = $(this).find(`.menu[name="corpus"] .text-only`).attr('value');
+		let filenameChoice = $(this).find(`.menu[name="filename"] .text-only`).attr('value');
+		let corpusInput = $(this).find(`.menu[name="corpus"] input`).val().trim();
+		let filenameInput = $(this).find(`.menu[name="filename"] input`).val().trim();
+		serial[filenameInput] = 0;
+		_corpusSetting[sheet].corpus = [];
 
-		// access information
-		let filenameSetting = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=filename] button.text-only');
-		let choice = $(filenameSetting)[0].innerText;
-		let barIndex = choice.indexOf('|');
-		
-		// initialize
-		_txtData[table] = [];
-		_txtData.length++;
-		_txtData[table].length += _data[table].length-1;
+		// each document
+		for (let i = 1; i < _dataPool[sheet].length; i++) {
+			let corpus, filename;
+			let index = _fileindex[sheet][i];
 
-		// auto generate
-		if (barIndex == -1) {
-			let inputSetting = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=filename] input');
-			let prefix = $(inputSetting)[0].value.trim();
-			if (!(prefix in index)) index[prefix] = 1;
-			for (let i=0; i<_data[table].length-1; i++) {
-				_txtData[table][generateFilename(prefix, index[prefix])] = {};
-				index[prefix]++;
-			}
-			
-		// header
-		} else {
-			let header = choice.substring(barIndex + 2, choice.length);
-			for (let row in _data[table]) {
-				if (row == 0) continue;
+			// corpus
+			if (itemInList(corpusChoice, _custom)) corpus = corpusInput;						// 自訂
+			else if (!itemInList(corpusChoice, _dataPool[sheet][0])) corpus = corpusChoice;		// 檔案名稱 or 資料表名稱
+			else corpus = normalizeData(_dataPool[sheet][i][corpusChoice]);						// 欄位名稱
 
-				// filename process
-				let filename = _data[table][row][header].toString().replace(/\n/g, '').trim().split('.')[0];
+			// corpus setting
+			if (!itemInList(corpus, _corpusSetting[sheet].corpus)) _corpusSetting[sheet].corpus.push(corpus);
 
-				// check if filename legal
-				if (allFiles.indexOf(filename) >= 0) {
-					alert("資料表「 " + table + " 」檔名不唯一。");
-					return false;
-				} else {
-					_txtData[table][filename] = {};
-					allFiles.push(filename);
-				}
-			}
+			// filename
+			if (itemInList(filenameChoice, _custom)) {
+				serial[filenameInput]++;
+				filename = strPlusNum(filenameInput, serial[filenameInput], 4);			// 自動產生檔名
+			} else filename = normalizeFilename(_dataPool[sheet][i][filenameChoice]);	// 欄位名稱
+
+			// filename not unique
+			if (itemInList(filename, allFilenames)) {
+				alert(`資料表「 ${ sheet } 」檔名不唯一。`);
+				pass = false;
+				return false;	// break
+
+			// record filename
+			} else allFilenames.push(filename);
+
+			// document content
+			_documents[index].attr.filename = filename;
+			_documents[index].corpus = corpus;
 		}
-	}
+	});
 
-	console.log(_txtData);
-	return true;
-}
-
-
-/* ---
-auto generate filenames according to prefix
-INPUT: 1) string, prefix
-       2) int, index
-OUTPUT: string, filename e.g. - prefix_0001
---- */
-function generateFilename($prefix, $index) {
-	var index = $index.toString();
-	var oriLen = index.length;
-	if (index.length < 4) {
-		for (let i=0; i<4-oriLen; i++) index = '0' + index;
-	}
-	return $prefix + '_' + index;
+	return pass;
 }
 
 
@@ -207,32 +114,62 @@ function generateFilename($prefix, $index) {
 
 
 /* ---
-check if user select the same metadata in optional setting page
-INPUT: none
-OUTPUT: boolean, valid = true, repeated = false
+remove an optional metadata (tag + value) - _documents, _corpusSetting
+INPUT: string, metadata name whose setting is cancelled
+OUTPUT: none
 --- */
-function checkOptionalPage() {
-	for (let table in _data) {
+function cancelOptionalMetadata($metaname) {
+	if ($metaname === 'null') return;
 
-		// check for each table
-		let selectMeta = {};
-		let blocks = $('#optionalInterface .settingTab[key=\'' + table + '\'] > div');
-		for (let i=0; i<blocks.length; i++) {
+	// corpus setting
+	delete _corpusSetting[_sheet].metadata[$metaname];
 
-			// information for each block
-			let blockName = $(blocks[i]).attr('name');
-			let metadata = $(blocks[i]).find('.text-only')[0].innerText;
-			if (metadata == '--- 請選擇 ---') continue;
+	// each file in target sheet
+	Object.values(_fileindex[_sheet]).forEach(index => {
+		delete _documents[index][$metaname];
+	});
+}
 
-			// unique
-			if (metadata in selectMeta) {
-				alert("「" + selectMeta[metadata] + "」與「" + blockName + "」皆被選為「" + metadata + "」。\n每種 Metadata 只能被選擇一次。");
-				return false;
 
-			} else selectMeta[metadata] = blockName;
-		}
+/* ---
+create an optional metadata (tag + value) - _documents, _corpusSetting
+INPUT: 1) string, metadata name which is setting
+	   2) string, setting value that user select
+OUTPUT: none
+--- */
+function setOptionalMetadata($metaname, $header) {
+	if ($metaname === 'null') return true;
+
+	// metadata has already set (same metadata cannot choose twice)
+	if ($metaname in _documents[_fileindex[_sheet][1]]) {
+		let prevMenu;
+
+		// find prev menu which user set the same metadata
+		$(`#optionalInterface .settingTab.target .text-only`).each(function() {
+			if ($(this).attr('value') === $metaname) {
+				prevMenu = this;
+				return false;	// break
+			}
+		});
+
+		// cancel setting in prev menu
+		if (confirm(`「 ${ _metadata[$metaname].chinese } 」已被「 ${ $(prevMenu.parentElement.parentElement).attr('name') } 」選擇，確定要覆蓋設定嗎？`)) {
+			$(prevMenu).attr('value', 'null');
+			$(prevMenu).html($(prevMenu.parentElement).find('li[value="null"]').html());
+
+		// cancel setting this item
+		} else return false;
 	}
-	
+
+	// corpus setting
+	if (_metadata[$metaname].postclass) _corpusSetting[_sheet].metadata[$metaname] = $header;
+
+	// each file in target sheet
+	for (let i in _fileindex[_sheet]) {
+		let j = _fileindex[_sheet][i];
+		_documents[j][$metaname] = normalizeData(_dataPool[_sheet][i][$header]);
+	}
+
 	return true;
 }
 
@@ -241,53 +178,50 @@ function checkOptionalPage() {
 
 
 /* ---
-check if user fill complete information
+clear all custom metadata in _documents
 INPUT: none
-OUTPUT: boolean, filled = true, not completed = false
+OUTPUT: none
 --- */
-function checkCustomPage() {
-	for (let table in _data) {
+function resetCustomMetadata() {
+	for (let i = 0; i < _documents.length; i++) delete _documents[i].xml_metadata;
+}
 
-		// check for each table
-		customMeta = {};
-		let blocks = $('#customInterface .settingTab[key=\'' + table + '\'] .customObj');
-		for (let i=0; i<blocks.length; i++) {
 
-			// format
-			let name = $(blocks[i]).find('input[name=metaName]')[0].value.trim();
-			if (name === '') {
-				alert("請填寫第 " + (i+1).toString() + " 個自訂詮釋資料的欄位名稱。");
-				return false;
-			} else if (!checkStr(name)) {
-				alert("在第 " + (i+1).toString() + " 個自訂詮釋資料中，請使用半形英文定義欄位名稱。");
-				return false;
-			}
+/* ---
+create a custom metadata - _documents
+INPUT: 1) string, sheet name
+	   2) string, custom metadata name
+	   3) string, data setting value that user select
+	   4) boolean, if the metadata have a link
+	   5) string, (if has link) link data setting value that user select
+OUTPUT: none
+--- */
+function setCustomMetadata($sheet, $metaname, $metachoice, $haslink, $linkchoice) {
 
-			// unique
-			if (name in customMeta) {
-				alert("第 " + (customMeta[name]).toString() + " 、" + (i+1).toString() + " 個自訂詮釋資料名稱同為「" + name + "」。\n請取不同的名字。");
-				return false;
-			} else customMeta[name] = i + 1;
+	// each document
+	for (let i in _fileindex[$sheet]) {
+		let j = _fileindex[$sheet][i];
+		let data = normalizeData(_dataPool[$sheet][i][$metachoice]);
 
-			// data
-			let choicedata = $(blocks[i]).find('.text-only')[0].innerText;
-			if (choicedata === '--- 請選擇 ---') {
-				alert("請選擇第 " + (i+1).toString() + " 個自訂詮釋資料的資料對應欄位。");
-				return false;
-			}
+		// create xml_metadata
+		if (!('xml_metadata' in _documents[j])) _documents[j].xml_metadata = {};
 
-			// hyper link
-			if ($(blocks[i]).find('input[name=link]')[0].checked) {
-				let choicelink = $(blocks[i]).find('.text-only')[1].innerText;
-				if (choicelink === '--- 請選擇 ---') {
-					alert("請選擇第 " + (i+1).toString() + " 個自訂詮釋資料的超連結資料。");
-					return false;
+		// add link
+		if ($haslink) {
+			data = {
+				a: {
+					attr: {
+						target: '_blank',
+						href: normalizeData(_dataPool[$sheet][i][$linkchoice])
+					},
+					value: data
 				}
-			}
+			};
 		}
-	}
 
-	return true;
+		// add a custom metadata
+		_documents[j].xml_metadata['Udef_' + $metaname] = data;
+	}
 }
 
 
@@ -295,34 +229,52 @@ function checkCustomPage() {
 
 
 /* ---
-check if user fill complete information
-INPUT: none
-OUTPUT: boolean, filled = true, not completed = false
+update doc_content source - _documents
+INPUT: string, doc_content data source, mapping or import
+OUTPUT: none
 --- */
-function checkContentPage() {
-	for (let table in _data) {
+function setDocContentSource($value) {
+	for (let i in _fileindex[_sheet]) {
+		let j = _fileindex[_sheet][i];
+		_documents[j].doc_content.source = $value;
+	}
+}
 
-		let panel = $('#contentInterface .settingTab[key="' + table + '"] .tagTab[key=MetaTags]');
-		if ($(panel).find('.contentMapping .text-only')[0].innerText === '--- 請選擇 ---') continue;
 
-		let blocks = $(panel).find('.contentMapping .selectObj > input');
-		for (let i=0; i<blocks.length; i++) {
-			let name = blocks[i].value.trim();
-			console.log(name);
+/* ---
+update corresponding mapping data - _document[j].doc_content, _corpusSetting[sheet].tag
+INPUT: 1) int, xth mapping object in UI
+	   2) string, data setting value that user select
+OUTPUT: boolean, success = true, fail = false, success will influence if UI to change
+--- */
+function setDocContent($index, $header) {
+	let tag = $('#contentInterface .settingTab.target .tagTab.target').attr('name');
 
-			// filled
-			if (name == '') {
-				alert("請填寫 MetaTags 標籤名稱。（位置：資料表 -> " + table + " 第 " + (i+1).toString() + " 項）");
+	// corpus setting
+	if (tag === 'MetaTags') _corpusSetting[_sheet].tag[$index].title = $header;
+
+	// each document
+	for (let i in _fileindex[_sheet]) {
+		let j = _fileindex[_sheet][i];
+		let content = ($header in _dataPool[_sheet][i]) ?_dataPool[_sheet][i][$header] :'';
+		content = content.toString().trim();
+
+		// document content
+		if (tag === 'doc_content') {
+
+			// content not wellform
+			if (!checkWellForm(content)) {
+				alert(`資料表「 ${ _sheet } 」的第 ${ i } 筆資料內容 (${ _documents[j].attr.filename }) 不符合 well form 格式。`);
 				return false;
 			}
 
-			// format
-			if (!checkStr(name)) {
-				alert("請使用半形英文填寫 MetaTags 標籤名稱。（位置：資料表 -> " + table + " 第 " + (i+1).toString() + " 項）");
-				return false;
-			}
-		}
-		
+			_documents[j].doc_content.doc_content.mapping[$index] = normalizeContent(content);
+
+		// metatags
+		} else if (tag === 'MetaTags') _documents[j].doc_content.MetaTags[$index].data = normalizeItems(content);
+
+		// comment & events
+		else _documents[j].doc_content[tag][$index] = normalizeItems(content);
 	}
 
 	return true;
@@ -330,264 +282,91 @@ function checkContentPage() {
 
 
 /* ---
-convert excel to DocuXML according to settings in the tool
+convert json (_documents) to DocuXML
 INPUT: none
-OUTPUT: boolean, convert success = true, fail = false
+OUTPUT: none
 --- */
 function convertToXML() {
+	var worker = new Worker('js/worker.js');
 
-	// reset
-	let info = {'sheetOrder': 0, 'sheetNum': _data.length};
-	_xml = '<?xml version=\'1.0\'?>\n<ThdlPrototypeExport>\n<documents>\n';
-	$('#XMLoutput').empty();
+	// reset progress bar
+	_progress = {};
+	updateProgress('#downloadInterface .explainPanel');
 
-	// process for each table
-	for (let table in _data) {
-		let corpusElement = $('#requiredInterface .settingTab[key=\'' + table + '\'] .menu[name=corpus]');
-		let corpusSetting = $(corpusElement).find('button.text-only')[0].innerText;
-		let corpusSetType = corpusSetting.split('|')[0].trim();
-		let metadataElement = $('#optionalInterface .settingTab[key=\'' + table + '\'] > .menu');
-		let customElement = $('#customInterface .settingTab[key="' + table + '"] .customObj');
+	// receive
+	worker.addEventListener('message', function($event) {
 
-		// progress info
-		info['fileOrder'] = 0;
-		info['fileNum'] = _data[table].length;
+		/* data structure {
+			func: functions,
+			percentage: percentage, (func = progress)
+			content: xml string (func = finish)
+		} */
 
-		// writing xml
-		for (let file in _data[table]) {
-			if (file == 0) continue;
+		let func = $event.data.func;
 
-			// extract corpus name
-			let corpus = '';
-			if (corpusSetType === '自訂') {
-				corpus = $(corpusElement).find('input')[0].value.trim();
-			} else if (corpusSetType === '檔案名稱' || corpusSetType === '資料表名稱') {
-				corpus = corpusSetting.split('|')[1].trim();
-			} else if (corpusSetType === '欄位名稱') {
-				let header = corpusSetting.split('|')[1].trim();
-				corpus = _data[table][file][header];
-			}
-
-			if (corpus === '') {
-				alert("程式錯誤：未找到 corpus name 的設定。\n請洽詢工程師。");
-				return false;
-			}
-
-			// extract filename
-			let filename = Object.keys(_txtData[table])[file-1];
-
-			if (filename === undefined) {
-				alert("程式錯誤：未找到 file name 的設定。\n請洽詢工程師。");
-				return false;
-			}
-			
-			_xml += '<document filename="' + filterChar(filename) + '">\n<corpus>' + filterChar(corpus) + '</corpus>\n';
-
-			// extract metadata
-			for (let m=0; m<metadataElement.length; m++) {
-				let metaSetting = $($(metadataElement)[m]).find('button.text-only')[0].innerText;
-				if (metaSetting === '--- 請選擇 ---') continue;
-
-				let header = $($(metadataElement)[m]).attr('name');
-				let metaValue = _data[table][file][header];
-				if (metaValue === undefined) continue;
-				
-				let metadata = filterChar(metaSetting.split('|')[1].trim());
-				_xml += '<' + metadata + '>' + filterChar(metaValue) + '</' + metadata + '>\n';
-			}
-
-			// custom metadata
-			let customMetaXML = '';
-			for (let m=0; m<customElement.length; m++) {
-				let obj = $(customElement)[m];
-				let metadata = 'Udef_' + filterChar($(obj).find('input[name=metaName]')[0].value.trim());
-				let header = $(obj).find('.text-only')[0].innerText;
-				let value = filterChar(_data[table][file][header]);
-				if (value === undefined) continue;
-
-				// hyper link
-				if ($(obj).find('input[name=link]')[0].checked) {
-					let linkHeader = $(obj).find('.text-only')[1].innerText;
-					let linkValue = filterChar(_data[table][file][linkHeader]);
-					value = '<a href="' + linkValue + '" trget="_blank">' + value + '</a>';
-				}
-
-				customMetaXML += '<' + metadata + '>' + value + '</' + metadata + '>\n';
-			}
-			if (customMetaXML != '') _xml += '<xml_metadata>\n' + customMetaXML + '</xml_metadata>\n';
-			
-			// append document content
-			let contentXML = ''
-			for (let tag in _contentTags) {
-				let source = (tag === 'doc_content') ?$('#contentInterface .settingTab[key=\'' + table + '\'] .tagTab[key=doc_content] div[name=contentSource] button.text-only')[0].innerText :'CSV/Excel 欄位';
-				if (source === '--- 請選擇 ---') continue;
-				
-				// mapping
-				else if (source === 'CSV/Excel 欄位') {
-					let mappingElement = $('#contentInterface .settingTab[key=\'' + table + '\'] .tagTab[key=\'' + tag + '\'] .contentMapping .selectObj');
-					let content = "";
-
-					// concate content text
-					for (let m=0; m<mappingElement.length; m++) {
-						let header = $($(mappingElement)[m]).find('button.text-only')[0].innerText;
-						let text = filterChar(_data[table][file][header]);
-						if (text !== undefined) {
-							
-							if (tag === 'doc_content') {
-								if (mappingElement.length > 1) content += '<Paragraph>' + text + '</Paragraph>\n';
-								else content += text + '\n';
-
-							} else if (tag === 'MetaTags') {
-								let name = $(mappingElement).find('input')[m].value.trim();
-								content += generateTagContent(text, 'Udef_' + name, []);
-
-							} else if (tag === 'Comment') {
-								content += generateTagContent(text, 'CommentItem', ['Category']);
-
-							} else if (tag === 'Events') {
-								content += generateTagContent(text, 'Event', ['Title']);
-
-							} else {
-								alert("程式錯誤：偵測到未知 tag。\n請洽詢工程師。");
-								return false;
-							}
-						}
-					}
-
-					// check well form
-					if (content !== "") {
-						if (checkWellForm(content)) contentXML += beginTag(tag) + content + endTag(tag);
-						else {
-							alert("內文需是 well-form 格式。（位置：資料表 -> " + table + "；文件 -> " + file + "；項目 -> " + tag + "）");
-							return false;
-						}
-						
-					}
-
-				// import
-				} else if (source === '匯入純文字檔') {
-					let content = filterChar(_txtData[table][filename][tag]);
-					if ( content !== undefined) {
-						if (checkWellForm(content)) contentXML += beginTag(tag) + content + endTag(tag);
-						else {
-							alert("內文需是 well-form 格式。（位置：資料表 -> " + table + "；文件 -> " + file + "；內容 -> " + tag + "）");
-							return false;
-						}
-					}
-				}
-			}
-			
-			_xml += '<doc_content>\n' + contentXML + '</doc_content>\n</document>\n';
-			updateProgress(info, 'content');
-			info['fileOrder']++;
+		// display progress bar
+		if (func === 'progress') {
+			_progress.xml = $event.data.percentage;
+			updateProgress('#downloadInterface .explainPanel');
+			return;
+		
+		// receive convert result
+		} else if (func === 'finish') {
+			_xml = $event.data.content;
+			$('#XMLoutput').html(`<xmp>${ _xml }</xmp>`);
 		}
 
-		info['sheetOrder']++;
+	}, false);
+
+	// send
+	worker.postMessage({ 
+		func: 'convert',
+		content: _documents,
+		corpusSetting: flatCorpusSetting()
+	});
+
+	// name
+	$('#outputFilename input').val('我的文獻集-' + now());
+	$('#databaseName input').val('DB-' + now());
+}
+
+
+/* ---
+convert _corpusSetting to specific format (easy to convert to DocuXML)
+INPUT: none
+OUTPUT: object, flatted _corpusSetting
+--- */
+function flatCorpusSetting() {
+	var setting = {};
+
+	// each sheet setting
+	for (let sheet in _corpusSetting) {
+		let sheetObj = _corpusSetting[sheet];
+
+		// each corpus
+		sheetObj.corpus.forEach(corpusname => {
+
+			// new corpus
+			if (!(corpusname in setting)) setting[corpusname] = { metadata: {}, tag: {} };
+			
+			// metadata
+			for (let meta in sheetObj.metadata) {
+				setting[corpusname].metadata[meta] = {
+					attr: {
+						show_spotlight: 'Y',
+						display_order: '999'
+					},
+					value: sheetObj.metadata[meta]
+				};
+			}
+
+			// tag
+			_corpusSetting[sheet].tag.forEach(tagObj => {
+				setting[corpusname].tag[tagObj.name] = tagObj.title;
+			});
+		});
 	}
 
-	_xml += '</documents>\n</ThdlPrototypeExport>\n';
-
-	// display
-	$('#XMLoutput').append('<xmp>' + _xml + '</xmp>');
-	return true;
+	return setting;
 }
 
-
-/* ---
-generate begin segment of specific tag
-INPUT: string, tag type
-OUTPUT: string, corresponsed begin segment
---- */
-function beginTag($tag) {
-	if ($tag === 'doc_content') return '';
-	else if ($tag === 'MetaTags') return '<MetaTags NoIndex="1">\n';
-	else if ($tag === 'Comment') return '<Comment>\n';
-	else if ($tag === 'Events') return '<Events NoTagAnalysis="1">\n';
-}
-
-
-/* ---
-generate end segment of specific tag
-INPUT: string, tag type
-OUTPUT: string, corresponsed end segment
---- */
-function endTag($tag) {
-	if ($tag === 'doc_content') return '\n';
-	else if ($tag === 'MetaTags') return '</MetaTags>\n';
-	else if ($tag === 'Comment') return '</Comment>\n';
-	else if ($tag === 'Events') return '</Events>\n';
-}
-
-
-/* ---
-generate tag content xml
-INPUT: 1) string, text
-	   2) string, tag name
-	   3) array, attributes
-OUTPUT: string, metatags xml
---- */
-function generateTagContent($text, $tagName, $attrs) {
-	
-	attr = "";
-	for (a in $attrs) attr += ' ' + $attrs[a] + '="default"';
-
-	xml = "";
-	items = $text.split(';');
-	for (i in items) xml += '<' + $tagName + attr + '>' + items[i] + '</' + $tagName + '>\n';
-	return xml;
-}
-
-
-/* ---
-check if content text is well form
-INPUT: string, content text
-OUTPUT: boolean, well form = true, not well form = false
---- */
-function checkWellForm($content) {
-	var stack = [];
-	var i = $content.indexOf('<', 0);
-
-	// go through whole 
-	while (i < $content.length && i !== -1) {
-		let tagPosEnd = $content.indexOf('>', i);
-		let tagStr = $content.substring(i + 1, tagPosEnd).trim();
-		let tagName = tagStr.split(' ')[0];
-		i = $content.indexOf('<', tagPosEnd);
-
-		// <xxx/>
-		if (tagStr[tagStr.length-1] !== '/') {
-			
-			// </xxx>
-			if (tagName[0] === '/') {
-				let tag = stack.pop();
-				if ('/'+tag !== tagName) return false;
-			
-			// <xxx>
-			} else stack.push(tagName);
-		}
-	}
-
-	return true;
-}
-
-
-/* ---
-generate tag content xml
-INPUT: string, text
-OUTPUT: string, metatags xml
---- */
-function filterChar($str) {
-
-	// undefined
-	if ($str === undefined) return $str;
-
-	// check type
-	if (typeof $str != 'string') $str = $str.toString();
-
-	var str = $str.replace(/&/g, '&amp;')	// This MUST be the 1st replacement.
-				  .replace(/'/g, '&apos;')	// The 4 other predefined entities, required.
-				  .replace(/"/g, '&quot;')
-				  .replace(/</g, '&lt;')
-				  .replace(/>/g, '&gt;');
-	return str;
-}

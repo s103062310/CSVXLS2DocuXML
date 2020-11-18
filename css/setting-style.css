@@ -9,7 +9,7 @@ input::placeholder {
 /* ----- TABLE LIST ----- */
 
 .tableList {
-	overflow: scroll;
+	overflow-y: scroll;
 }
 
 .tableList li {
@@ -59,9 +59,7 @@ input::placeholder {
 
 .btn-group ul {
 	width: 100%;
-	max-height: 30vh;
-	overflow: scroll;
-	margin: 5px;
+	overflow-y: scroll;
 }
 
 .btn-group li {
@@ -130,6 +128,7 @@ li.selected:hover {
 }
 
 .menu input {
+	height: 36px;
 	grid-area: text;
 	font-size: medium;
 	padding: 5px;
@@ -158,7 +157,8 @@ li.postClass.selected:hover {
 .metahintbox {
 	position: fixed;
 	width: 20vw;
-	margin: 16vh 0 0 29vw;
+	margin-top: 12%;
+	margin-left: 30vw;
 	border: 1px solid silver;
 	border-radius: 5px;
 	background-color: whitesmoke;
@@ -226,13 +226,17 @@ li.postClass.selected:hover {
 }
 
 .customObj > span:nth-child(3) {
+	display: flex;
+	flex-direction: row-reverse;
+}
+
+.customObj .glyphicon-trash {
 	color: darkgray;
 	font-size: large;
-	text-align: right;
 	padding: 5px;
 }
 
-.customObj > span:nth-child(3):hover {
+.customObj .glyphicon-trash:hover {
 	color: gray;
 	cursor: pointer;
 }

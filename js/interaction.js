@@ -7,20 +7,16 @@ This file defined the functions that interact with user.
 
 
 /* ---
-click previous page
+click previous page button (some switch limit are defined)
+INPUT: none
+OUTPUT: none
 --- */
 $('#prevPage').click(function() {
 
-	// switch limit
 	// required -> upload
 	if (_current === _procedure[1]) {
-		if (!confirm("返回上傳介面將會清空所有設定，確定返回？\n（若想製作一份新文本，請按頁面重整按鈕。）")) return;
-		resetUploadData();
-
-	// optional -> required
-	} else if (_current === _procedure[2]) {
-		if (!confirm("返回必填詮釋資料設定介面將會清空從外部匯入的內文純文字資料，確定返回？\n（若想製作一份新文本，請按頁面重整按鈕。）")) return;
-		resetRequiredData();
+		if (!confirm("返回上一步將會清空本頁設定，確定返回？\n（若想製作一份新文本，請按頁面重整按鈕。）")) return;
+		resetSetting();
 	}
 
 	// switch
@@ -30,70 +26,58 @@ $('#prevPage').click(function() {
 
 
 /* ---
-click next page
+click next page button (some switch limit are defined)
+INPUT: none
+OUTPUT: none
 --- */
 $('#nextPage').click(function() {
+	switch (_current) {
 
-	// switch limit
-	// upload -> required
-	if (_current === _procedure[0]) {
-		if (selectTable() == false) return;
+		// upload -> required
+		case _procedure[0]:
+			if (!checkUploadPage()) return;
+			generateXMLContainer();
+			displayTableList();
+			displayRequiredPage();
+			displayOptionalPage();
+			displayCustomPage();
+			displayContentPage();
+			break;
 
-		displayTableList();
-		displayRequiredPage();
-		displayOptionalPage();
-		displayCustomPage();
-		displayContentPage();
-
-		switchTo(_procedure[1], 'next');
-
-	// required -> optional
-	} else if (_current === _procedure[1]) {
-
-		if (checkRequiredPage() == false) return;
-		if (generateTXTData() == false) return;
-
-		_temp['percentage'] = 0;
-		$('#requiredInterface img').show();
-
-		setTimeout(function(){
+		// required -> optional
+		case _procedure[1]:
+			if (!checkRequiredPage()) return;
+			if (!fillRequiredData()) return;
 			displayImportTXT();
-			$('#requiredInterface img').hide();
-			switchTo(_procedure[2], 'next');
-		}, 100);
+			break;
 
-	// optional -> custom
-	} else if (_current === _procedure[2]) {
-		if (checkOptionalPage() == false) return;
-		switchTo(_procedure[3], 'next');
+		// optional -> custom
+		case _procedure[2]:
+			break;
 
-	// custom -> content
-	} else if (_current === _procedure[3]) {
-		if (checkCustomPage() == false) return;
-		switchTo(_procedure[4], 'next');
+		// custom -> content
+		case _procedure[3]:
+			if (!checkandSetCustomPage()) return;
+			break;
 
-	// content -> download
-	} else if (_current === _procedure[4]) {
-		if (checkContentPage() == false) return;
-
-		_temp['percentage'] = 0;
-		$('#contentInterface img').show();
-		setTimeout(function(){
-			if (convertToXML()) {
-				let defaultDBName = now() + '-db';
-				$('#databaseName input').attr('value', defaultDBName);
-				$('#contentInterface img').hide();
-				switchTo(_procedure[5], 'next');
-			}
-		}, 100);
+		// content -> download
+		case _procedure[4]:
+			if (!checkContentPage()) return;
+			convertToXML();
+			break;
 	}
+
+	// switch
+	var index = _procedure.indexOf(_current);
+	switchTo(_procedure[index+1], 'next');
 });
 
 
 /* ---
-switch to specific page
+switch to an interface
 INPUT: 1) string, interface name
-       2) string, direction, prev or next
+	   2) string, direction, prev or next
+OUTPUT: none
 --- */
 function switchTo($interface, $dir) {
 	
@@ -101,8 +85,8 @@ function switchTo($interface, $dir) {
 	if ($('.animating').length > 0) return;
 
 	// set panel
-	$('#' + _current + 'Interface').attr('class', 'panelWrapper exit ' + $dir);
-	$('#' + $interface + 'Interface').attr('class', 'panelWrapper enter ' + $dir);
+	$(`#${ _current }Interface`).attr('class', 'panelWrapper exit ' + $dir);
+	$(`#${ $interface }Interface`).attr('class', 'panelWrapper enter ' + $dir);
 
 	// start animation
 	setTimeout(function() {
@@ -111,17 +95,17 @@ function switchTo($interface, $dir) {
 
 	// update progress bar
 	if ($dir === 'next') {
-		$('#' + _current + ' span').attr('class', 'glyphicon glyphicon-ok');
-		$('#' + _current + '-' + $interface).addClass('target');
-		$('#' + $interface).addClass('target');
-		$('#' + $interface + ' span').addClass('circle');
-		$('#' + $interface + ' span').empty();
+		$(`#${ _current } span`).attr('class', 'glyphicon glyphicon-ok');
+		$(`#${ _current }-${ $interface }`).addClass('target');
+		$(`#${ $interface }`).addClass('target');
+		$(`#${ $interface } span`).addClass('circle');
+		$(`#${ $interface } span`).empty();
 	} else if ($dir === 'prev') {
-		$('#' + _current).removeClass('target');
-		$('#' + _current + ' span').removeClass();
-		$('#' + _current + ' span').append(_procedure.indexOf(_current) + 1);
-		$('#' + $interface + '-' + _current).removeClass('target');
-		$('#' + $interface + ' span').attr('class', 'circle');
+		$(`#${ _current }`).removeClass('target');
+		$(`#${ _current } span`).removeClass();
+		$(`#${ _current } span`).html(_procedure.indexOf(_current) + 1);
+		$(`#${ $interface }-${ _current }`).removeClass('target');
+		$(`#${ $interface } span`).attr('class', 'circle');
 	}
 
 	// update switch button
@@ -132,11 +116,14 @@ function switchTo($interface, $dir) {
 	
 	// stop animation
 	setTimeout(function() {
-		$('#' + _current + 'Interface').attr('class', 'panelWrapper');
-		$('#' + $interface + 'Interface').attr('class', 'panelWrapper current');
+		$(`#${ _current }Interface`).attr('class', 'panelWrapper');
+		$(`#${ $interface }Interface`).attr('class', 'panelWrapper current');
 		$('#toolWrapper').removeClass('animating');
 		_current = $interface;
 	}, 600);
+
+	// access target sheet
+	_sheet = $(`#${ $interface }Interface .settingTab.target`).attr('name');
 }
 
 
@@ -144,7 +131,31 @@ function switchTo($interface, $dir) {
 
 
 /* ---
+click usage button in tool bar and show usage document
+INPUT: none
+OUTPUT: none
+--- */
+$('#usage').click(function() {
+	showLightBox();
+
+	// data
+	var name = `使用說明 
+				<a href="assets/guide.pdf" download="表格文本轉換工具操作手冊.pdf">
+					<span class="glyphicon glyphicon-cloud-download"></span>
+				</a>`;
+	var text = $('#explainText').html();
+
+	// display
+	$('#lightbox-filename > h1').html(name);
+	$('#lightbox-text').html(text);
+	$('#lightbox-text').addClass('explainInterface');
+});
+
+
+/* ---
 click close button in lightbox
+INPUT: none
+OUTPUT: none
 --- */
 $('#lightbox-close').click(function() {
 	if ($('.animating').length > 0) return;	// don't do anything if we are currently animating
@@ -154,60 +165,14 @@ $('#lightbox-close').click(function() {
 
 
 /* ---
-click usage button in right-up screen and show usage document
---- */
-$('#usage').click(function() {
-	var explainContent = $('#explainText').html();
-	$('#lightbox-text').addClass('explainInterface');
-	showLightBox('使用說明 <a href="assets/表格文本轉換工具操作手冊.pdf" download><span class="glyphicon glyphicon-cloud-download"></a></span>', explainContent);
-});
-
-
-/* ---
-show the content of a sheet
-INPUT: show button html element
---- */
-function showSheet($this) {
-	var sheetObj = $this.parentElement.parentElement;
-	var sheet = $(sheetObj).find('.coverText')[0].innerText;
-	var text = displayTable(sheet);
-	showLightBox(sheet, text);
-}
-
-
-/* ---
-show the content of a text file
-INPUT: show button html element
---- */
-function showTXT($this) {
-	var filename = $($this.parentElement).attr('name');
-	var tag = $($this.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement).attr('key');
-	var table = $($this.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement).attr('key');
-
-	// see if have uploaded
-	var status = $($this.parentElement).find('span[func=status]');
-	if ($(status)[0].innerText == '無') alert("請先上傳檔案。");
-	else showLightBox(filename, '<xmp>' + _txtData[table][filename][tag] + '</xmp>');
-}
-
-
-/* ---
 pop out lightbox with animation
-INPUT: 1) string, title
-       2) string, content
+INPUT: none
+OUTPUT: none
 --- */
-function showLightBox($name, $text) {
+function showLightBox() {
 
 	// don't do anything if we are currently animating
 	if ($('.animating').length > 0) return;
-
-	// update sheet name
-	$('#lightbox-filename > h1').empty();
-	$('#lightbox-filename > h1').append($name);
-
-	// update sheet text
-	$('#lightbox-text').empty();
-	$('#lightbox-text').append($text);
 
 	// show up
 	$('#lightbox').css('display', 'block');
@@ -228,117 +193,164 @@ function showLightBox($name, $text) {
 }
 
 
+/* ---
+scroll to correspond explain section
+INPUT: string, selector of target that want to scroll to
+OUTPUT: none
+--- */
+function jumpToSection($selector) {
+	var originY = $('#lightbox h2[key=1]').offset().top;
+	var targetY = $($selector).offset().top;
+
+	// move
+	$('#lightbox .explainContent').animate({
+		scrollTop: targetY - originY
+	}, 600);
+}
+
+
 // * * * * * * * * * * * * * * * * upload * * * * * * * * * * * * * * * * *
 
 
 /* ---
-select all button in tool bar of upload interface
+click select all button in tool bar
+INPUT: none
+OUTPUT: none
 --- */
 $('#selectAll').click(function() {
-	for (let i = 0; i < $('.fileCover').length; i++) {
-		let color = $($('.fileCover')[i]).attr('style').split(' ')[1].split(';')[0];
-		if (color === 'indianred') toggleUsed($($('.fileCover')[i]));
-	}
+	$('.fileCover').each( function(i) {
+		if (!$(this).is('.chose')) toggleUsed(this);
+	});
 });
 
 
 /* ---
-select reverse button in tool bar of upload interface
+click select reverse button in tool bar
+INPUT: none
+OUTPUT: none
 --- */
 $('#selectReverse').click(function() {
-	for (let i = 0; i < $('.fileCover').length; i++) toggleUsed($($('.fileCover')[i]));
+	$('.fileCover').each( function(i) {
+		toggleUsed(this);
+	});
 });
 
 
 /* ---
-delete all button in tool bar of upload interface
+click delete all button in tool bar
+INPUT: none
+OUTPUT: none
 --- */
 $('#deleteAll').click(function() {
-	if (confirm("確定刪除所有資料嗎?")) {
-		_dataPool = [];
-		_dataPool.length = 0;
-		_inputFiles = []
-		_inputFiles.length = 0;
-		$('.fileCover').remove();
-	}
-
-	//console.log(_inputFiles);
-	//console.log(_dataPool);
+	if (!confirm("確定刪除所有資料嗎？")) return;
+	
+	// delete
+	_dataPool = [];
+	_dataPool.length = 0;
+	_inputFiles = []
+	$('.fileCover').remove();
 });
 
 
 /* ---
-delete select button in tool bar of upload interface
+click delete select button in tool bar
+INPUT: none
+OUTPUT: none
 --- */
 $('#deleteSelect').click(function() {
-	if (confirm("確定刪除所有已選取的資料嗎?")) {
-		for (let i = 0; i < $('.fileCover').length; i++) {
-			let color = $($('.fileCover')[i]).attr('style').split(' ')[1].split(';')[0];
-			if (color === 'limegreen') deleteUploadSheet($($('.fileCover')[i]), false);
-		}
-	}
+	if (!confirm("確定刪除所有已選取的資料嗎？")) return;
+	
+	// delete
+	$('.fileCover').each( function(i) {
+		if ($(this).is('.chose')) deleteSheet($(this).attr('name'), false);
+	});
 });
 
 
 /* ---
-toggle sheet item
-INPUT: sheet item html element
+toggle sheet, used or not used
+INPUT: object, html element of sheet block
+OUTPUT: none
 --- */
 function toggleUsed($this) {
-	var ok = $($this).find('.glyphicon-ok')[0];
-	var remove = $($this).find('.glyphicon-remove')[0];
 
 	// ok -> remove
-	if (ok != undefined) {
-		$($this).attr('style', 'border-color: indianred;');
-		$(ok).attr('class', 'glyphicon glyphicon-remove');
+	if ($($this).is('.chose')) {
+		$($this).removeClass('chose');
+		$($this).find('.glyphicon-ok').attr('class', 'glyphicon glyphicon-remove');
 
 	// remove -> ok
 	} else {
-		$($this).attr('style', 'border-color: limegreen;');
-		$(remove).attr('class', 'glyphicon glyphicon-ok');
+		$($this).addClass('chose');
+		$($this).find('.glyphicon-remove').attr('class', 'glyphicon glyphicon-ok');
 	}
 }
 
 
 /* ---
 delete uploaded sheet
-INPUT: 1) deleted html element
+INPUT: 1) string, sheet ID
        2) boolean, if need confirm
+OUTPUT: none
 --- */
-function deleteUploadSheet($this, $confirm) {
-
-	// get sheet information
-	var sheet = $($this).find('.coverText')[0].innerText;
-	var pos = sheet.indexOf('--');
-	var filename = sheet.substring(0, pos);
-	var sheetName = sheet.substring(pos + 2, sheet.length);
-
-	// pop out confirm box
-	var del = false;
+function deleteSheet($sheet, $confirm) {
+	
+	// pop out confirm
 	if ($confirm) {
-		if (confirm("確定刪除 " + sheet + " ?")) del = true;
-	} else del = true;
-
-	// delete
-	if (del) {
-
-		// remove
-		delete _dataPool[sheet];
-		_dataPool.length--;
-		let itemPos = _inputFiles[filename].indexOf(sheetName);
-		if (itemPos >= 0) _inputFiles[filename].splice(itemPos, 1);
-		$($this).remove();
-
-		// check input files
-		if (_inputFiles[filename].length === 0) {
-			delete _inputFiles[filename];
-			_inputFiles.length--;
-		}
+		if (!confirm(`確定刪除 ${ $sheet } ？`)) return;
 	}
 
-	//console.log(_inputFiles);
-	//console.log(_dataPool);
+	// get filename
+	var filename = $sheet.split('--')[0];
+
+	// remove
+	delete _dataPool[$sheet];
+	_dataPool.length--;
+	_inputFiles[filename]--;
+	$(`.fileCover[name="${ $sheet }"]`).remove();
+
+	// check input files
+	if (_inputFiles[filename] === 0) delete _inputFiles[filename];
+}
+
+
+/* ---
+show the content of a sheet
+INPUT: string, sheet ID
+OUTPUT: none
+--- */
+function showSheet($sheet) {
+	showLightBox();
+
+	var table = `<table border="1">
+					<thead></thead>
+					<tbody></tbody>
+				</table>`;
+
+	// display
+	$('#lightbox-filename > h1').html($sheet);
+	$('#lightbox-text').html(table);
+
+	// worker
+	var worker = new Worker('js/worker.js');
+
+	// receive
+	worker.addEventListener('message', function($event) {
+
+		/* data structure {
+			loc: location,
+			html: html in thead or tbody
+		} */
+
+		$(`#lightbox-text ${ $event.data.loc }`).append($event.data.html);
+
+	}, false);
+
+	// send
+	worker.postMessage({ 
+		func: 'showsheet',
+		content: _dataPool[$sheet]
+	});
 }
 
 
@@ -346,104 +358,189 @@ function deleteUploadSheet($this, $confirm) {
 
 
 /* ---
-switch to specific table (for required/optional/content interface)
-INPUT: string, key of table
+switch to specific sheet (for required/optional/custom/content interface)
+INPUT: string, sheet ID
+OUTPUT: none
 --- */
-function changeTableListItem($tableKey) {
-	$('#' + _current + 'Interface .tableList .target').removeClass('target');
-	$('#' + _current + 'Interface .settingTab.target').removeClass('target');
-	$('#' + _current + 'Interface .tableList li[key=\'' + $tableKey + '\']').addClass('target');
-	$('#' + _current + 'Interface .settingTab[key=\'' + $tableKey + '\']').addClass('target');
+function changeToSheet($sheet) {
+	var interface = $(`#${ _current }Interface`);
 
-	// global uploader
+	// clear
+	$(interface).find('.tableList .target').removeClass('target');
+	$(interface).find('.settingTab.target').removeClass('target');
+
+	// find target
+	$(interface).find(`.tableList li[key="${ $sheet }"]`).addClass('target');
+	$(interface).find(`.settingTab[name="${ $sheet }"]`).addClass('target');
+
+	// fixed not match element in content interface
 	if (_current === _procedure[4]) {
-		let tag = $('#contentInterface .settingTab[key=\'' + $tableKey + '\'] .tab .target').attr('key');
-		$('.txtFilesHeader.fixed .glyphicon').attr('onclick', "uploadTXT('" + $tableKey + "', undefined, '" + tag + "', false)");
+		let notMatch = $('#contentInterface .settingTab.target .notMatch');
+
+		// copy local html to global area
+		$('.notMatch.fixed').html($(notMatch).html());
+
+		// drag event
+		$(notMatch).find('.notMatchFile').each(function() {
+			document.querySelector(`.notMatch.fixed .notMatchFile[name="${ $(this).attr('name') }"]`).addEventListener('dragstart', dragNotMatchFileStart);
+		});
 	}
+
+	_sheet = $sheet;
 }
 
 
 /* ---
-switch to specific tab (tag for content interface)
-INPUT: string, key of table
+click button group and pop-out a dropdown/dropup menu
+INPUT: object, html element of clicked button group
+OUTPUT: none
 --- */
-function changeTab($tabKey) {
-	$('#contentInterface .settingTab.target .tab div.target').removeClass('target');
-	$('#contentInterface .settingTab.target div.target').removeClass('target');
-	$('#contentInterface .settingTab.target .tab div[key=\'' + $tabKey + '\']').addClass('target');
-	$('#contentInterface .settingTab.target div[key=\'' + $tabKey + '\']').addClass('target');
-	
-	// global uploader
-	let table = $('#contentInterface .settingTab.target').attr('key');
-	$('.txtFilesHeader.fixed .glyphicon').attr('onclick', "uploadTXT('" + table + "', undefined, '" + $tabKey + "', false)");
-}
-
-
-/* ---
-click specific dropdown menu
-INPUT: select html element
---- */
-function selectClicked($this) {
+function clickMenuBtn($this) {
+	var containerY = $(`#${ _current }Interface .settingPanel`).offset().top;
+	var containerH = $(`#${ _current }Interface .settingPanel`).height();
 	var clickedY = $($this).offset().top;
-	var screenHeight = $(document).height();
-	if (clickedY > 0.65 * screenHeight) $($this.parentElement).addClass('dropup');
+	var clickedH = $($this).height();
+	var menuH = (containerH - clickedH) / 2;
+
+	// set menu height
+	$($this.parentElement).find('ul').css('max-height', `${ menuH }px`);
+
+	// modify direction of popped out menu to up
+	if (containerY + containerH - clickedY - clickedH < menuH) $($this.parentElement).addClass('dropup');
 	else $($this.parentElement).removeClass('dropup');
 }
 
 
 /* ---
-select specific item in menu list
-INPUT: item html element
+click/select specific item in pop-out menu of button group
+INPUT: object, html element of clicked list item
+OUTPUT: none
 --- */
-function selectItem($this) {
+function selectMenuItem($this) {
 
 	// get information
-	var choice = $this.innerText;
-	var result = $($this.parentElement.parentElement).find('.text-only');
-	var selected = $($this.parentElement).find('.selected');
-	var inputP = $this.parentElement.parentElement.parentElement;
-	var name = $($this.parentElement.parentElement.parentElement).attr('name');
-	var tab = $this.parentElement.parentElement.parentElement.parentElement;
+	var prevValue = $($this.parentElement.parentElement).find('.text-only').attr('value');
+	var itemName = $($this.parentElement.parentElement.parentElement).attr('name');
+	var value = $($this).attr('value');
+	var select = true;
 
-	// display
-	$(result).empty();
-	$(result).append(choice);
-	$(selected).removeClass('selected');
-	$($this).addClass('selected');
+	// for each interface
+	switch (_current) {
 
-	// show input UI
-	if (_current === _procedure[1] || _current === _procedure[3]) {
-		let input = (_current === _procedure[1]) ?$(inputP).find('input') :$(inputP).find('input[name=linkText]');
-		let pos = _custom.indexOf(choice);
-		if (pos >= 0)  $(input).css('display', 'block');
-		else $(input).css('display', 'none');
+		// required
+		case _procedure[1]:
+
+			// show input UI
+			let input = $($this.parentElement.parentElement.parentElement).find('input');
+			if (itemInList(value, _custom)) $(input).css('display', 'block');
+			else $(input).css('display', 'none');
+
+			break;
+
+		// optional
+		case _procedure[2]:
+			cancelOptionalMetadata(prevValue);				// clear previous setting
+			select = setOptionalMetadata(value, itemName);	// new setting
+			break;
+
+		// content
+		case _procedure[4]:
+			
+			// source
+			if (itemName === 'contentSource') {
+				showContentSetting(value);
+				setDocContentSource(value);
+			}
+
+			// extract content of doc_content, Metatags, Comment, Events
+			else {
+				let index = $($this.parentElement.parentElement.parentElement).attr('key');
+				select = setDocContent(index, value);
+			}
+			
+			break;
 	}
 
-	// show content setting
-	if (name === 'contentSource') {
-		$(tab).find('.contentMapping').css('display', 'none');
-		$(tab).find('.importTXT').css('display', 'none');
-
-		if (choice === 'CSV/Excel 欄位') {
-			$(tab).find('.contentMapping').css('display', 'grid');
-			_temp['headerY'] = 10000;
-		} else if (choice === '匯入純文字檔') {
-			$(tab).find('.importTXT').css('display', 'grid');
-			_temp['headerY'] = $(tab).find('.txtFilesHeader')[0].offsetTop;
-		}
+	// display
+	if (select) {
+		$($this.parentElement.parentElement).find('.text-only').attr('value', value);
+		$($this.parentElement.parentElement).find('.text-only').html($this.innerText);
+		$($this.parentElement).find('.selected').removeClass('selected');
+		$($this).addClass('selected');
 	}
 }
 
 
 /* ---
 trigger when mouse is over a optional metadata item and put hint information in hintbox
-INPUT: string, active metadata
+INPUT: string, metadata name
+OUTPUT: none
 --- */
-function setHint($metadata) {
-	$('.hinttitle').empty();
-	$('.hinttitle').append(_metadata[$metadata].chinese + ' | ' + $metadata);
-	$('.hintcontent').empty();
-	$('.hintcontent').append(list2html(_metadata[$metadata].hint));
+function showHint($metaname) {
+
+	// list of hints
+	var listHtml = '';
+	_metadata[$metaname].hint.forEach(item => {
+		listHtml += `<li>${ item }</li>`;
+	});
+
+	// content
+	$('.hinttitle').html(`${ _metadata[$metaname].chinese} | ${ $metaname }`);
+	$('.hintcontent').html(`<ul>${ listHtml }</ul>`);
+
+	// position
+	var containerH = $('#optionalInterface .settingPanel').height();
+	var boxH = $('.metahintbox').height();
+	var boxY = (containerH - boxH) / 2;
+	$('.metahintbox').css('margin-top', `${ boxY }px`);
+}
+
+
+/* ---
+add a new slot in custom metadata
+INPUT: object, html element of add button
+OUTPUT: none
+--- */
+function addCustomSlot($this) {
+
+	// list of sheet header
+	var listItem = '';
+	_dataPool[_sheet][0].forEach(key => {
+		listItem += `<li role="presentation" onclick="selectMenuItem(this)" value="${ key }" style="display: block;">
+						${ key }
+					</li>`;
+	});
+	
+	// button
+	var buttonGroup = displayBtnGroup(listItem);
+
+	// custom metadata block
+	var block = `<div class="customObj">
+					<span>欄位名稱</span>
+					<input type="text" name="metaname">
+					<span><span class="glyphicon glyphicon-trash" onclick="deleteCustomSlot(this)"></span></span>
+					
+					<span>欄位資料</span>
+					${ buttonGroup }
+					<div></div>
+					
+					<span>超連結資料</span>
+					${ buttonGroup }
+					<label class="switch"><input type="checkbox" name="link"><span class="slider"></span></label>
+				</div>`;
+	
+	// display
+	$($this).before(block);
+}
+
+
+/* ---
+delete a slot in custom metadata
+INPUT: object, html element of delete button
+OUTPUT: none
+--- */
+function deleteCustomSlot($this) {
+	$($this.parentElement.parentElement).remove();
 }
 
 
@@ -451,61 +548,219 @@ function setHint($metadata) {
 
 
 /* ---
-trigger when scroll the panel in content interface
-show table header when header scroll out of screen
+switch to specific tab (for content interface)
+INPUT: string, key of table
+OUTPUT: none
+--- */
+function changeToTab($tabKey) {
+	let settingTab = $('#contentInterface .settingTab.target');
+
+	// clear
+	$(settingTab).find('.tab div.target').removeClass('target');
+	$(settingTab).find('.tagTab.target').removeClass('target');
+
+	// find target
+	$(settingTab).find(`.tab div[key="${ $tabKey }"]`).addClass('target');
+	$(settingTab).find(`.tagTab[name="${ $tabKey }"]`).addClass('target');
+}
+
+
+/* ---
+trigger when select a choice in 'content source' button group - show corresponding UI
+INPUT: string, setting value that user selected
+OUTPUT: none
+--- */
+function showContentSetting($type) {
+	let target = $('#contentInterface .settingTab.target .tagTab.target');
+
+	// reset
+	$(target).find('.contentMapping').css('display', 'none');
+	$(target).find('.importTXT').css('display', 'none');
+
+	// from sheet
+	if ($type === 'mapping') {
+		$(target).find('.contentMapping').css('display', 'grid');
+		_showFixedY = -1;
+
+	// from txt
+	} else if ($type === 'import') {
+		$(target).find('.importTXT').css('display', 'grid');
+		let headerY = $(target).find('.txtFilesHeader').offset().top;
+		let containerY = $(target[0].parentElement).offset().top;
+		_showFixedY = headerY - containerY;
+	}
+}
+
+
+/* ---
+add a new select slot in content mapping
+INPUT: object, html element of add button
+OUTPUT: none
+--- */
+function addNewSelectObj($this) {
+
+	// list of header
+	let listItem = '';
+	_dataPool[_sheet][0].forEach(header => {
+		listItem += `<li role="presentation" onclick="selectMenuItem(this)" value="${ header }" style="display: block;">${ header }</li>`;
+	});
+
+	// display UI
+	var tag = $('#contentInterface .settingTab.target .tagTab.target').attr('name');
+	var show = (tag === 'MetaTags') ?' style="display: block;"' :'';
+	var block = `<div class="selectObj" key="${ $($this.parentElement).find('.selectObj').length }">
+					${ displayBtnGroup(listItem) }
+					<input type="text" placeholder="請輸入標籤名稱（半形英文）"${ show }>
+					<span class="glyphicon glyphicon-trash" onclick="deleteSelectObj(this)"></span>
+				</div>`;
+	$($this).before(block);
+
+	// corpus seeting
+	if (tag === 'MetaTags') _corpusSetting[_sheet].tag.push({ name: '', title: '' });
+
+	// data container
+	for (let i in _fileindex[_sheet]) {
+		let j = _fileindex[_sheet][i];
+		if (tag === 'doc_content') _documents[j].doc_content.doc_content.mapping.push('');
+		else if (tag === 'MetaTags') _documents[j].doc_content.MetaTags.push({ tagname: '', data: [] });
+		else _documents[j].doc_content[tag].push([]);
+	}
+}
+
+
+/* ---
+delete a slot in content mapping
+INPUT: object, html element of delete button
+OUTPUT: none
+--- */
+function deleteSelectObj($this) {
+	let tag = $('#contentInterface .settingTab.target .tagTab.target').attr('name');
+	let index = parseInt($($this.parentElement).attr('key'));
+
+	// delete corpus setting
+	if (tag === 'MetaTags') _corpusSetting[_sheet].tag.splice(index, 1);
+
+	// delete corresponded content
+	for (let i in _fileindex[_sheet]) {
+		let j = _fileindex[_sheet][i];
+		if (tag === 'doc_content') _documents[j].doc_content.doc_content.mapping.splice(index, 1);
+		else _documents[j].doc_content[tag].splice(index, 1);
+	}
+
+	// delete UI
+	$($this.parentElement).remove();
+
+	// modify UI key
+	$('#contentInterface .settingTab.target .tagTab.target .selectObj').each(function(i) {
+		$(this).attr('key', i);
+	});
+}
+
+
+/* ---
+click upload cloud icon in import txt table - upload corresponding txt file
+INPUT: object, html element of upload span
+OUTPUT: none
+--- */
+function clickUploadTXT($this) {
+
+	// set target file
+	$($this.parentElement).addClass('target');
+
+	// click input
+	$('#singleTXT').click();
+}
+
+
+/* ---
+click trash can icon in import txt table - delete corresponding txt file
+INPUT: object, html element of delete span
+OUTPUT: none
+--- */
+function clickDeleteTXT($this) {
+	var j = $($this.parentElement).attr('key');
+	var filename = _documents[j].attr.filename;
+
+	// check with user before delete
+	if (!confirm("確定刪除 " + filename + ".txt 嗎？")) return;
+	
+	// delete
+	_documents[j].doc_content.doc_content.import = [''];
+	$($this.parentElement).html(displayTXTFile(j));
+}
+
+
+/* ---
+click eye icon in import txt table - show the content of a txt file
+INPUT: object, html element of show span
+OUTPUT: none
+--- */
+function showTXT($this) {
+	var hasContent = ($($this.parentElement).find('span[func="status"]').html() === '');
+	var j = $($this.parentElement).attr('key');
+	var filename = _documents[j].attr.filename;
+
+	// see if have uploaded
+	if (!hasContent) {
+		alert("請先上傳檔案。");
+		return;
+	}
+
+	// display
+	showLightBox();
+	$('#lightbox-filename > h1').html(filename);
+	$('#lightbox-text').html(`<xmp style="white-space: pre-wrap;">${ _documents[j].doc_content.doc_content.import[0] }</xmp>`);
+}
+
+
+/* ---
+click delete all button in tool bar in import txt table - delete all txt file
+INPUT: none
+OUTPUT: none
+--- */
+function deleteAllTXT() {
+	if (confirm("確定刪除所有檔案嗎？")) {
+		for (let i in _fileindex[_sheet]) {
+			let j = _fileindex[_sheet][i];
+			_documents[j].doc_content.doc_content.import = [''];
+			$(`#contentInterface .settingTab.target .rowFile[key="${ j }"]`).html(displayTXTFile(j));
+		}
+	}
+}
+
+
+/* ---
+trigger when scroll the panel in content interface - show table header when header scroll out of screen
+INPUT: none
+OUTPUT: none
 --- */
 $('#contentInterface .settingPanel').scroll(function() {
-	if ($(this).scrollTop() > _temp['headerY']) $('.txtFilesHeader.fixed').css('opacity', '1');
-	else $('.txtFilesHeader.fixed').css('opacity', '0');
+
+	// fixed header style
+	var headerW = $(this).find('.settingTab.target .txtFilesHeader').width();
+	var headerX = $(this).find('.settingTab.target .txtFilesHeader').offset().left;
+	$('.txtFilesHeader.fixed').width(headerW);
+	$('.txtFilesHeader.fixed').css('left', headerX.toString() + 'px');
+
+	// not match block style
+	var containerH = $(this).height();
+	var containerW = $(this).find('.settingTab.target').width();
+	var notmatchX = $(this).find('.settingTab.target .notMatch').offset().left;
+	var notmatchW = (containerW * 0.98 - 5) / 3;
+	$('.notMatch.fixed').css('height', containerH.toString() + 'px');
+	$('.notMatch.fixed').css('width', notmatchW.toString() + 'px');
+	$('.notMatch.fixed').css('left', notmatchX.toString() + 'px');
+	$(this).find('.settingTab.target .notMatch').css('height', containerH.toString() + 'px');
+
+	// show fixed header or not
+	if (_showFixedY >= 0 && $(this).scrollTop() > _showFixedY) {
+		$('.txtFilesHeader.fixed').css('display', 'grid');
+		$('.notMatch.fixed').css('display', 'block');
+	} else {
+		$('.txtFilesHeader.fixed').css('display', 'none');
+		$('.notMatch.fixed').css('display', 'none');
+	}
 });
-
-
-/* ---
-upload a txt file to content (onclick)
-INPUT: 1) string, table name
-       2) string, filename
-       3) string, tag name
-       4) string, single txt = 'single', multi txt = 'multi', whole corpus in a txt = 'whole'
---- */
-function uploadTXT($table, $filename, $tag, $mode) {
-	_temp['target-table'] = $table;
-	_temp['target-filename'] = $filename;
-	_temp['target-tag'] = $tag;
-	if ($mode === 'single') $('#singleTXT').click();
-	else if ($mode === 'multi') $('#multiTXT').click();
-	else if ($mode === 'whole') $('#wholeTXT').click();
-}
-
-
-/* ---
-delete a txt file in content (onclick)
-INPUT: 1) string, table name
-       2) string, filename
-       3) string, tag name
-       4) boolean, if need to confirm with user
---- */
-function deleteTXT($table, $filename, $tag, $confirm) {
-	var del = false;
-	if ($confirm) {
-		if (confirm("確定刪除 " + $filename + ".txt 嗎？")) del = true
-	} else del = true;
-	
-	if (del) {
-		delete _txtData[$table][$filename][$tag];
-		displayDeleteTXT($table, $filename, $tag);
-	}
-}
-
-/* ---
-delete all txt file in content of one setting tab (onclick)
-INPUT: 1) string, table name
-       2) string, tag name
---- */
-function deleteAllTXT($table, $tag) {
-	if (confirm("確定刪除所有檔案嗎？")) {
-		for (let file in _txtData[$table]) deleteTXT($table, file, $tag, false);
-	}
-}
 
 
 // * * * * * * * * * * * * * * * * download * * * * * * * * * * * * * * * * *
@@ -513,13 +768,15 @@ function deleteAllTXT($table, $tag) {
 
 /* ---
 download DocuXML to computer
+INPUT: none
+OUTPUT: none
 --- */
-$('#ouputFilename button').click(function() {
+$('#outputFilename button').click(function() {
 
 	// data
-	var textFileAsBlob = new Blob([_xml], {type: 'text/xml'});
-	var filename = $('#ouputFilename input').val();
-	if (filename === '') filename = '我的文獻集';
+	var textFileAsBlob = new Blob([_xml], { type: 'text/xml' });
+	var filename = $('#outputFilename input').val().trim();
+	if (filename === '') filename = '我的文獻集-' + now();
 
 	// download
 	var downloadLink = document.createElement("a");
@@ -544,13 +801,10 @@ $('#ouputFilename button').click(function() {
 
 /* ---
 upload DocuXML to DocuSky directly
+INPUT: none
+OUTPUT: none
 --- */
 $('#databaseName button').click(function($event) {
-	var dbTitle = $("#databaseName input").val().trim();
-	if (dbTitle === '') {
-		alert("請輸入資料庫名稱。");
-		return;
-	}
 	_docuSkyObj.manageDbList($event, uploadXML2DocuSky);
 });
 

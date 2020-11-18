@@ -1,8 +1,8 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-This file's functions:
-1. defined all used data structures and global variables.
+This file defines:
+1. all used data structures and global variables.
 2. initialization of the program.
-3. getter (get some information) and checker (return a boolean value).
+3. getter (get some information).
 4. other small tools.
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -15,34 +15,39 @@ var _docuSkyObj;
 
 
 // switch pages
+const _procedure = ['upload', 'required', 'optional', 'custom', 'content', 'download'];
 var _current;
-var _procedure = ['upload', 'required', 'optional', 'custom', 'content', 'download'];
 
 
-// files
-var _inputFiles = [];
+// row data
+const _allowedFileType = ['xls', 'xlsx', 'csv'];
+var _inputFiles = {};
 var _dataPool = [];				// filename(sheetname) >> data of each row in sheet
-var _data = [];					// used data in dataPool
-var _allowedFileType = ['xls', 'xlsx', 'csv'];
+
+
+// selected data
+var _selectedSheet = [];
+var _fileindex = {};			// corresponded index in _dataPool: index in _documents
+var _documents = [];			// data for generate document xml
+var _corpusSetting = {};		// setting data for generate corpus metadata xml
 
 
 // metadata 
-var _custom = ['自訂', '自動產生檔名'];
-var _metadata;
-$.getJSON('js/meta.json', function(result) {
-	_metadata = result;
-});
+const _custom = ['自訂', '自動產生檔名'];
+var _metadata;					// data in meta.json
 
 
 // content
-var _contentTags = {doc_content: '內文', MetaTags: '多值欄位', Comment: '註解', Events: '事件'};
-var _txtData = [];		// tablename >> filename(.txt) >> content of each tag
-var _txtBuffer = [];	// not matching blob
+const _contentTags = { doc_content: '內文', MetaTags: '多值欄位', Comment: '註解', Events: '事件' };
+var _matching = {};
+var _notMatch = {};		// not matching blob
 
 
-// global variables
-var _xml = "";
-var _temp = {'sheetNum': 0, 'headerY': 0};
+// others
+var _sheet;				// target sheet when setting
+var _progress;			// progress recorder
+var _showFixedY = -1;	// recorded pos that fixed element should appear
+var _xml = '';			// final xml string
 
 
 // * * * * * * * * * * * * * * * * initialization * * * * * * * * * * * * * * * * *
@@ -52,75 +57,79 @@ var _temp = {'sheetNum': 0, 'headerY': 0};
 trigger initialization until finishing initialization when file is ready
 --- */
 $(document).ready(function() {
-	_current = 'upload';
-	$('#prevPage').css('display', 'none');
-	_docuSkyObj = docuskyManageDbListSimpleUI;
-	_docuSkyObj.uploadProgressFunc = function($percentage){
-		$('#downloadInterface .progress-bar').attr('style', 'width: ' + $percentage + '%; display: grid; align-items: center;');
-		$('#downloadInterface .progress-bar span').empty().append($percentage + ' %');
-	}
 
-	//
-	$(function () { $("[data-toggle='tooltip']").tooltip(); });
+	// load metadata info
+	$.getJSON('js/meta.json', function(result) {
+		_metadata = result;
+	});
 
-	// explain
-	$('#explainText').load('html/explain.html');
-	setTimeout(function(){
+	// load explain text and show
+	$('.explainDirectory').load('html/explainDir.html');
+	$('.explainContent').load('html/explain.html');
+	setTimeout(function() {
 		$('#usage').click();
 	}, 600);
+
+	// active tooltip of tool bar
+	$(function() { 
+		$("[data-toggle='tooltip']").tooltip();
+	});
+
+	// first page
+	_current = 'upload';
+	$('#prevPage').css('display', 'none');
+
+	// docusky widget TODO
+	_docuSkyObj = docuskyManageDbListSimpleUI;
+	_docuSkyObj.uploadProgressFunc = function($percentage){
+		$('#downloadInterface .progress-bar').attr('style', `width: ${ $percentage }%; display: grid; align-items: center;`);
+		$('#downloadInterface .progress-bar span').html(`${ $percentage } %`);
+	}
 });
 
 
-// * * * * * * * * * * * * * * * * getter & checker * * * * * * * * * * * * * * * * *
+// * * * * * * * * * * * * * * * * getter * * * * * * * * * * * * * * * * *
 
 
 /* ---
-getting now time
+get number of all sheets that are in system 
 INPUT: none
-OUTPUT: now time in string form
+OUTPUT: int, number of sheets
+--- */
+function getAllSheetNum() {
+	return Object.values(_inputFiles).reduce((a, b) => a+b);
+}
+
+
+/* ---
+calculate number of target filename in all filenames (remove string in (num))
+INPUT: 1) string, target filename
+	   2) array, all filenames
+OUTPUT: int, number of target filename
+--- */
+function getFileNum($filename, $names) {
+	var count = 0;
+
+	$names.forEach(name => {
+		let filename = name.replace(/\([0-9]+\)/, '');
+		if (filename === $filename) count++;
+	});
+
+	return count;
+}
+
+
+/* ---
+get time now (as unique name)
+INPUT: none
+OUTPUT: string, time in string form
 --- */
 function now() {
 	let hour = (new Date()).getHours();
 	let minute = (new Date()).getMinutes();
 	let second = (new Date()).getSeconds();
-	let date = (new Date()).toDateString().replace(/ /g, '_');
-	return date + '-' + hour + '_' + minute + '_' + second;
-}
-
-
-/* ---
-check if specific item is in the list
-INPUT: 1) single list element
-       2) target list
-OUTPUT: boolean, in list = true, not in list = false
---- */
-function itemInList($item, $list) {
-	if ($list.indexOf($item) === -1) return false;
-	else return true;
-}
-
-
-/* ---
-check if specific file is in the system
-INPUT: string, source filename
-OUTPUT: boolean, in system = true, not in system = false
---- */
-function fileInSystem($filename) {
-	if (_inputFiles[$filename.split('.')[0]] === undefined) return false;
-	else return true;
-}
-
-
-/* ---
-check if string charactsrs are all half and english character
-INPUT: string
-OUTPUT: boolean, all half and english = true, otherwise = false
---- */
-function checkStr($str) {
-	var half_english = /[A-Za-z\x00-\xff]/g;
-	var result = $str.match(half_english);
-	if (result == null || result.length != $str.length) return false;
-	else return true;
+	let date = (new Date()).toDateString().replace(/\s/g, '_');
+	return `${ date }_${ hour }_${ minute }_${ second }`;
 }
 
 
@@ -128,115 +137,154 @@ function checkStr($str) {
 
 
 /* ---
-add suffix for files that have the same filename
-INPUT: string, filename
-OUTPUT: string, filename that adds suffix
+combine string with number (used in repeated filename)
+INPUT: 1) string, prefix string
+	   2) int, number
+	   3) int, padding zero to specific length
+	   4) string, style of number's string
+OUTPUT: string, prefixstring_numberstring
 --- */
-function addSuffix($filename) {
-	var count = 0;
-	for (file in _inputFiles) {
-		if (file.split('(')[0] === $filename) count++;
+function strPlusNum($str, $num, $padding, $style) {
+
+	// padding zero
+	var numStr = $num.toString();
+	for (let i = numStr.length; i < $padding; i++) numStr = '0' + numStr;
+
+	// complete string
+	if ($style === 'bracket') return $str + '(' + numStr + ')';
+	else return $str + '_' + numStr;
+}
+
+
+/* ---
+generally normalize data
+INPUT: string, data string
+OUTPUT: string, normalized data
+--- */
+function normalizeData($data) {
+	if ($data === undefined) return '-';
+	return filterChar($data.toString().replace(/\n/g, '').trim());
+}
+
+
+/* ---
+normalize filename - remove .xxx
+INPUT: string, original filename
+OUTPUT: string, normalized filename
+--- */
+function normalizeFilename($filename) {
+	let normalized = normalizeData($filename);
+
+	// parse filename
+	let filenameParts = normalized.split('.');
+	let fileType = filenameParts[filenameParts.length-1];
+
+	return normalized.replace(`.${ fileType }`, '');
+}
+
+
+/* ---
+normalize string in tag - space to underline
+INPUT: string, tag string
+OUTPUT: string, normalized tag
+--- */
+function normalizeTag($tag) {
+	return $tag.trim().replace(/\s+/g, '_');
+}
+
+
+/* ---
+normalize doc_content data - replace special char but keep inner tag
+INPUT: string, content string
+OUTPUT: string, normalized content
+--- */
+function normalizeContent($content) {
+	let tagReg = /<\/?.+?\/?>/g;
+	let tags = $content.match(tagReg);
+	let str = filterChar($content.replace(tagReg, '▓'));
+
+	// no tags
+	if (tags === null) return str;
+
+	// put tag back
+	for (let i = 0; i < tags.length; i++) str = str.replace('▓', tags[i]);
+	return str;
+}
+
+
+/* ---
+normalize items in metatags, comment, events which is split by ;
+INPUT: string, content string
+OUTPUT: array, normalized items in content
+--- */
+function normalizeItems($content) {
+	let items = $content.split(';');
+
+	// filter empty
+	for (let i = length-1; i >= 0; i--) {
+		items[i] = filterChar(items[i].trim());
+		if (items[i] === '') items.splice(i, 1);
 	}
-	if (count > 0) return $filename + '(' + count + ')';
-	else return $filename;
+
+	return items;
 }
 
 
 /* ---
-update progress number
-INPUT: 1) object, needed information when calculating progress
-       2) string, record progress in where
-OUTPUT: none, print progress in console
+replace special char in xml format
+INPUT: string, original string
+OUTPUT: string, filtered string
 --- */
-function updateProgress($info, $type) {
-	var percentage;
-	if ($type === 'upload') percentage = ($info['fileOrder'] / $info['fileNum'] + ($info['sheetOrder']+1) / $info['sheetNum'] / $info['fileNum']) * 100;
-	else if ($type === 'required') percentage = ($info['sheetOrder'] / $info['sheetNum'] + ($info['fileOrder']+1) / $info['fileNum'] / $info['sheetNum']) * 100;
-	else if ($type === 'content') percentage = ($info['sheetOrder'] / $info['sheetNum'] + ($info['fileOrder']+1) / $info['fileNum'] / $info['sheetNum']) * 100;
-	else if ($type === 'table') percentage = ($info['rowOrder'] / $info['rowNum']) * 100;
-	if (percentage - _temp['percentage'] >= 1) {
-		console.log($type + ':' + percentage.toFixed(0).toString() + '%');
-		_temp['percentage'] = percentage;
-	}
+function filterChar($str) {
+
+	// undefined
+	if ($str === undefined) return $str;
+
+	// check type
+	if (typeof $str != 'string') $str = $str.toString();
+
+	var str = $str.replace(/&/g, '&amp;')	// This MUST be the 1st replacement.
+				  .replace(/'/g, '&apos;')	// The 4 other predefined entities, required.
+				  .replace(/"/g, '&quot;')
+				  .replace(/</g, '&lt;')
+				  .replace(/>/g, '&gt;');
+	return str;
 }
 
 
 /* ---
-trigger when user start to drag not match file in buffer area
-INPUT: event object
+generate string in specific form from array
+INPUT: array, string array
+OUTPUT: string, array string
 --- */
-function dragNotMatchFileStart($event) {
-	$event.dataTransfer.setData('text/plain', $event.target.innerText.split('.')[0]);
+function array2Str($arr) {
+	var str = '';
+	$arr.forEach(item => {
+		str += `- ${ item }\n`;
+	});
+	return str;
 }
 
 
 /* ---
-trigger when user drag not match file and enter files table row (change css)
-INPUT: event object
+update progress (data store in _progress) at specific location
+INPUT: string, selector that describes progress bar's location
+OUTPUT: none, just display progress in progress bar
 --- */
-function dragNotMatchFileEnter ($event) {
-	$event.preventDefault();
-	$event.stopPropagation();
-	this.classList.add('notMatchHover');
+function updateProgress($loc) {
+
+	// calculate
+	var progresses = Object.values(_progress);
+	var percentage = (progresses.length > 0) ?Math.round(progresses.reduce((a, b) => a+b) / progresses.length * 100) :0;
+	
+	// UI
+	var progressBar = $(`${ $loc } .progress-bar`);
+	$(progressBar).css('width', `${ percentage }%`);
+	$(progressBar).html(`<span>${ percentage } %</span>`);
+
+	// show or hide
+	if (checkProgress()) $(`${ $loc } .progress`).hide();
+	if (Object.keys(_progress).length <= 0) $(`${ $loc } .progress`).show();
 }
 
-
-/* ---
-trigger when user drag not match file and cover files table row
-INPUT: event object
---- */
-function dragNotMatchFileOver ($event) {
-	$event.preventDefault();
-	$event.stopPropagation();
-}
-
-
-/* ---
-trigger when user drag not match file and leave files table row (change css)
-INPUT: event object
---- */
-function dragNotMatchFileLeave ($event) {
-	$event.preventDefault();
-	$event.stopPropagation();
-	this.classList.remove('notMatchHover');
-}
-
-
-/* ---
-trigger when user drop not match file in table row of a file
-change css and extract uploaded file
-INPUT: event object
---- */
-function dropNotMatchFile($event) {
-	$event.preventDefault();
-	$event.stopPropagation();
-	this.classList.remove('notMatchHover');
-
-	// access data
-	var filename = $event.dataTransfer.getData('text/plain');
-	var table = $(this.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement).attr('key');
-	var tag = $(this.parentElement.parentElement.parentElement.parentElement.parentElement).attr('key');
-
-	// load txt
-	$('#singleTXT').attr('target-table', table);
-	$('#singleTXT').attr('target-tag', tag);
-	load('text', _txtBuffer[filename], loadTXT($(this).attr('name')));
-
-	// remove html
-	$('#contentInterface .settingTab[key=\'' + table + '\'] .tagTab[key=' + tag + '] .notMatch div[name=' + filename + ']').remove();
-	delete _txtBuffer[filename];
-}
-
-
-/* ---
-convert list to string in html form
-INPUT: list object that record hint
-OUTPUT: html string
---- */
-function list2html($list) {
-	var html = "<ul>";
-	for (let i in $list) html += "<li>" + $list[i] + "</li>";
-	html += "</ul>";
-	return html;
-}
 

@@ -51,6 +51,7 @@
 /* ----- CONTENT MAPPING ----- */
 
 .contentMapping {
+	display: grid;
 	grid-gap: 5px;
 	padding: 1%;
 }
@@ -58,7 +59,7 @@
 .selectObj {
 	display: grid;
 	grid-gap: 1%;
-	grid-template-columns: 1fr 1fr;
+	grid-template-columns: 5fr 5fr 1fr;
 	align-items: center;
 }
 
@@ -106,8 +107,9 @@
 .notMatch {
 	border: solid 1px gainsboro;
 	border-radius: 4px;
-	padding: 5%;
-	overflow: scroll;
+	padding: 10px;
+	overflow-y: scroll;
+	background-color: white;
 }
 
 .notMatchFile {
@@ -181,10 +183,8 @@
 	position: fixed;
 }
 
-.txtFilesHeader.fixed {
-	position: fixed;
+.txtFilesHeader.fixed,
+.notMatch.fixed {
+	display: none;
 	z-index: 20;
-	left: 37.9vw;
-	right: 26.9vw;
-	opacity: 0;
 }

@@ -2,17 +2,40 @@
 /* ----- EXPLAIN ----- */
 
 .explainInterface {
+	display: grid;
+	grid-template-columns: 1fr 3fr;
 	font-size: medium;
+	overflow-y: hidden!important;
 }
 
 .explainInterface h4 {
 	font-size: larger;
 }
 
+.explainDirectory li.level1 {
+	grid-template-columns: auto;
+}
+
+.explainDirectory li.level2 {
+	grid-template-columns: 1em auto;
+}
+
+.explainDirectory li.level3 {
+	grid-template-columns: 2em auto;
+}
+
+.explainDirectory li span:last-child {
+	margin-left: 1rem;
+}
+
+.explainContent {
+	overflow-y: scroll;
+}
+
 .explainBlock {
 	margin: 2%;
 	display: grid;
-	grid-template-columns: 4fr 6fr; 
+	grid-template-columns: 1fr 1fr; 
 	place-items: center;
 }
 
@@ -90,7 +113,7 @@
 #lightbox-text {
 	grid-area: text;
 	padding: 2%;
-	overflow: scroll;
+	overflow-y: scroll;
 }
 
 /* ----- POP OUT ANIMATE ----- */

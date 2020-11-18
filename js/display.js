@@ -3,65 +3,27 @@ This file defined the functions that used to display html page.
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 
-// * * * * * * * * * * * * * * * * light box * * * * * * * * * * * * * * * * *
-
-
-/* ---
-show whole sheet
-INPUT: string, sheet name
-OUTPUT: string, html string
---- */
-function displayTable($sheet) {
-
-	var table = "<table border=\"1\"><thead><tr>";
-
-	// table header
-	for (let item in _dataPool[$sheet][0]) {
-		let oneItem = "<th>" + _dataPool[$sheet][0][item] + "</th>";
-		table += oneItem;
-	}
-	table += "</tr></thead><tbody>"
-
-	// table content
-	for (let row=1; row<_dataPool[$sheet].length; row++){
-		let rowText = "";
-		let header = _dataPool[$sheet][0];
-		for (let item in header) {
-			let text = (_dataPool[$sheet][row][header[item]] === undefined) ?"" :_dataPool[$sheet][row][header[item]];
-			rowText += "<td>" + text + "</td>";
-		}
-		table += "<tr>" + rowText + "</tr>";
-	}
-	table += "</tbody></table>";
-
-	return table;
-	
-}
-
-
 // * * * * * * * * * * * * * * * * upload * * * * * * * * * * * * * * * * *
 
 
 /* ---
-block that represents one sheet
+block that represents a sheet
 INPUT: string, sheet name
+OUTPUT: none
 --- */
 function displayUploadSheet($sheet) {
-	let fileBlock = "<label class=\"uploadCover fileCover\" style=\"border-color: limegreen;\"><div class=\"usualFile\"><span class=\"glyphicon glyphicon-file\"></span><span class=\"coverText\">" + $sheet + "</span></div><div class=\"hoverFile\"><span class=\"glyphicon glyphicon-trash\" onclick=\"deleteUploadSheet(this.parentElement.parentElement, true)\"></span><span class=\"glyphicon glyphicon-eye-open\" onclick=\"showSheet(this)\"></span><span class=\"glyphicon glyphicon-ok\" onclick=\"toggleUsed(this.parentElement.parentElement)\"></span></div></label>";
+	let fileBlock = `<label class="uploadCover fileCover chose" name="${ $sheet }">
+						<div class="usualFile">
+							<span class="glyphicon glyphicon-file"></span>
+							<span class="coverText">${ $sheet }</span>
+						</div>
+						<div class="hoverFile">
+							<span class="glyphicon glyphicon-trash" onclick="deleteSheet('${ $sheet }', true)"></span>
+							<span class="glyphicon glyphicon-eye-open" onclick="showSheet('${ $sheet }')"></span>
+							<span class="glyphicon glyphicon-ok" onclick="toggleUsed(this.parentElement.parentElement)"></span>
+						</div>
+					</label>`;
 	$('.emptyCover').before(fileBlock);	
-}
-
-
-/* ---
-trigger when back to upload page
-reset used data container and html in metadata/content setting
---- */
-function resetUploadData() {
-	_data = [];
-	_data.length = 0;
-	$('.tableList ul').empty();
-	$('.settingPanel').empty();
-	$('#contentInterface .settingPanel').append("<div class=\"txtFilesHeader fixed\"><span>檔名</span><span>狀態</span><span>檢視</span><span>操作</span></div><input id=\"singleTXT\" type=\"file\" accept=\".txt\" onchange=\"uploadSingleTXT(this, undefined, true)\" style=\"display: none;\"/><input id=\"multiTXT\" type=\"file\" accept=\".txt\" onchange=\"uploadMultiTXT(this)\" style=\"display: none;\"/>");
 }
 
 
@@ -69,72 +31,132 @@ function resetUploadData() {
 
 
 /* ---
-table list in required/optional/content interface
+trigger when back to upload interface - reset all data and UI
+INPUT: none
+OUTPUT: none
+--- */
+function resetSetting() {
+	_fileindex = [];
+	_documents = [];
+	_corpusSetting = {};
+	_notMatch = {};
+	$('#topContainer .tableList ul').empty();
+	$('.settingPanel').empty();
+}
+
+
+/* ---
+table list in required/optional/custom/content interface
+INPUT: none
+OUTPUT: none
 --- */
 function displayTableList() {
-	var first = true;
-	for (let table in _data) {
+	_selectedSheet.forEach((sheet, i) => {
 
 		// information
-		let info = table.split('--');
-		let filename = "<span>" + info[0] + "</span>";
-		let splitIcon = "<span> | </span>";
-		let tablename = "<span>" + info[1] + "</span>";
-		let classname = (first) ?"list-group-item target" :"list-group-item";
-		first = false;
+		let [filename, sheetname] = sheet.split('--');
+		let classname = (i === 0) ?'list-group-item target' :'list-group-item';
 		
-		// combine
-		let tableItem = "<li class=\"" + classname + "\" key=\"" + table + "\" onclick=\"changeTableListItem('" + table + "')\">" + filename + splitIcon + tablename + "</li>";
-		$('.tableList ul').append(tableItem);
-	}
+		// html
+		let tableItem = `<li class="${ classname }" key="${ sheet }" onclick="changeToSheet('${ sheet }')">
+							<span>${ filename }</span>
+							<span> | </span>
+							<span>${ sheetname }</span>
+						</li>`;
+
+		// display
+		$('#topContainer .tableList ul').append(tableItem);
+	});
 }
 
 
 /* ---
-trigger when back to required metadata setting
-reset txt filename container and table in html
+html of button group with custom choices
+INPUT: string, html of choices
+OUTPUT: string, html of button group
 --- */
-function resetRequiredData() {
-	_txtData = [];
-	for (let table in _data) {
-		for (let tag in _contentTags) $('#contentInterface .settingTab[key=\'' + table + '\'] .tagTab[key=' + tag + '] .txtFiles').empty();
-	}
+function displayBtnGroup($listItem) {
+	return `<div class="btn-group">
+				<button type="button" class="btn btn-default dropdown-toggle text-only" data-toggle="dropdown" onclick="clickMenuBtn(this)" value="null">
+					--- 請選擇 ---
+				</button>
+
+				<button type="button" class="btn btn-default dropdown-toggle icon-only" data-toggle="dropdown" onclick="clickMenuBtn(this)">
+					<span class="caret"></span>
+				</button>
+
+				<ul class="dropdown-menu" role="menu">
+					<li role="presentation" onclick="selectMenuItem(this)" value="null" class="selected" style="display: block;">--- 請選擇 ---</li>
+					${ $listItem }
+				</ul>
+			</div>`;
 }
 
 
 /* ---
-required page
+content setting of required interface
+INPUT: none
+OUTPUT: none
 --- */
 function displayRequiredPage() {
-
-	// corpus
-	var corpusHTMLstart = "<div name=\"corpus\" class=\"menu\"><h3>文獻集名稱 corpus</h3><div class=\"btn-group\"><button type=\"button\" class=\"btn btn-default dropdown-toggle text-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\">--- 請選擇 ---</button><button type=\"button\" class=\"btn btn-default dropdown-toggle icon-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\"><span class=\"caret\"></span></button><ul class=\"dropdown-menu\" role=\"menu\"><li role=\"presentation\" onclick=\"selectItem(this)\" class=\"selected\" style=\"display: block;\">--- 請選擇 ---</li><li role=\"presentation\" onclick=\"selectItem(this)\" style=\"display: block;\">自訂</li>";
-	var corpusHTMLend = "</ul></div><input type=\"text\" name=\"corpus\" placeholder=\"請輸入文獻集名稱...\"></div>";
-
-	// filename
-	var filenameHTMLstart = "<div name=\"filename\" class=\"menu\"><h3>文件唯一編號 filename</h3><div class=\"btn-group\"><button type=\"button\" class=\"btn btn-default dropdown-toggle text-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\">--- 請選擇 ---</button><button type=\"button\" class=\"btn btn-default dropdown-toggle icon-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\"><span class=\"caret\"></span></button><ul class=\"dropdown-menu\" role=\"menu\"><li role=\"presentation\" onclick=\"selectItem(this)\" class=\"selected\" style=\"display: block;\">--- 請選擇 ---</li><li role=\"presentation\" onclick=\"selectItem(this)\" style=\"display: block;\">自動產生檔名</li>";
-	var filenameHTMLend = "</ul></div><input type=\"text\" name=\"filename\" placeholder=\"請輸入檔名前綴...\"></div>";
-
-	// scan all table
-	var first = true;
-	for (let table in _data) {
+	_selectedSheet.forEach((sheet, i) => {
 
 		// information
-		let info = table.split('--');
-		let tablename = "<h2 class=\"text-center\">" + table + "</h2>";
-		let classname = (first) ?"settingTab target" :"settingTab";
-		first = false;
+		let [filename, sheetname] = sheet.split('--');
+		let classname = (i === 0) ?'settingTab target' :'settingTab';
 
-		// choice
-		let filenameItem = "<li role=\"presentation\" onclick=\"selectItem(this)\"><span>檔案名稱</span><span> | </span><span>" + info[0] + "</span></li>";
-		let sheenametItem = "<li role=\"presentation\" onclick=\"selectItem(this)\"><span>資料表名稱</span><span> | </span><span>" + info[1] + "</span></li>";
-		let listItem = "";
-		for (let header in _data[table][0]) listItem += "<li role=\"presentation\" onclick=\"selectItem(this)\"><span>欄位名稱</span><span> | </span><span>" + _data[table][0][header] + "</span></li>";
-		
-		// combine
-		let panel = "<div class=\"" + classname + "\" key=\"" + table + "\">" + tablename + corpusHTMLstart + filenameItem + sheenametItem + listItem + corpusHTMLend + filenameHTMLstart + listItem + filenameHTMLend + "</div>";
+		// corpus basic choices
+		let corpusItem =   `<li role="presentation" onclick="selectMenuItem(this)" value="自訂" style="display: block;">
+								自訂
+							</li>
+										
+							<li role="presentation" onclick="selectMenuItem(this)" value="${ filename }">
+								<span>檔案名稱</span>
+								<span> | </span>
+								<span>${ filename }</span>
+							</li>
+
+							<li role="presentation" onclick="selectMenuItem(this)" value="${ sheetname }">
+								<span>資料表名稱</span>
+								<span> | </span>
+								<span>${ sheetname }</span>
+							</li>`;
+
+		// filename basic choices
+		let filenameItem = `<li role="presentation" onclick="selectMenuItem(this)" value="自動產生檔名" style="display: block;">自動產生檔名</li>`;
+
+		// choices
+		let listItem = '';
+		_dataPool[sheet][0].forEach(key => {
+			listItem += `<li role="presentation" onclick="selectMenuItem(this)" value="${ key }">
+							<span>欄位名稱</span>
+							<span> | </span>
+							<span>${ key }</span>
+						</li>`;
+		});
+
+		// html
+		let panel = `<div class="${ classname }" name="${ sheet }">
+						<h2 class="text-center">${ sheet }</h2>
+						
+						<!-- corpus -->
+						<div class="menu" name="corpus">
+							<h3>文獻集名稱 corpus</h3>
+							${ displayBtnGroup(corpusItem + listItem) }
+							<input type="text" placeholder="請輸入文獻集名稱...">
+						</div>
+
+						<!-- filename -->
+						<div class="menu" name="filename">
+							<h3>文件唯一編號 filename</h3>
+							${ displayBtnGroup(filenameItem + listItem) }
+							<input type="text" placeholder="請輸入檔名前綴...">
+						</div>
+					</div>`;
+
+		// display
 		$('#requiredInterface .settingPanel').append(panel);
-	}
+	});
 }
 
 
@@ -142,44 +164,57 @@ function displayRequiredPage() {
 
 
 /* ---
-optional page
+content setting of optional interface
+INPUT: none
+OUTPUT: none
 --- */
 function displayOptionalPage() {
 
-	// hintbox
-	let hintbox = "<div class=\"metahintbox\" key=\"\"><div class=\"hinttitle\"></div><hr style=\"margin: 0 5%;\"><div class=\"hintcontent\"></div></div>"
+	// globel fixed hintbox
+	var hintbox = `<div class="metahintbox" key="">
+						<div class="hinttitle"></div>
+						<hr style="margin: 0 5%;">
+						<div class="hintcontent"></div>
+				   </div>`;
 	$('#optionalInterface .settingPanel').append(hintbox);
 
-	// list
-	var choiceList = "<ul class=\"dropdown-menu\" role=\"menu\"><li role=\"presentation\" onclick=\"selectItem(this)\" class=\"selected\" style=\"display: block;\">--- 請選擇 ---</li>";
+	// list of metadata
+	var listItem = '';
 	for (let meta in _metadata) {
 		if (_metadata[meta].mustfill) continue;
-		let classofPost = (_metadata[meta].postclass) ?"class=\"postClass\" " :""
-		choiceList += "<li " + classofPost + "role=\"presentation\" onclick=\"selectItem(this)\" onmouseover=\"setHint('" + meta + "')\"><span>" + _metadata[meta].chinese + '</span><span> | </span><span>' + meta + "</span></li>";
+		let postClass = (_metadata[meta].postclass) ?'postClass' :'';
+		listItem += `<li class="${ postClass }" role="presentation" onclick="selectMenuItem(this)" onmouseover="showHint('${ meta }')" value="${ meta }">
+						<span>${ _metadata[meta].chinese }</span>
+						<span> | </span>
+						<span>${ meta }</span>
+					 </li>`;
 	}
-	choiceList += "</ul>";
 
-	// button
-	var buttonGroup = "<div class=\"btn-group\"><button type=\"button\" class=\"btn btn-default dropdown-toggle text-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\">--- 請選擇 ---</button><button type=\"button\" class=\"btn btn-default dropdown-toggle icon-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\"><span class=\"caret\"></span></button>" + choiceList + "</div><input type=\"text\">";
-
-	// scan all table
-	var first = true;
-	for (let table in _data) {
+	// each sheet
+	_selectedSheet.forEach((sheet, i) => {
 
 		// information
-		let info = table.split('--');
-		let tablename = "<h2 class=\"text-center\">" + table + "</h2>";
-		let classname = (first) ?"settingTab target" :"settingTab";
-		first = false;
+		let classname = (i === 0) ?'settingTab target' :'settingTab';
+		let blocks = '';
 
-		// setting items
-		let blocks = "";
-		for (let header in _data[table][0]) blocks += "<div name=\"" + _data[table][0][header] + "\" class=\"menu\"><h3>" + _data[table][0][header] + "</h3>" + buttonGroup + "</div>";
+		// each header
+		_dataPool[sheet][0].forEach(header => {
+			blocks += `<div class="menu" name="${ header }">
+							<h3>${ header }</h3>
+							${ displayBtnGroup(listItem) }
+							<input type="text">
+					   </div>`;
+		});
 
-		// combine
-		let panel = "<div class=\"" + classname + "\" key=\"" + table + "\">" + tablename + blocks + "</div>";
+		// html
+		let panel = `<div class="${ classname }" name="${ sheet }">
+						<h2 class="text-center">${ sheet }</h2>
+						${ blocks }
+					 </div>`;
+
+		// display
 		$('#optionalInterface .settingPanel').append(panel);
-	}
+	});
 }
 
 
@@ -187,54 +222,28 @@ function displayOptionalPage() {
 
 
 /* ---
-custom page
+content setting of custom interface
+INPUT: none
+OUTPUT: none
 --- */
 function displayCustomPage() {
-
-	// scan all table
-	var first = true;
-	for (let table in _data) {
+	_selectedSheet.forEach((sheet, i) => {
 
 		// information
-		let info = table.split('--');
-		let tablename = "<h2 class=\"text-center\">" + table + "</h2>";
-		let classname = (first) ?"settingTab target" :"settingTab";
-		first = false;
+		let classname = (i === 0) ?'settingTab target' :'settingTab';
 
-		let addBtn = "<div class=\"newObj\" onclick=\"addNewCustom(this, '" + table + "')\"><span class=\"glyphicon glyphicon-plus\"></span><span> 新增一項自訂欄位...</span></div>";
+		// html
+		let panel = `<div class="${ classname }" name="${ sheet }">
+						<h2 class="text-center">${ sheet }</h2>
+						<div class="newObj" onclick="addCustomSlot(this)">
+							<span class="glyphicon glyphicon-plus"></span>
+							<span> 新增一項自訂欄位...</span>
+						</div>
+					 </div>`;
 
-		// combine
-		let panel = "<div class=\"" + classname + "\" key=\"" + table + "\">" + tablename + addBtn + "</div>";
+		// display
 		$('#customInterface .settingPanel').append(panel);
-	}
-}
-
-
-/* ---
-add a new slot in custom metadata
-INPUT: 1) add button html element
-	   2) string, table name
---- */
-function addNewCustom($this, $table) {
-
-	// list
-	let listItem = "";
-	for (let header in _data[$table][0]) listItem += "<li role=\"presentation\" onclick=\"selectItem(this)\" style=\"display: block;\">" + _data[$table][0][header] + "</li>";
-	
-	// button
-	var buttonGroup = "<div class=\"btn-group\"><button type=\"button\" class=\"btn btn-default dropdown-toggle text-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\">--- 請選擇 ---</button><button type=\"button\" class=\"btn btn-default dropdown-toggle icon-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\"><span class=\"caret\"></span></button><ul class=\"dropdown-menu\" role=\"menu\"><li role=\"presentation\" onclick=\"selectItem(this)\" class=\"selected\" style=\"display: block;\">--- 請選擇 ---</li>" + listItem + "</ul></div>";
-
-	var block = "<div class=\"customObj\"><span>欄位名稱</span><input type=\"text\" name=\"metaName\"><span class=\"glyphicon glyphicon-trash\" onclick=\"deleteCustomObj(this)\"></span><span>欄位資料</span>" + buttonGroup + "<div></div><span>超連結資料</span>" + buttonGroup + "<label class=\"switch\"><input type=\"checkbox\" name=\"link\"><span class=\"slider\"></span></label></div>";
-	$($this).before(block);
-}
-
-
-/* ---
-delete a slot in custom metadata
-INPUT: delete button html element
---- */
-function deleteCustomObj($this) {
-	$($this.parentElement).remove();
+	});
 }
 
 
@@ -242,195 +251,209 @@ function deleteCustomObj($this) {
 
 
 /* ---
-content page
+content setting of content interface
+INPUT: none
+OUTPUT: none
 --- */
 function displayContentPage() {
 
-	// choose source
-	var sourceHTML = "<div name=\"contentSource\" class=\"menu\"><h3>來源</h3><div class=\"btn-group\"><button type=\"button\" class=\"btn btn-default dropdown-toggle text-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\">--- 請選擇 ---</button><button type=\"button\" class=\"btn btn-default dropdown-toggle icon-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\"><span class=\"caret\"></span></button><ul class=\"dropdown-menu\" role=\"menu\"><li role=\"presentation\" onclick=\"selectItem(this)\" class=\"selected\" style=\"display: block;\">--- 請選擇 ---</li><li role=\"presentation\" onclick=\"selectItem(this)\" style=\"display: block;\">CSV/Excel 欄位</li><li role=\"presentation\" onclick=\"selectItem(this)\" style=\"display: block;\">匯入純文字檔</li></ul></div><input type=\"text\" name=\"contentSource\"></div>";
+	// global fixed elements
+	let fixed = `<div class="txtFilesHeader fixed">
+					<span>檔名</span>
+					<span>狀態</span>
+					<span>檢視</span>
+					<span>操作</span>
+				</div>
+				<div class="notMatch fixed"></div>
+				<input id="singleTXT" type="file" accept=".txt" onchange="uploadSingleTXT(this)" style="display: none;"/>
+				<input id="multiTXT" type="file" accept=".txt" onchange="uploadMultiTXT(this)" style="display: none;" multiple/>
+				<input id="wholeTXT" type="file" accept=".txt" onchange="uploadWholeTXT(this)" style="display: none;"/>`;
+	$('#contentInterface .settingPanel').append(fixed);
 
-	// scan all table
-	var first = true;
-	for (let table in _data) {
+	// pagination
+	let pagination = '';
+	for (let tag in _contentTags) {
+		let classname = (tag === 'doc_content') ?'target' :'';
+		pagination += `<div key="${ tag }" class="${ classname }" onclick="changeToTab('${ tag }')">
+							<span>${ _contentTags[tag] }</span>
+							<span>${ tag }</span>
+					   </div>`;
+	}
 
-		// pagination
-		let second = true;
-		let pagination = "<div class=\"tab\">";
-		for (let tag in _contentTags) {
-			let classname = (second) ?" class=\"target\"" :"";
-			pagination += "<div key=\"" + tag + "\"" + classname + " onclick=\"changeTab('" + tag + "')\"><span>" + _contentTags[tag] + "</span><span>" + tag + "</span></div>";
-			second = false;
-		}
-		pagination += "</div>";
+	// content mapping
+	let contentMapping = `<h3>對應欄位</h3>
+						  <div class="newObj" onclick="addNewSelectObj(this)">
+						  		<span class="glyphicon glyphicon-plus"></span>
+						  		<span> 新增一項對應欄位...</span>
+						  </div>`;
 
-		// list
-		let choiceList = "<ul class=\"dropdown-menu\" role=\"menu\"><li role=\"presentation\" onclick=\"selectItem(this)\" class=\"selected\" style=\"display: block;\">--- 請選擇 ---</li>";
-		for (let header in _data[table][0]) choiceList += "<li role=\"presentation\" onclick=\"selectItem(this)\" style=\"display: block;\">" + _data[table][0][header] + "</li>";
-		choiceList += "</ul>";
+	// import txt
+	let importTXT = `<div class="importTXT">
+						<h3>上傳純文字檔</h3>
 
-		// button
-		let buttonGroup = "<div class=\"btn-group\"><button type=\"button\" class=\"btn btn-default dropdown-toggle text-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\">--- 請選擇 ---</button><button type=\"button\" class=\"btn btn-default dropdown-toggle icon-only\" data-toggle=\"dropdown\" onclick=\"selectClicked(this)\"><span class=\"caret\"></span></button>" + choiceList + "</div>";
+						<div>
+							<div class="importTXTtoolBar">
+								<button type="button" class="btn btn-default" onclick="$('#wholeTXT').click()" style="grid-area: whole;">
+									<span class="glyphicon glyphicon-cloud-upload"></span>
+									 使用單一文字檔案，並以「空行」分件
+								</button>
 
-		// content mapping
-		let contentMapping = "<h3>對應欄位</h3><div class=\"selectObj\">" + buttonGroup + "<input type=\"text\"></div><div class=\"newObj\" onclick=\"addNewSelect(this)\"><span class=\"glyphicon glyphicon-plus\"></span><span> 新增一項對應欄位...</span></div>";
+								<button type="button" class="btn btn-default" onclick="$('#multiTXT').click()" style="grid-area: multi;">
+									<span class="glyphicon glyphicon-cloud-upload"></span>
+									 批次上傳
+								</button>
 
-		// tool bar
-		let wholeUpload = "<button type=\"button\" class=\"btn btn-default\" onclick=\"uploadTXT('" + table + "', undefined, 'doc_content', 'whole')\" style=\"grid-area: whole;\"><span class=\"glyphicon glyphicon-cloud-upload\"></span> 使用單一文字檔案，並以「空行」分件</button>";
-		let multiUpload = "<button type=\"button\" class=\"btn btn-default\" onclick=\"uploadTXT('" + table + "', undefined, 'doc_content', 'multi')\" style=\"grid-area: multi;\"><span class=\"glyphicon glyphicon-cloud-upload\"></span> 批次上傳</button>";
-		let deleteAll = "<button type=\"button\" class=\"btn btn-default\" onclick=\"deleteAllTXT('" + table + "', 'doc_content')\" style=\"grid-area: delete;\"><span class=\"glyphicon glyphicon-trash\"></span> 刪除全部</button>";
-		let toolBar = "<div class=\"importTXTtoolBar\">" + wholeUpload + multiUpload + deleteAll + "</div><div></div>";
+								<button type="button" class="btn btn-default" onclick="deleteAllTXT()" style="grid-area: delete;">
+									<span class="glyphicon glyphicon-trash"></span>
+									 刪除全部
+								</button>
+							</div>
+							<div></div>
 
-		// header
-		let header = "<div class=\"txtFilesHeader\"><span>檔名</span><span>狀態</span><span>檢視</span><span>操作</span></div>";
+							<div>
+								<div class="txtFilesHeader">
+									<span>檔名</span>
+									<span>狀態</span>
+									<span>檢視</span>
+									<span>操作</span>
+								</div>
+								<div class="txtFiles"></div>
+							</div>
+							<div class="notMatch"></div>
+						</div>
+					 </div>`;
 
-		// import txt
-		let importTXT = "<div class=\"importTXT\"><h3>上傳純文字檔</h3><div>" + toolBar + "<div>" + header + "<div class=\"txtFiles\"></div></div><div class=\"notMatch\"></div></div></div>";
-
-		// content elements
-		let content = "";
-		let third = true;
-		for (let tag in _contentTags) {
-
-			// information
-			let classname = (third) ?"tagTab target" :"tagTab";
-			third = false;
-
-			// content of one tag
-			if (tag === 'doc_content') content += "<div key=\"" + tag + "\" name=\"" + tag + "\" class=\"" + classname + "\">" + sourceHTML + "<div class=\"contentMapping\" style=\"display: none;\">" + contentMapping + "</div>" + importTXT + "</div>";
-			else content += "<div key=\"" + tag + "\" name=\"" + tag + "\" class=\"" + classname + "\">"  + "<div class=\"contentMapping\">" + contentMapping + "</div></div>";
-		}
+	// each sheet
+	_selectedSheet.forEach((sheet, i) => {
 
 		// information
-		let tablename = "<h2 class=\"text-center\">" + table + "</h2>";
-		let classname = (first) ?"settingTab target" :"settingTab";
-		first = false;
-		
-		// combine
-		let panel = "<div class=\"" + classname + "\" key=\"" + table + "\">" + tablename + pagination + content + "</div>";
-		$('#contentInterface .settingPanel').append(panel);
-	}
+		let classname = (i === 0) ?'settingTab target' :'settingTab';
 
-	// show metatags input
-	$('.tagTab[key="MetaTags"] .selectObj > input').css('display', 'block');
-	$('.tagTab[key="MetaTags"] .selectObj > input').attr('placeholder', '請輸入標籤名稱（半形英文）');
-}
+		// content
+		let content = '';
+		for (let tag in _contentTags) {
 
+			if (tag === 'doc_content') {
+				let srcItem = ` <li role="presentation" onclick="selectMenuItem(this)" value="mapping" style="display: block;">CSV/Excel 欄位</li>
+								<li role="presentation" onclick="selectMenuItem(this)" value="import" style="display: block;">匯入純文字檔</li>`;
 
-/* ---
-import txt tables in content page
---- */
-function displayImportTXT() {
-	
-	var info = {'sheetOrder': 0, 'sheetNum': _txtData.length, 'tagNum': 4};
-	for (let table in _txtData) {
+				content += `<div class="tagTab target" name="${ tag }">
+								<div class="menu" name="contentSource">
+									<h3>來源</h3>
+									${ displayBtnGroup(srcItem) }
+									<input type="text">
+								</div>
 
-		// filenames
-		info['fileOrder'] = 0;
-		info['fileNum'] = _txtData[table].length;
-		for (let filename in _txtData[table]) {
+								<div class="contentMapping" style="display: none;">${ contentMapping }</div>
+								${ importTXT }
+							</div>`;
 
-			// one file
-			let row = "<div name=\"" + filename + "\" class=\"rowFile\"><span func=\"name\">" + filename + ".txt</span><span func=\"status\">無</span><span func=\"view\" class=\"glyphicon glyphicon-eye-open\" onclick=\"showTXT(this)\"></span><span func=\"manipulate\" class=\"glyphicon glyphicon-cloud-upload\" onclick=\"uploadTXT('" + table + "', '" + filename + "', 'doc_content', 'single')\"></span></div>";
-			$('#contentInterface .settingTab[key=\'' + table + '\'] .tagTab[key=doc_content] .txtFiles').append(row);
-
-			// add drag and drop listener
-			let dropTarget = document.querySelector('#contentInterface .settingTab[key=\'' + table + '\'] .tagTab[key=doc_content] .rowFile[name=\'' + filename + '\']');
-			dropTarget.addEventListener('drop', dropNotMatchFile);
-			dropTarget.addEventListener('dragenter', dragNotMatchFileEnter);
-			dropTarget.addEventListener('dragover', dragNotMatchFileOver);
-			dropTarget.addEventListener('dragleave', dragNotMatchFileLeave);
-			
-			// progress
-			updateProgress(info, 'required');
-			info['fileOrder']++;
+			} else {
+				content += `<div class="tagTab" name="${ tag }">
+								<div class="contentMapping">${ contentMapping }</div>
+							</div>`;
+			}
 		}
 
-		info['sheetOrder']++;
+		// html
+		let panel = `<div class="${ classname }" name="${ sheet }">
+						<h2 class="text-center">${ sheet }</h2>
+						<div class="tab">${ pagination }</div>
+						${ content }
+					 </div>`;
+
+		// display
+		$('#contentInterface .settingPanel').append(panel);
+	});
+
+	// show metatags input
+	$('.tagTab[name="MetaTags"] .selectObj > input').css('display', 'block');
+}
+
+
+/* ---
+all table in import txt section
+INPUT: none
+OUTPUT: none
+--- */
+function displayImportTXT() {
+	_selectedSheet.forEach(sheet => {
+		displayTXTTable(sheet);
+	});
+}
+
+
+/* ---
+a table in import txt section
+INPUT: none
+OUTPUT: none
+--- */
+function displayTXTTable($sheet) {
+
+	// reset table
+	$(`#contentInterface .settingTab[name="${ $sheet }"] .txtFiles`).empty();
+
+	// each document
+	for (let i in _fileindex[$sheet]) {
+		let j = _fileindex[$sheet][i];
+
+		// row of a file
+		let row = `<div class="rowFile" key="${ j }">
+						${ displayTXTFile(j) }
+					</div>`;
+
+		// display
+		$(`#contentInterface .settingTab[name="${ $sheet }"] .txtFiles`).append(row);
+
+		// add drag and drop listener
+		let dropTarget = document.querySelector(`#contentInterface .settingTab[name="${ $sheet }"] .rowFile[key="${ j }"]`);
+		dropTarget.addEventListener('drop', dropNotMatchFile);
+		dropTarget.addEventListener('dragenter', dragNotMatchFileEnter);
+		dropTarget.addEventListener('dragover', dragNotMatchFileOver);
+		dropTarget.addEventListener('dragleave', dragNotMatchFileLeave);
 	}
 }
 
 
 /* ---
-add a new slot in content mapping
-INPUT: add button html element
+a row in import txt table
+INPUT: int/string, file unique index in system
+OUTPUT: string, html in a row of table
 --- */
-function addNewSelect($this) {
+function displayTXTFile($index) {
+	let hasContent = !(_documents[$index].doc_content.doc_content.import[0] === '');
+	let filename = _documents[$index].attr.filename;
+	let status, manipulate;
 
-	// copy UI
-	var selectObj = $($this.parentElement).find('.selectObj')[0]
-	var block = "<div class=\"selectObj\">" + $(selectObj).html() + "<span class=\"glyphicon glyphicon-trash\" onclick=\"deleteSelectObj(this)\"></span></div>";
-	$($this).before(block);
+	if (hasContent) {
+		status = `<span func="status" class="glyphicon glyphicon-ok" style="color: limegreen;"></span>`;
+		manipulate = `<span func="manipulate" class="glyphicon glyphicon-trash" onclick="clickDeleteTXT(this)"></span>`;
+	} else {
+		status = `<span func="status">無</span>`;
+		manipulate = `<span func="manipulate" class="glyphicon glyphicon-cloud-upload" onclick="clickUploadTXT(this)"></span>`;
+	}
 
-	// reset new slot
-	var resetIndex = $($this.parentElement).find('.selectObj').length - 1;
-	var resetObj = $($this.parentElement).find('.selectObj')[resetIndex];
-	selectItem($(resetObj)[0].children[0].children[2].children[0]);
+	return `<span func="name">${ filename }.txt</span>
+			${ status }
+			<span func="view" class="glyphicon glyphicon-eye-open" onclick="showTXT(this)"></span>
+			${ manipulate }`;
 }
 
 
 /* ---
-delete a slot in content mapping
-INPUT: delete button html element
+create an UI of not match file
+INPUT: string, name of not match file
+OUTPUT: none
 --- */
-function deleteSelectObj($this) {
-	$($this.parentElement).remove();
-}
+function displayNotMatchTXT($filename) {
+	var notMtachFile = `<div name="${ $filename }" class="notMatchFile" draggable="true">${ $filename }</div>`;
 
-
-/* ---
-trigger after upload a txt file
-INPUT: 1) string, table name
-       2) string, filename
-       3) string, tag name
---- */
-function displayUploadTXT($table, $filename, $tag) {
-	var row = $('#contentInterface .settingTab[key=\'' + $table + '\'] .tagTab[key=\'' + $tag + '\'] .rowFile[name=\'' + $filename + '\']');
-	var status = $(row).find('span[func=status]');
-	var manipulate = $(row).find('span[func=manipulate]');
-
-	// modify status icon
-	$(status).addClass('glyphicon glyphicon-ok');
-	$(status).attr('style', 'color: limegreen;');
-	$(status).empty();
-
-	// modify manipulate function
-	$(manipulate).attr('class', 'glyphicon glyphicon-trash');
-	$(manipulate).attr('onclick', 'deleteTXT(\'' + $table + '\', \'' + $filename + '\', \'' + $tag + '\', true);');
-}
-
-
-/* ---
-trigger after delete a txt file
-INPUT: 1) string, table name
-       2) string, filename
-       3) string, tag name
---- */
-function displayDeleteTXT($table, $filename, $tag) {
-	var row = $('#contentInterface .settingTab[key=\'' + $table + '\'] .tagTab[key=\'' + $tag + '\'] .rowFile[name=\'' + $filename + '\']');
-	var status = $(row).find('span[func=status]');
-	var manipulate = $(row).find('span[func=manipulate]');
-
-	// modify status icon
-	$(status).removeClass();
-	$(status).attr('style', '');
-	$(status).empty();
-	$(status).append('無');
-
-	// modify manipulate function
-	$(manipulate).attr('class', 'glyphicon glyphicon-cloud-upload');
-	$(manipulate).attr('onclick', 'uploadTXT(\'' + $table + '\', \'' + $filename + '\', \'' + $tag + '\', \'single\');');
-}
-
-
-/* ---
-trigger after delete a txt file and add new listener
-INPUT: 1) string, filename
-       2) string, table name
-       3) string, tag name
---- */
-function displayNotMatchTXT($filename, $table, $tag) {
-	var notMtachFiles = "<div name=\"" + $filename + "\" class=\"notMatchFile\" draggable=\"true\">" + $filename + ".txt</div>";
-	$('#contentInterface .settingTab[key=\'' + $table + '\'] .tagTab[key=' + $tag + '] .notMatch').append(notMtachFiles);
-	document.querySelector('#contentInterface .settingTab[key=\'' + $table + '\'] .tagTab[key=' + $tag + '] .notMatch div[name=\'' + $filename + '\']').addEventListener('dragstart', dragNotMatchFileStart);
+	// display
+	$('#contentInterface .settingTab.target .notMatch').append(notMtachFile);
+	$('.notMatch.fixed').append(notMtachFile);
+	
+	// drag listener
+	document.querySelector(`#contentInterface .settingTab.target .notMatchFile[name="${ $filename }"]`).addEventListener('dragstart', dragNotMatchFileStart);
+	document.querySelector(`.notMatch.fixed .notMatchFile[name="${ $filename }"]`).addEventListener('dragstart', dragNotMatchFileStart);
 }
 

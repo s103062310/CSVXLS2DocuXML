@@ -2,7 +2,7 @@
 /* ----- UPLOAD ----- */
 
 #uploadToolBar {
-	margin-top: 1%;
+	margin: 1% 0;
 	display: grid;
 	grid-gap: 5px;
 	grid-template-columns: repeat(4, 1fr);
@@ -18,7 +18,7 @@
 	grid-template-columns: repeat(3, 1fr);
 	grid-template-rows: repeat(1, 15vh);
 	border: dashed 3px silver;
-	overflow: scroll;
+	overflow-y: scroll;
 }
 
 .managerHover {
@@ -68,12 +68,25 @@
 
 .fileCover {
 	color: darkgray;
-	border: solid 1px darkgray;
+	border: solid 1px indianred;
+}
+
+.fileCover.chose {
+	border-color: limegreen;
 }
 
 .fileCover:hover {
 	background-color: whitesmoke;
-	border: solid 1px gray;
+}
+
+.fileCover:hover .usualFile {
+	display: none;
+}
+
+.fileCover:hover .hoverFile {
+	display: grid;
+	cursor: pointer;
+	grid-template-columns: repeat(3, 1fr);
 }
 
 .usualFile {
@@ -102,16 +115,6 @@
 
 .hoverFile .glyphicon-ok:hover {
 	color: forestgreen;
-}
-
-.fileCover:hover .usualFile {
-	display: none;
-}
-
-.fileCover:hover .hoverFile {
-	display: grid;
-	cursor: pointer;
-	grid-template-columns: repeat(3, 1fr);
 }
 
 /* ----- OUTPUT ----- */
