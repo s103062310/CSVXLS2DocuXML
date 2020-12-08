@@ -1,0 +1,118 @@
+
+/* ----- UPLOAD ----- */
+
+.toolbar {
+	margin: 1vh 0;
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	grid-gap: 5px;
+}
+
+#file-manager {
+	padding: 1vh;
+	display: grid;
+	grid-gap: 1vh;
+	grid-template-columns: repeat(3, 1fr);
+	grid-template-rows: repeat(1, 15vh);
+	border: dashed 3px silver;
+}
+
+#file-manager.hover {
+	background-color: whitesmoke;	/* for dragging function */
+}
+
+#file-manager > div {
+	margin: 0;
+	padding: 3%;
+	display: grid;
+	text-align: center;
+	border-radius: 10px;
+	font-size: large;
+}
+
+#file-manager span {
+	word-break: break-all;  /* English */
+	white-space: pre-wrap;  /* Chinese */
+	align-self: center;
+}
+
+#file-manager i {
+	font-size: 2rem!important;
+}
+
+#file-manager .hover i:hover {
+	font-size: 2.5rem!important;
+}
+
+.sheet-obj {
+	color: darkgray;
+	border: solid 1px indianred;
+}
+
+.sheet-obj.target {
+	border-color: limegreen;
+}
+
+.sheet-obj .normal {
+	display: grid;
+}
+
+.sheet-obj .hover {
+	display: none;
+	color: gray;
+}
+
+.sheet-obj:hover {
+	background-color: whitesmoke;
+}
+
+.sheet-obj:hover .normal {
+	display: none;
+}
+
+.sheet-obj:hover .hover {
+	display: grid;
+	cursor: pointer;
+	grid-template-columns: repeat(3, 1fr);
+}
+
+.upload-obj {
+	color: silver;
+	border: dotted 2px silver;
+}
+
+.upload-obj:hover {
+	color: gray;
+	border-color: gray;
+	cursor: pointer;
+}
+
+/* ----- OUTPUT ----- */
+
+.output {
+	margin-top: 2vh; 
+	overflow-y: scroll;
+}
+
+.output > * {
+	margin: 1em;
+}
+
+.input-btn {
+	display: grid;
+	grid-template-columns: 120px auto 200px;
+	grid-gap: 10px;
+	align-items: center;
+	text-align: left;
+}
+
+#XMLoutput {
+	padding: 1vh;
+	word-break: break-all;
+	word-wrap: break-word;
+	white-space: pre-wrap;
+	background-color: #F5F5F5;
+	border: 1px solid #CCCCCC;
+	border-radius: 5px;
+}
+

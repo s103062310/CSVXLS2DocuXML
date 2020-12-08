@@ -11,19 +11,20 @@ block that represents a sheet
 INPUT: string, sheet name
 OUTPUT: none
 --- */
-function displayUploadSheet($sheet) {
-	let fileBlock = `<label class="uploadCover fileCover chose" name="${ $sheet }">
-						<div class="usualFile">
-							<span class="glyphicon glyphicon-file"></span>
-							<span class="coverText">${ $sheet }</span>
-						</div>
-						<div class="hoverFile">
-							<span class="glyphicon glyphicon-trash" onclick="deleteSheet('${ $sheet }', true)"></span>
-							<span class="glyphicon glyphicon-eye-open" onclick="showSheet('${ $sheet }')"></span>
-							<span class="glyphicon glyphicon-ok" onclick="toggleUsed(this.parentElement.parentElement)"></span>
-						</div>
-					</label>`;
-	$('.emptyCover').before(fileBlock);	
+function displayUploadedSheet(sheet) {
+	$('.upload-obj').before(`
+		<div class="sheet-obj target" name="${ sheet }">
+			<div class="normal">
+				<i class="fa fa-file" aria-hidden="true"></i>
+				<span>${ sheet.replace('|', ' | ') }</span>
+			</div>
+			<div class="hover">
+				<i class="fa fa-trash-o" aria-hidden="true" onclick="deleteSheet('${ sheet }', true);"></i>
+				<i class="fa fa-eye" aria-hidden="true" onclick="showSheet('${ sheet }');"></i>
+				<i class="fa fa-check" aria-hidden="true" onclick="toggleUsed(this);"></i>
+			</div>
+		</div>
+	`);	
 }
 
 
@@ -32,130 +33,118 @@ function displayUploadSheet($sheet) {
 
 /* ---
 trigger when back to upload interface - reset all data and UI
-INPUT: none
-OUTPUT: none
 --- */
-function resetSetting() {
+function reset() {
 	_fileindex = [];
 	_documents = [];
 	_corpusSetting = {};
+	_buffer = {};
 	_notMatch = {};
-	$('#topContainer .tableList ul').empty();
-	$('.settingPanel').empty();
+	$('.main .directory').empty();
+	$('.main .content').empty();
 }
 
 
 /* ---
-table list in required/optional/custom/content interface
-INPUT: none
-OUTPUT: none
+sheet list in required/optional/custom/content interface
 --- */
-function displayTableList() {
+function displaySheetList() {
 	_selectedSheet.forEach((sheet, i) => {
-
-		// information
-		let [filename, sheetname] = sheet.split('--');
-		let classname = (i === 0) ?'list-group-item target' :'list-group-item';
-		
-		// html
-		let tableItem = `<li class="${ classname }" key="${ sheet }" onclick="changeToSheet('${ sheet }')">
-							<span>${ filename }</span>
-							<span> | </span>
-							<span>${ sheetname }</span>
-						</li>`;
+		let [filename, sheetname, num] = sheet.split('|');
 
 		// display
-		$('#topContainer .tableList ul').append(tableItem);
+		$('section .directory').append(`
+			<div class="dir-item${ (i === 0) ?' target' :'' }" key="${ sheet }">
+				<span>${ filename }</span>
+				<span>|</span>
+				<span>${ sheetname + '(' + num + ')' }</span>
+			</div>
+		`);
 	});
 }
 
 
 /* ---
 html of button group with custom choices
-INPUT: string, html of choices
+INPUT: array, choices, (object [type: single or header or multiple, value: string or array(2/3)])
 OUTPUT: string, html of button group
 --- */
-function displayBtnGroup($listItem) {
+function displayBtnGroup(list) {
+	var items = '';
+
+	// choices string
+	list.forEach(item => {
+		if (item.type === 'header') items += `<div class="dropdown-divider"></div>
+				  							  <h6 class="dropdown-header">${ item.value }</h6>
+				  							  <div class="dropdown-divider"></div>`;
+		else if (item.type === 'single') items += `<a class="dropdown-item" value="${ item.value[1] }">${ item.value[0] }</a>`;
+		else items += `<a class="dropdown-item multiple${ (item.value[2]) ?' ' + item.value[2] :'' }" value="${ item.value[1] }">
+							<span>${ item.value[0] }</span>
+							<span>|</span>
+							<span>${ item.value[1] }</span>
+						</a>`;
+	});
+
+	// button group string
 	return `<div class="btn-group">
-				<button type="button" class="btn btn-default dropdown-toggle text-only" data-toggle="dropdown" onclick="clickMenuBtn(this)" value="null">
+				<button type="button" class="btn btn-light dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 					--- 請選擇 ---
 				</button>
-
-				<button type="button" class="btn btn-default dropdown-toggle icon-only" data-toggle="dropdown" onclick="clickMenuBtn(this)">
-					<span class="caret"></span>
-				</button>
-
-				<ul class="dropdown-menu" role="menu">
-					<li role="presentation" onclick="selectMenuItem(this)" value="null" class="selected" style="display: block;">--- 請選擇 ---</li>
-					${ $listItem }
-				</ul>
+				<div class="dropdown-menu text-center">
+					<a class="dropdown-item target" value="reset">--- 請選擇 ---</a>
+					${ items }
+				</div>
 			</div>`;
 }
 
 
 /* ---
 content setting of required interface
-INPUT: none
-OUTPUT: none
 --- */
 function displayRequiredPage() {
 	_selectedSheet.forEach((sheet, i) => {
-
-		// information
-		let [filename, sheetname] = sheet.split('--');
-		let classname = (i === 0) ?'settingTab target' :'settingTab';
+		let corpusItem = [], filenameItem = [];
+		let [filename, sheetname, num] = sheet.split('|');
 
 		// corpus basic choices
-		let corpusItem =   `<li role="presentation" onclick="selectMenuItem(this)" value="自訂" style="display: block;">
-								自訂
-							</li>
-										
-							<li role="presentation" onclick="selectMenuItem(this)" value="${ filename }">
-								<span>檔案名稱</span>
-								<span> | </span>
-								<span>${ filename }</span>
-							</li>
-
-							<li role="presentation" onclick="selectMenuItem(this)" value="${ sheetname }">
-								<span>資料表名稱</span>
-								<span> | </span>
-								<span>${ sheetname }</span>
-							</li>`;
+		corpusItem.push({ type: 'single', value: ['自訂', 'udef'] });
+		corpusItem.push({ type: 'multiple', value: ['檔案名稱', filename] });
+		corpusItem.push({ type: 'multiple', value: ['資料表名稱', sheetname] });
 
 		// filename basic choices
-		let filenameItem = `<li role="presentation" onclick="selectMenuItem(this)" value="自動產生檔名" style="display: block;">自動產生檔名</li>`;
-
-		// choices
-		let listItem = '';
-		_dataPool[sheet][0].forEach(key => {
-			listItem += `<li role="presentation" onclick="selectMenuItem(this)" value="${ key }">
-							<span>欄位名稱</span>
-							<span> | </span>
-							<span>${ key }</span>
-						</li>`;
+		filenameItem.push({ type: 'single', value: ['自動產生檔名', 'udef'] });
+		
+		// common choices
+		_dataPool[sheet][0].forEach(header => {
+			corpusItem.push({ type: 'multiple', value: ['欄位名稱', header] });
+			filenameItem.push({ type: 'multiple', value: ['欄位名稱', header] });
 		});
 
-		// html
-		let panel = `<div class="${ classname }" name="${ sheet }">
-						<h2 class="text-center">${ sheet }</h2>
-						
-						<!-- corpus -->
-						<div class="menu" name="corpus">
-							<h3>文獻集名稱 corpus</h3>
-							${ displayBtnGroup(corpusItem + listItem) }
-							<input type="text" placeholder="請輸入文獻集名稱...">
-						</div>
-
-						<!-- filename -->
-						<div class="menu" name="filename">
-							<h3>文件唯一編號 filename</h3>
-							${ displayBtnGroup(filenameItem + listItem) }
-							<input type="text" placeholder="請輸入檔名前綴...">
-						</div>
-					</div>`;
-
 		// display
-		$('#requiredInterface .settingPanel').append(panel);
+		$('#required .content').append(`
+			<!-- sheet -->
+			<div class="setting-sheet${ (i === 0) ?' target' :'' }" name="${ sheet }">
+				<h4 class="text-center">${ sheet.replace(/\|/g, ' | ') }</h4>
+
+				<!-- corpus -->
+				<div class="required-obj" name="corpus">
+					<h5>文獻集名稱 corpus</h5>
+					<div class="button-input">
+						${ displayBtnGroup(corpusItem) }
+						<input type="text" class="form-control" placeholder="請輸入文獻集名稱...">
+					</div>
+				</div>
+
+				<!-- filename -->
+				<div class="required-obj" name="filename">
+					<h5>文件唯一編號 filename</h5>
+					<div class="button-input">
+						${ displayBtnGroup(filenameItem) }
+						<input type="text" class="form-control" placeholder="請輸入檔名前綴...">
+					</div>
+				</div>
+			</div>
+		`);
 	});
 }
 
@@ -165,55 +154,49 @@ function displayRequiredPage() {
 
 /* ---
 content setting of optional interface
-INPUT: none
-OUTPUT: none
 --- */
 function displayOptionalPage() {
-
-	// globel fixed hintbox
-	var hintbox = `<div class="metahintbox" key="">
-						<div class="hinttitle"></div>
-						<hr style="margin: 0 5%;">
-						<div class="hintcontent"></div>
-				   </div>`;
-	$('#optionalInterface .settingPanel').append(hintbox);
-
+	
 	// list of metadata
-	var listItem = '';
-	for (let meta in _metadata) {
-		if (_metadata[meta].mustfill) continue;
-		let postClass = (_metadata[meta].postclass) ?'postClass' :'';
-		listItem += `<li class="${ postClass }" role="presentation" onclick="selectMenuItem(this)" onmouseover="showHint('${ meta }')" value="${ meta }">
-						<span>${ _metadata[meta].chinese }</span>
-						<span> | </span>
-						<span>${ meta }</span>
-					 </li>`;
+	var listItem = [];
+	for (let name in _metadata.spec) {
+
+		// skip required metadata
+		if (name === 'corpus' || name === 'filename') continue;
+
+		// header
+		if (name === 'title') listItem.push({ type: 'header', value: '文件資訊' });
+		if (name === 'geo_level1') listItem.push({ type: 'header', value: '地理資訊' });
+		if (name === 'time_orig_str') listItem.push({ type: 'header', value: '時間資訊' });
+
+		// item
+		let value = [_metadata.spec[name].zh, name];
+		if (_metadata.spec[name].post) value.push('post');
+		listItem.push({ type: 'multiple', value: value });
 	}
+
+	var listHtml = displayBtnGroup(listItem);
 
 	// each sheet
 	_selectedSheet.forEach((sheet, i) => {
-
-		// information
-		let classname = (i === 0) ?'settingTab target' :'settingTab';
-		let blocks = '';
+		let objs = '';
 
 		// each header
 		_dataPool[sheet][0].forEach(header => {
-			blocks += `<div class="menu" name="${ header }">
-							<h3>${ header }</h3>
-							${ displayBtnGroup(listItem) }
-							<input type="text">
-					   </div>`;
+			objs += `<div class="optional-obj" name="${ header }">
+						<h5>${ header }</h5>
+						${ listHtml }
+					</div>`;
 		});
 
-		// html
-		let panel = `<div class="${ classname }" name="${ sheet }">
-						<h2 class="text-center">${ sheet }</h2>
-						${ blocks }
-					 </div>`;
-
 		// display
-		$('#optionalInterface .settingPanel').append(panel);
+		$('#optional .content').append(`
+			<!-- sheet -->
+			<div class="setting-sheet${ (i === 0) ?' target' :'' }" name="${ sheet }">
+				<h4 class="text-center">${ sheet.replace(/\|/g, ' | ') }</h4>
+				${ objs }
+			</div>
+		`);
 	});
 }
 
@@ -223,26 +206,67 @@ function displayOptionalPage() {
 
 /* ---
 content setting of custom interface
-INPUT: none
-OUTPUT: none
 --- */
 function displayCustomPage() {
+
+	// display each sheet
 	_selectedSheet.forEach((sheet, i) => {
+		$('#custom .content').append(`
+			<!-- sheet -->
+			<div class="setting-sheet${ (i === 0) ?' target' :'' }" name="${ sheet }">
+				<h4 class="text-center">${ sheet.replace(/\|/g, ' | ') }</h4>
+			</div>
+		`);
+	});
 
-		// information
-		let classname = (i === 0) ?'settingTab target' :'settingTab';
+	// display add button
+	$('#custom .content').append(`
+		<button id="add-cumstom-obj" type="button" class="btn btn-light">
+			<i class="fa fa-plus" aria-hidden="true"></i> 新增一項自訂欄位
+		</button>
+	`);
 
-		// html
-		let panel = `<div class="${ classname }" name="${ sheet }">
-						<h2 class="text-center">${ sheet }</h2>
-						<div class="newObj" onclick="addCustomSlot(this)">
-							<span class="glyphicon glyphicon-plus"></span>
-							<span> 新增一項自訂欄位...</span>
-						</div>
-					 </div>`;
+	// activate button
+	$('#add-cumstom-obj').click(function(event) {
+		let target = $(event.target).siblings('.target');
 
-		// display
-		$('#customInterface .settingPanel').append(panel);
+		// list of sheet header
+		let listItem = [];
+		_dataPool[_sheet][0].forEach(header => {
+			listItem.push({ type: 'single', value: [header, header] });
+		});
+		
+		// button
+		let buttonGroup = displayBtnGroup(listItem);
+		
+		// display new custom obj
+		$(target).append(`
+			<div class="custom-obj">
+				<div class="obj-item" name="name">
+					<span>欄位名稱</span>
+					<input type="text" class="form-control">
+				</div>
+
+				<div class="obj-item" name="data">
+					<span>欄位資料</span>
+					${ buttonGroup }
+				</div>
+
+				<div class="obj-item" name="link">
+					<span>超連結資料</span>
+					${ buttonGroup }
+					<label class="switch">
+						<input type="checkbox">
+						<span class="slider"></span>
+					</label>
+				</div>
+
+				<i class="fa fa-trash" aria-hidden="true" onclick="$(this).closest('.custom-obj').remove();"></i>
+			</div>
+		`);
+
+		// activate
+		activateDropdown($(target).children().last());
 	});
 }
 
@@ -252,208 +276,177 @@ function displayCustomPage() {
 
 /* ---
 content setting of content interface
-INPUT: none
-OUTPUT: none
 --- */
 function displayContentPage() {
-
-	// global fixed elements
-	let fixed = `<div class="txtFilesHeader fixed">
-					<span>檔名</span>
-					<span>狀態</span>
-					<span>檢視</span>
-					<span>操作</span>
-				</div>
-				<div class="notMatch fixed"></div>
-				<input id="singleTXT" type="file" accept=".txt" onchange="uploadSingleTXT(this)" style="display: none;"/>
-				<input id="multiTXT" type="file" accept=".txt" onchange="uploadMultiTXT(this)" style="display: none;" multiple/>
-				<input id="wholeTXT" type="file" accept=".txt" onchange="uploadWholeTXT(this)" style="display: none;"/>`;
-	$('#contentInterface .settingPanel').append(fixed);
-
-	// pagination
-	let pagination = '';
+	
+	// tab navigation
+	var tabNav = '';
 	for (let tag in _contentTags) {
-		let classname = (tag === 'doc_content') ?'target' :'';
-		pagination += `<div key="${ tag }" class="${ classname }" onclick="changeToTab('${ tag }')">
-							<span>${ _contentTags[tag] }</span>
-							<span>${ tag }</span>
-					   </div>`;
+		tabNav += `<div class="tab-nav-item${ (tag === 'content') ?' target' :'' }" key="${ tag }">
+						<span>${ _contentTags[tag].zh }</span>
+						<span>${ _contentTags[tag].name }</span>
+					</div>`;
 	}
 
-	// content mapping
-	let contentMapping = `<h3>對應欄位</h3>
-						  <div class="newObj" onclick="addNewSelectObj(this)">
-						  		<span class="glyphicon glyphicon-plus"></span>
-						  		<span> 新增一項對應欄位...</span>
-						  </div>`;
+	// source item list
+	let sourceItem = [];
+	sourceItem.push({ type: 'single', value: ['對應資料表欄位', 'mapping'] });
+	sourceItem.push({ type: 'single', value: ['匯入純文字檔案', 'import'] });
+
+	// source
+	let source = `<!-- source -->
+					<div class="obj-item" name="source">
+						<h5 style="margin-left: 0;">來源</h5>
+						${ displayBtnGroup(sourceItem) }
+					</div>`;
+
+	// mapping
+	let mapping = `<!-- mapping -->
+					<div class="mapping-obj">
+						<h5>對應欄位</h5>
+						<button type="button" class="btn btn-light add-mapping-btn">
+							<i class="fa fa-plus" aria-hidden="true"></i> 新增一項對應欄位
+						</button>
+					</div>`;
 
 	// import txt
-	let importTXT = `<div class="importTXT">
-						<h3>上傳純文字檔</h3>
+	let importtxt = `<!-- import -->
+					<div class="import-obj dy-obj">
+						<h5>上傳純文字檔</h5>
 
-						<div>
-							<div class="importTXTtoolBar">
-								<button type="button" class="btn btn-default" onclick="$('#wholeTXT').click()" style="grid-area: whole;">
-									<span class="glyphicon glyphicon-cloud-upload"></span>
-									 使用單一文字檔案，並以「空行」分件
-								</button>
+						<!-- tool bar -->
+						<div class="obj-item">
+							<button type="button" class="btn btn-light delete-txt-all">
+								<i class="fa fa-trash" aria-hidden="true"></i> 刪除全部
+							</button>
+							<button type="button" class="btn btn-light upload-txt-multiple">
+								<i class="fa fa-upload" aria-hidden="true"></i> 批次上傳
+							</button>
+							<button type="button" class="btn btn-light upload-txt-whole">
+								<i class="fa fa-upload" aria-hidden="true"></i> 使用單一文字檔案，並以「空行」分件
+							</button>
+						</div>
 
-								<button type="button" class="btn btn-default" onclick="$('#multiTXT').click()" style="grid-area: multi;">
-									<span class="glyphicon glyphicon-cloud-upload"></span>
-									 批次上傳
-								</button>
+						<!-- txt manipulate -->
+						<div class="txt-board">
 
-								<button type="button" class="btn btn-default" onclick="deleteAllTXT()" style="grid-area: delete;">
-									<span class="glyphicon glyphicon-trash"></span>
-									 刪除全部
-								</button>
-							</div>
-							<div></div>
-
-							<div>
-								<div class="txtFilesHeader">
+							<!-- txt record table -->
+							<div class="txt-table">
+								<div class="txt-th">
 									<span>檔名</span>
 									<span>狀態</span>
 									<span>檢視</span>
 									<span>操作</span>
 								</div>
-								<div class="txtFiles"></div>
 							</div>
-							<div class="notMatch"></div>
+
+							<!-- not match buffer -->
+							<div class="txt-buffer"></div>
 						</div>
-					 </div>`;
+					</div>`;
 
 	// each sheet
 	_selectedSheet.forEach((sheet, i) => {
+		let panel = $('#content .content');
 
-		// information
-		let classname = (i === 0) ?'settingTab target' :'settingTab';
+		// display sheet
+		$(panel).append(`
+			<!-- sheet -->
+			<div class="setting-sheet${ (i === 0) ?' target' :'' }" name="${ sheet }">
+				<h4 class="text-center">${ sheet.replace(/\|/g, ' | ') }</h4>
+				
+				<!-- tab navigation -->
+				<div class="tab-nav">${ tabNav }</div>
+			</div>
+		`);
 
-		// content
-		let content = '';
+		// display tab
+		let sheetPanel = $(panel).children().last();
 		for (let tag in _contentTags) {
+			$(sheetPanel).append(`
+				<div class="dy-obj ${ tag }-obj${ (tag === 'content') ?' target' :'' }">
+					${ (tag === 'content')
+						? source + mapping + importtxt
+						: mapping }
+				</div>
+			`);
+		}		
 
-			if (tag === 'doc_content') {
-				let srcItem = ` <li role="presentation" onclick="selectMenuItem(this)" value="mapping" style="display: block;">CSV/Excel 欄位</li>
-								<li role="presentation" onclick="selectMenuItem(this)" value="import" style="display: block;">匯入純文字檔</li>`;
-
-				content += `<div class="tagTab target" name="${ tag }">
-								<div class="menu" name="contentSource">
-									<h3>來源</h3>
-									${ displayBtnGroup(srcItem) }
-									<input type="text">
-								</div>
-
-								<div class="contentMapping" style="display: none;">${ contentMapping }</div>
-								${ importTXT }
-							</div>`;
-
-			} else {
-				content += `<div class="tagTab" name="${ tag }">
-								<div class="contentMapping">${ contentMapping }</div>
-							</div>`;
-			}
-		}
-
-		// html
-		let panel = `<div class="${ classname }" name="${ sheet }">
-						<h2 class="text-center">${ sheet }</h2>
-						<div class="tab">${ pagination }</div>
-						${ content }
-					 </div>`;
-
-		// display
-		$('#contentInterface .settingPanel').append(panel);
+		// display txt table
+		let tablePanel = $(sheetPanel).find('.txt-table');
+		Object.keys(_fileindex[sheet]).forEach(index => {
+			$(tablePanel).append(`
+				<div class="txt-td" data-index="${ index }">
+					<span></span>
+					<span>無</span>
+					<i class="fa fa-eye" aria-hidden="true"></i>
+					<i class="fa fa-upload" aria-hidden="true"></i>
+				</div>
+			`);
+		});
 	});
 
-	// show metatags input
-	$('.tagTab[name="MetaTags"] .selectObj > input').css('display', 'block');
+	// other display setting
+	$('.content-obj .mapping-obj').addClass('dy-obj');
+	for (let tag in _contentTags) $(`.${ tag }-obj .add-mapping-btn`).attr('data-type', tag);
+
+	// activate add mapping button
+	$('.add-mapping-btn').click(function(event) {
+		let btn = $(event.target).closest('button');
+		let id = $(btn).attr('data-type');
+
+		// list of sheet header
+		let listItem = [];
+		_dataPool[_sheet][0].forEach(header => {
+			listItem.push({ type: 'single', value: [header, header] });
+		});
+
+		// display
+		$(btn).before(`
+			<div class="obj-item" name="${ id }" data-index="${ _buffer[_sheet].addNewMapping(id) }">
+				${ displayBtnGroup(listItem) }
+				${ (id === 'metatag') 
+					? '<input type="text" class="form-control" placeholder="請輸入標籤名稱...">'
+					: '' }
+				<i class="fa fa-trash mapping-trash" aria-hidden="true"></i>
+			</div>
+		`);
+
+		// activate
+		activateMapping($(btn).prev());
+	});
+
+	// activate table functions
+	activateImport('body', ['eye', 'upload'], true);
 }
 
 
 /* ---
-all table in import txt section
-INPUT: none
-OUTPUT: none
+filename in txt table
 --- */
-function displayImportTXT() {
+function displayImport() {
 	_selectedSheet.forEach(sheet => {
-		displayTXTTable(sheet);
+		$(`#content .setting-sheet[name="${ sheet }"] .txt-td`).each(function() {
+			let i = $(this).attr('data-index');
+			let j = _fileindex[sheet][i];
+			$(this).children().first().html(_documents[j].filename + '.txt');
+		});
 	});
-}
-
-
-/* ---
-a table in import txt section
-INPUT: none
-OUTPUT: none
---- */
-function displayTXTTable($sheet) {
-
-	// reset table
-	$(`#contentInterface .settingTab[name="${ $sheet }"] .txtFiles`).empty();
-
-	// each document
-	for (let i in _fileindex[$sheet]) {
-		let j = _fileindex[$sheet][i];
-
-		// row of a file
-		let row = `<div class="rowFile" key="${ j }">
-						${ displayTXTFile(j) }
-					</div>`;
-
-		// display
-		$(`#contentInterface .settingTab[name="${ $sheet }"] .txtFiles`).append(row);
-
-		// add drag and drop listener
-		let dropTarget = document.querySelector(`#contentInterface .settingTab[name="${ $sheet }"] .rowFile[key="${ j }"]`);
-		dropTarget.addEventListener('drop', dropNotMatchFile);
-		dropTarget.addEventListener('dragenter', dragNotMatchFileEnter);
-		dropTarget.addEventListener('dragover', dragNotMatchFileOver);
-		dropTarget.addEventListener('dragleave', dragNotMatchFileLeave);
-	}
-}
-
-
-/* ---
-a row in import txt table
-INPUT: int/string, file unique index in system
-OUTPUT: string, html in a row of table
---- */
-function displayTXTFile($index) {
-	let hasContent = !(_documents[$index].doc_content.doc_content.import[0] === '');
-	let filename = _documents[$index].attr.filename;
-	let status, manipulate;
-
-	if (hasContent) {
-		status = `<span func="status" class="glyphicon glyphicon-ok" style="color: limegreen;"></span>`;
-		manipulate = `<span func="manipulate" class="glyphicon glyphicon-trash" onclick="clickDeleteTXT(this)"></span>`;
-	} else {
-		status = `<span func="status">無</span>`;
-		manipulate = `<span func="manipulate" class="glyphicon glyphicon-cloud-upload" onclick="clickUploadTXT(this)"></span>`;
-	}
-
-	return `<span func="name">${ filename }.txt</span>
-			${ status }
-			<span func="view" class="glyphicon glyphicon-eye-open" onclick="showTXT(this)"></span>
-			${ manipulate }`;
 }
 
 
 /* ---
 create an UI of not match file
-INPUT: string, name of not match file
-OUTPUT: none
+INPUT: string, id of not match file
 --- */
-function displayNotMatchTXT($filename) {
-	var notMtachFile = `<div name="${ $filename }" class="notMatchFile" draggable="true">${ $filename }</div>`;
-
-	// display
-	$('#contentInterface .settingTab.target .notMatch').append(notMtachFile);
-	$('.notMatch.fixed').append(notMtachFile);
-	
-	// drag listener
-	document.querySelector(`#contentInterface .settingTab.target .notMatchFile[name="${ $filename }"]`).addEventListener('dragstart', dragNotMatchFileStart);
-	document.querySelector(`.notMatch.fixed .notMatchFile[name="${ $filename }"]`).addEventListener('dragstart', dragNotMatchFileStart);
+function displayTxtBuffItem(fileID) {
+	var item = `<span class="txt-buffer-item" key="${ fileID }" draggable="true">${ fileID.replace('|', ' | ') }</span>`;
+	var display = function(buf) {
+		$(buf).append(item);
+		activateNotMatchFile($(buf).children().last());
+	};
+	display($('#content .setting-sheet.target .txt-buffer'));
+	display($('.txt-buffer.fixed'));
 }
+
 

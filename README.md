@@ -1,5 +1,5 @@
 # CSVXLS2DocuXML
-[Develop Weekly Progress](https://hackmd.io/N1x-sTgeQGucbKUmJMZu5g)
+[Develop Weekly Progress](https://hackmd.io/@DocuSky/Hy8191XGH)
 
 > 2019.11.28 | v.1.0  
 > 2019.12.19 | v.1.1, add: upload multiple txt at once  
@@ -8,7 +8,8 @@
 > 2020.07.03 | v.2.2, fix: bugs and update explanation, add: some functions in setting  
 > 2020.07.14 | v.2.3, fix: hintbox, default adjust, and json file  
 > 2020.09.04 | v.2.4, fix: bugs & some UI  
-> 2020.11.18 | v.3.0
+> 2020.11.18 | v.3.0  
+> 2021.03.03 | v.3.1, fix: update bootstrap and apply docuxml.js
 
 ## Introduction of Interface (page)
 1. **upload** => load csv/excel files
@@ -19,28 +20,25 @@
 6. **download** => converting to DocuXML
 
 ## HTML File
-1. **explain.html** => explanation of the tool
-2. **explainDir.html** => directory of explanation
+1. **index.html** => tool main page
+2. **explain.html** => explanation page
 
 ## CSS Files
-1. **main-style.css** => for main screen which won't switch as the process progresses
-2. **animating-style.css** => for animation, including lightbox and page switching
-3. **IO-style.css** => for upload and download interface
-4. **setting.css** => for required, optional, and part of content interface, including button-group, select, input, and table list
-5. **content-style.css** => for content interface
+1. **main.css** => for main screen which won't change as the process progresses
+3. **io.css** => for upload and download page
+4. **setting.css** => for required, optional, custom, and part of content page
+5. **content.css** => for detail of content page
 
 ## Javascripts Files
 1. **globalVar.js** =>
 * all used data structures and global variables
 * initialization of the program
-* getter (get some information)
+* overwirte class prototype.
 * other small tools
-2. **checker.js** => check functions (return a boolean value)
-3. **fileLoading.js** => functions that used to upload/download files to system or DocuSky
-4. **dataProcess.js** => functions that used file data or setting data to dynamicly process output data
-5. **display.js** => functions that used to display html page
-6. **interaction.js** => functions that interact with user
-7. **worker.js** => worker scripts to prevent UI blocked
-8. **meta.json** => metadata standard in json format
+2. **fileLoading.js** => functions that used to upload/download files to system or DocuSky
+3. **dataProcess.js** => functions that used file data or setting data to dynamicly process output data
+4. **display.js** => functions that used to display html page
+5. **interaction.js** => functions that interact with user
+6. **worker.js** => worker scripts to prevent UI blocked
 
 

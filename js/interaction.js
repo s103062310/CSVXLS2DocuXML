@@ -8,51 +8,48 @@ This file defined the functions that interact with user.
 
 /* ---
 click previous page button (some switch limit are defined)
-INPUT: none
-OUTPUT: none
 --- */
-$('#prevPage').click(function() {
+$('#prev-btn').click(function() {
 
 	// required -> upload
 	if (_current === _procedure[1]) {
 		if (!confirm("返回上一步將會清空本頁設定，確定返回？\n（若想製作一份新文本，請按頁面重整按鈕。）")) return;
-		resetSetting();
+		reset();
 	}
 
 	// switch
-	var index = _procedure.indexOf(_current);
-	switchTo(_procedure[index-1], 'prev');
+	switchTo('prev');
 });
 
 
 /* ---
 click next page button (some switch limit are defined)
-INPUT: none
-OUTPUT: none
 --- */
-$('#nextPage').click(function() {
+$('#next-btn').click(function() {
 	switch (_current) {
 
 		// upload -> required
 		case _procedure[0]:
 			if (!checkUploadPage()) return;
 			generateXMLContainer();
-			displayTableList();
+			displaySheetList();
 			displayRequiredPage();
 			displayOptionalPage();
 			displayCustomPage();
 			displayContentPage();
+			activate();
 			break;
 
 		// required -> optional
 		case _procedure[1]:
 			if (!checkRequiredPage()) return;
 			if (!fillRequiredData()) return;
-			displayImportTXT();
+			displayImport();
 			break;
 
 		// optional -> custom
 		case _procedure[2]:
+			pickCorpusMetaSetting();
 			break;
 
 		// custom -> content
@@ -62,151 +59,101 @@ $('#nextPage').click(function() {
 
 		// content -> download
 		case _procedure[4]:
-			if (!checkContentPage()) return;
+			if (!(metatagName = checkContentPage())) return;
+			setDocContent(metatagName);
 			convertToXML();
 			break;
 	}
 
 	// switch
-	var index = _procedure.indexOf(_current);
-	switchTo(_procedure[index+1], 'next');
+	switchTo('next');
 });
 
 
 /* ---
 switch to an interface
-INPUT: 1) string, interface name
-	   2) string, direction, prev or next
-OUTPUT: none
+INPUT: string, direction, prev or next
 --- */
-function switchTo($interface, $dir) {
-	
-	// don't do anything if we are currently animating
-	if ($('.animating').length > 0) return;
+function switchTo(dir) {
+	var now = _procedure.indexOf(_current);
+	var index = (dir === 'prev') ?now-1 :now+1;
+	var section = _procedure[index];
 
-	// set panel
-	$(`#${ _current }Interface`).attr('class', 'panelWrapper exit ' + $dir);
-	$(`#${ $interface }Interface`).attr('class', 'panelWrapper enter ' + $dir);
+	// before animation
+	$('#' + section).addClass('target');
+	$('#' + section).css('left', `${ (dir === 'prev') ?-100 :100 }vw`);
+	$('#' + section).css('right', `${ (dir === 'prev') ?100 :-100 }vw`);
 
-	// start animation
+	// section enter
+	$('#' + section).animate({
+		left: 0,
+		right: 0
+	}, 300);
+
+	// current exit
+	$('#' + _current).animate({
+		left: `${ (dir === 'prev') ?100 :-100 }vw`,
+		right: `${ (dir === 'prev') ?-100 :100 }vw`
+	}, 300);
+
+	// after animation
 	setTimeout(function() {
-		$('#toolWrapper').addClass('animating');
-	}, 0);
-
+		$('#' + _current).removeClass('target');
+		_current = section;
+	}, 300);
+	
 	// update progress bar
-	if ($dir === 'next') {
-		$(`#${ _current } span`).attr('class', 'glyphicon glyphicon-ok');
-		$(`#${ _current }-${ $interface }`).addClass('target');
-		$(`#${ $interface }`).addClass('target');
-		$(`#${ $interface } span`).addClass('circle');
-		$(`#${ $interface } span`).empty();
-	} else if ($dir === 'prev') {
-		$(`#${ _current }`).removeClass('target');
-		$(`#${ _current } span`).removeClass();
-		$(`#${ _current } span`).html(_procedure.indexOf(_current) + 1);
-		$(`#${ $interface }-${ _current }`).removeClass('target');
-		$(`#${ $interface } span`).attr('class', 'circle');
+	if (dir === 'prev') {
+		$('nav .target').last().html(`<span>${ now+1 }</span>`);
+		$('nav .target').last().removeClass('target');
+		$('nav .target').last().removeClass('target');
+		$('nav .target').last().html('<span></span>');
+
+	} else {
+		$('nav .target').last().html('<i class="fa fa-check" aria-hidden="true"></i>');
+		$('nav .target').last().next().addClass('target');
+		$('nav .target').last().next().addClass('target');
+		$('nav .target').last().html('<span></span>');
 	}
 
 	// update switch button
-	if ($interface === _procedure[_procedure.length-1]) $('#nextPage').css('display', 'none');
-	else $('#nextPage').css('display', 'grid');
-	if ($interface === _procedure[0]) $('#prevPage').css('display', 'none');
-	else $('#prevPage').css('display', 'grid');
-	
-	// stop animation
-	setTimeout(function() {
-		$(`#${ _current }Interface`).attr('class', 'panelWrapper');
-		$(`#${ $interface }Interface`).attr('class', 'panelWrapper current');
-		$('#toolWrapper').removeClass('animating');
-		_current = $interface;
-	}, 600);
+	if (index === _procedure.length-1) $('#next-btn').hide();
+	else $('#next-btn').show();
+	if (index === 0) $('#prev-btn').hide();
+	else $('#prev-btn').show();
 
 	// access target sheet
-	_sheet = $(`#${ $interface }Interface .settingTab.target`).attr('name');
+	_sheet = $('#' + section + ' .setting-sheet.target').attr('name');
 }
 
 
-// * * * * * * * * * * * * * * * * light box * * * * * * * * * * * * * * * * *
+// * * * * * * * * * * * * * * * * explain * * * * * * * * * * * * * * * * *
 
 
 /* ---
-click usage button in tool bar and show usage document
-INPUT: none
-OUTPUT: none
+click explain button in tool bar and show document
 --- */
-$('#usage').click(function() {
-	showLightBox();
+$('#explain').click(function() {
 
 	// data
-	var name = `使用說明 
-				<a href="assets/guide.pdf" download="表格文本轉換工具操作手冊.pdf">
-					<span class="glyphicon glyphicon-cloud-download"></span>
-				</a>`;
-	var text = $('#explainText').html();
+	$('#lightbox-label').html('使用說明 <a href="assets/guide.pdf" download="表格文本轉換工具操作手冊.pdf"><i class="fa fa-cloud-download" aria-hidden="true"></i></a>');
+	$('#lightbox-body').html(_explain);
+
+	// activate functions
+	$('.explain .dir-item').click(function(event) {
+		let key = $(event.target).closest('.dir-item').attr('data-key');
+		let originY = $('.content [data-key=1]').offset().top;
+		let targetY = $(`.content [data-key=${ key }]`).offset().top;
+
+		// move
+		$('.explain .content').animate({
+			scrollTop: targetY - originY
+		}, 600);
+	});
 
 	// display
-	$('#lightbox-filename > h1').html(name);
-	$('#lightbox-text').html(text);
-	$('#lightbox-text').addClass('explainInterface');
+	$('#lightbox').modal('show');
 });
-
-
-/* ---
-click close button in lightbox
-INPUT: none
-OUTPUT: none
---- */
-$('#lightbox-close').click(function() {
-	if ($('.animating').length > 0) return;	// don't do anything if we are currently animating
-	$('#lightbox-text').removeClass('explainInterface');
-	$('#lightbox').css('display', 'none');
-});
-
-
-/* ---
-pop out lightbox with animation
-INPUT: none
-OUTPUT: none
---- */
-function showLightBox() {
-
-	// don't do anything if we are currently animating
-	if ($('.animating').length > 0) return;
-
-	// show up
-	$('#lightbox').css('display', 'block');
-	$('#lightbox-bg').attr('class', 'popOut fade');
-	$('#lightbox-content').attr('class', 'popOut scale');
-
-	// start animation
-	setTimeout(function() {
-		$('#lightbox').addClass('animating');
-	}, 0);
-
-	// stop animation
-	setTimeout(function() {
-		$('#lightbox-bg').removeClass();
-		$('#lightbox-content').removeClass();
-		$('#lightbox').removeClass('animating');
-	}, 600);
-}
-
-
-/* ---
-scroll to correspond explain section
-INPUT: string, selector of target that want to scroll to
-OUTPUT: none
---- */
-function jumpToSection($selector) {
-	var originY = $('#lightbox h2[key=1]').offset().top;
-	var targetY = $($selector).offset().top;
-
-	// move
-	$('#lightbox .explainContent').animate({
-		scrollTop: targetY - originY
-	}, 600);
-}
 
 
 // * * * * * * * * * * * * * * * * upload * * * * * * * * * * * * * * * * *
@@ -214,76 +161,58 @@ function jumpToSection($selector) {
 
 /* ---
 click select all button in tool bar
-INPUT: none
-OUTPUT: none
 --- */
-$('#selectAll').click(function() {
-	$('.fileCover').each( function(i) {
-		if (!$(this).is('.chose')) toggleUsed(this);
+$('#select-all').click(function() {
+	$('.sheet-obj').each(function() {
+		if (!$(this).is('.target')) toggleUsed($(this).find('.hover i').last());
 	});
 });
 
 
 /* ---
 click select reverse button in tool bar
-INPUT: none
-OUTPUT: none
 --- */
-$('#selectReverse').click(function() {
-	$('.fileCover').each( function(i) {
-		toggleUsed(this);
+$('#select-reverse').click(function() {
+	$('.sheet-obj').each(function() {
+		toggleUsed($(this).find('.hover i').last());
 	});
 });
 
 
 /* ---
 click delete all button in tool bar
-INPUT: none
-OUTPUT: none
 --- */
-$('#deleteAll').click(function() {
+$('#delete-all').click(function() {
 	if (!confirm("確定刪除所有資料嗎？")) return;
 	
 	// delete
 	_dataPool = [];
 	_dataPool.length = 0;
-	_inputFiles = []
-	$('.fileCover').remove();
+	$('.sheet-obj').remove();
 });
 
 
 /* ---
 click delete select button in tool bar
-INPUT: none
-OUTPUT: none
 --- */
-$('#deleteSelect').click(function() {
+$('#delete-select').click(function() {
 	if (!confirm("確定刪除所有已選取的資料嗎？")) return;
 	
 	// delete
-	$('.fileCover').each( function(i) {
-		if ($(this).is('.chose')) deleteSheet($(this).attr('name'), false);
+	$('.sheet-obj').each(function() {
+		if ($(this).is('.target')) deleteSheet($(this).attr('name'), false);
 	});
 });
 
 
 /* ---
 toggle sheet, used or not used
-INPUT: object, html element of sheet block
-OUTPUT: none
+INPUT: jquery, html element of toggle icon
 --- */
-function toggleUsed($this) {
-
-	// ok -> remove
-	if ($($this).is('.chose')) {
-		$($this).removeClass('chose');
-		$($this).find('.glyphicon-ok').attr('class', 'glyphicon glyphicon-remove');
-
-	// remove -> ok
-	} else {
-		$($this).addClass('chose');
-		$($this).find('.glyphicon-remove').attr('class', 'glyphicon glyphicon-ok');
-	}
+function toggleUsed(span) {
+	$(span).closest('.sheet-obj').toggleClass('target');
+	$(span).toggleClass('fa-check');
+	$(span).toggleClass('fa-remove');
 }
 
 
@@ -291,45 +220,40 @@ function toggleUsed($this) {
 delete uploaded sheet
 INPUT: 1) string, sheet ID
        2) boolean, if need confirm
-OUTPUT: none
 --- */
-function deleteSheet($sheet, $confirm) {
+function deleteSheet(sheet, ask) {
 	
 	// pop out confirm
-	if ($confirm) {
-		if (!confirm(`確定刪除 ${ $sheet } ？`)) return;
+	if (ask) {
+		if (!confirm(`確定刪除資料表「${ sheet }」嗎？`)) return;
 	}
 
-	// get filename
-	var filename = $sheet.split('--')[0];
-
 	// remove
-	delete _dataPool[$sheet];
+	$(`.sheet-obj[name="${ sheet }"]`).remove();
+	delete _dataPool[sheet];
 	_dataPool.length--;
-	_inputFiles[filename]--;
-	$(`.fileCover[name="${ $sheet }"]`).remove();
-
-	// check input files
-	if (_inputFiles[filename] === 0) delete _inputFiles[filename];
 }
 
 
 /* ---
 show the content of a sheet
 INPUT: string, sheet ID
-OUTPUT: none
 --- */
-function showSheet($sheet) {
-	showLightBox();
+function showSheet(sheet) {
 
-	var table = `<table border="1">
-					<thead></thead>
-					<tbody></tbody>
-				</table>`;
+	// data
+	$('#lightbox-label').html(sheet);
+	$('#lightbox-body').html(`
+		<div style="height: 100%; padding: 1rem; overflow: scroll;">
+			<table border="1">
+				<thead></thead>
+				<tbody></tbody>
+			</table>
+		</div>
+	`);
 
 	// display
-	$('#lightbox-filename > h1').html($sheet);
-	$('#lightbox-text').html(table);
+	$('#lightbox').modal('show');
 
 	// worker
 	var worker = new Worker('js/worker.js');
@@ -342,14 +266,156 @@ function showSheet($sheet) {
 			html: html in thead or tbody
 		} */
 
-		$(`#lightbox-text ${ $event.data.loc }`).append($event.data.html);
+		$('#lightbox-body ' + $event.data.loc).append($event.data.html);
 
 	}, false);
 
 	// send
 	worker.postMessage({ 
 		func: 'showsheet',
-		content: _dataPool[$sheet]
+		content: _dataPool[sheet]
+	});
+}
+
+
+// * * * * * * * * * * * * * * * * activation * * * * * * * * * * * * * * * * *
+
+
+/* ---
+activate UI interacted functions
+--- */
+function activate() {
+
+	// sheet navigation
+	$('.dir-item').click(function(event) {
+		changeToSheet($(event.target).closest('.dir-item').attr('key'));
+	});
+
+	// tab navigation
+	$('.tab-nav-item').click(function(event) {
+		changeToTab($(event.target).closest('.tab-nav-item'));
+	});
+
+	// hintbox
+	$('#optional .dropdown-item').hover(function(event) {
+		hoverMetadata($(event.target).closest('.dropdown-item').attr('value'));
+	});
+
+	// import - delete all
+	$('.delete-txt-all').click(function() {
+		deleteTxtAll();
+	});
+
+	// import - upload multiple
+	$('.upload-txt-multiple').click(function() {
+		$('#txt-multiple').click();
+	});
+
+	// import - delete all
+	$('.upload-txt-whole').click(function() {
+		$('#txt-whole').click();
+	});
+
+	// dropdown
+	activateDropdown('body');
+}
+
+
+/* ---
+activate dropdown functions
+INPUT: jquery/string, selector of activated range
+--- */
+function activateDropdown(span) {
+	$(span).find('.dropdown-item').click(function(event) {
+		selectMenuItem($(event.target).closest('.dropdown-item'));
+	});
+}
+
+
+/* ---
+activate mapping UI (content)
+INPUT: jquery/string, selector of activated range
+--- */
+function activateMapping(span) {
+
+	// dropdown
+	activateDropdown(span);
+
+	// remove
+	$(span).find('.mapping-trash').click(function(event) {
+		deleteMapping($(event.target).closest('.obj-item'));		
+	});
+}
+
+
+/* ---
+activate import txt table UI (content)
+INPUT: 1) jquery/string, selector of activated range
+	   2) array(string), id of activated item
+	   3) bool, if need to activate drag function
+--- */
+function activateImport(span, items, drag) {
+	items.forEach(id => {
+		let target = $(span).find('.fa-' + id);
+
+		// clear
+		$(target).prop('onclick', null).off('click');
+
+		// bind
+		$(target).click(function(event) {
+			_file = $(event.target).closest('.txt-td').attr('data-index');
+			let j = _fileindex[_sheet][_file];
+			if (id === 'eye') showTxt(_documents[j].filename, _buffer[_sheet].getImport(_file));
+			else if (id === 'upload') $('#txt-single').click();
+			else if (id === 'trash') deleteTxt(_documents[j].filename, true);
+		});
+	});
+
+	if (drag) {
+		let targets = $('#content .txt-td');
+
+		// drag over
+		$(targets).on('dragover', function(event) {
+			event.preventDefault();
+			event.stopPropagation();
+			$(event.target).closest('.txt-td').addClass('hover');
+		});
+
+		// drag leave
+		$(targets).on('dragleave', function(event) {
+			event.preventDefault();
+			event.stopPropagation();
+			$(event.target).closest('.txt-td').removeClass('hover');
+		});
+
+		// drop
+		$(targets).on('drop', function(event) {
+			event.preventDefault();
+			event.stopPropagation();
+			let target = $(event.target).closest('.txt-td');
+			$(target).removeClass('hover');
+			_file = $(target).attr('data-index');
+			dropNotMatchFile(event.originalEvent.dataTransfer.getData('text/plain'));
+		});
+	}
+}
+
+
+/* ---
+activate new added not matching file (content)
+INPUT: jquery/string, html element of not matching file
+--- */
+function activateNotMatchFile(span) {
+
+	// click
+	$(span).click(function(event) {
+		let fileID = $(span).attr('key');
+		showTxt(fileID.replace(/\|.+/, ''), _notMatch[_sheet][fileID]);
+	});
+
+	// drag
+	$(span).on('dragstart', function(event) {
+		event.originalEvent.dataTransfer.setData('text/plain', $(span).attr('key'));
 	});
 }
 
@@ -358,409 +424,285 @@ function showSheet($sheet) {
 
 
 /* ---
-switch to specific sheet (for required/optional/custom/content interface)
+switch to specific sheet
 INPUT: string, sheet ID
-OUTPUT: none
 --- */
-function changeToSheet($sheet) {
-	var interface = $(`#${ _current }Interface`);
+function changeToSheet(id) {
+	var panel = $('#' + _current);
 
 	// clear
-	$(interface).find('.tableList .target').removeClass('target');
-	$(interface).find('.settingTab.target').removeClass('target');
+	$(panel).find('.dir-item.target').removeClass('target');
+	$(panel).find('.setting-sheet.target').removeClass('target');
 
 	// find target
-	$(interface).find(`.tableList li[key="${ $sheet }"]`).addClass('target');
-	$(interface).find(`.settingTab[name="${ $sheet }"]`).addClass('target');
+	$(panel).find(`.dir-item[key="${ id }"]`).addClass('target');
+	$(panel).find(`.setting-sheet[name="${ id }"]`).addClass('target');
 
-	// fixed not match element in content interface
+	// fixed buffer in #content 
 	if (_current === _procedure[4]) {
-		let notMatch = $('#contentInterface .settingTab.target .notMatch');
+		let buffer = $('#content .setting-sheet.target .txt-buffer');
 
 		// copy local html to global area
-		$('.notMatch.fixed').html($(notMatch).html());
+		$('.txt-buffer.fixed').html($(buffer).html());
 
 		// drag event
-		$(notMatch).find('.notMatchFile').each(function() {
-			document.querySelector(`.notMatch.fixed .notMatchFile[name="${ $(this).attr('name') }"]`).addEventListener('dragstart', dragNotMatchFileStart);
+		$('.txt-buffer.fixed').children().each(function() {
+			activateNotMatchFile(this);
 		});
 	}
 
-	_sheet = $sheet;
+	_sheet = id;
 }
 
 
 /* ---
-click button group and pop-out a dropdown/dropup menu
-INPUT: object, html element of clicked button group
-OUTPUT: none
+switch to specific tab (content)
+INPUT: jquery, html element of clicked tab navigation item
 --- */
-function clickMenuBtn($this) {
-	var containerY = $(`#${ _current }Interface .settingPanel`).offset().top;
-	var containerH = $(`#${ _current }Interface .settingPanel`).height();
-	var clickedY = $($this).offset().top;
-	var clickedH = $($this).height();
-	var menuH = (containerH - clickedH) / 2;
+function changeToTab(span) {
 
-	// set menu height
-	$($this.parentElement).find('ul').css('max-height', `${ menuH }px`);
+	// clear
+	$(span).siblings('.target').removeClass('target');
+	$(span).closest('.tab-nav').siblings('.target').removeClass('target');
 
-	// modify direction of popped out menu to up
-	if (containerY + containerH - clickedY - clickedH < menuH) $($this.parentElement).addClass('dropup');
-	else $($this.parentElement).removeClass('dropup');
+	// find target
+	$(span).addClass('target');
+	$(span).closest('.tab-nav').siblings(`.${ $(span).attr('key') }-obj`).addClass('target');
 }
 
 
 /* ---
 click/select specific item in pop-out menu of button group
-INPUT: object, html element of clicked list item
-OUTPUT: none
+INPUT: jquery, html element of clicked list item
 --- */
-function selectMenuItem($this) {
-
-	// get information
-	var prevValue = $($this.parentElement.parentElement).find('.text-only').attr('value');
-	var itemName = $($this.parentElement.parentElement.parentElement).attr('name');
-	var value = $($this).attr('value');
+function selectMenuItem(span) {
+	var btn = $(span).closest('.btn-group').find('button');
+	var target = $(span).closest('.dropdown-item');
+	var value = $(target).attr('value');
+	var prevTarget = $(target).siblings('.target');
+	var prevValue = $(prevTarget).attr('value');
 	var select = true;
 
-	// for each interface
+	// for each step
 	switch (_current) {
 
-		// required
+		// required - show input UI
 		case _procedure[1]:
-
-			// show input UI
-			let input = $($this.parentElement.parentElement.parentElement).find('input');
-			if (itemInList(value, _custom)) $(input).css('display', 'block');
-			else $(input).css('display', 'none');
-
+			let input = $(span).closest('.button-input').find('input');
+			if (value === 'udef') $(input).show();
+			else $(input).hide();
 			break;
 
 		// optional
 		case _procedure[2]:
-			cancelOptionalMetadata(prevValue);				// clear previous setting
-			select = setOptionalMetadata(value, itemName);	// new setting
+			let header = $(span).closest('.optional-obj').attr('name');
+			cancelOptionalMetadata(prevValue);							// clear previous setting
+			select = setOptionalMetadata(value, header);				// new setting
 			break;
 
 		// content
 		case _procedure[4]:
+			let obj = $(span).closest('.obj-item');
+			let name = $(obj).attr('name');
+			let index = $(obj).attr('data-index');
 			
-			// source
-			if (itemName === 'contentSource') {
-				showContentSetting(value);
-				setDocContentSource(value);
-			}
+			// show setting according to source
+			if (name === 'source') {
+				$(obj).siblings('.target').removeClass('target');
+				if (value !== 'reset') $(obj).siblings(`.${ value }-obj`).addClass('target');
 
-			// extract content of doc_content, Metatags, Comment, Events
-			else {
-				let index = $($this.parentElement.parentElement.parentElement).attr('key');
-				select = setDocContent(index, value);
-			}
+			// extract mapping content
+			} else select = setContentByMapping(name, index, value);
 			
 			break;
 	}
 
 	// display
 	if (select) {
-		$($this.parentElement.parentElement).find('.text-only').attr('value', value);
-		$($this.parentElement.parentElement).find('.text-only').html($this.innerText);
-		$($this.parentElement).find('.selected').removeClass('selected');
-		$($this).addClass('selected');
+		$(btn).html($(target).html());
+		$(prevTarget).removeClass('target');
+		$(target).addClass('target');
 	}
 }
 
 
 /* ---
-trigger when mouse is over a optional metadata item and put hint information in hintbox
+hover specific item in pop-out metadata menu (optional)
 INPUT: string, metadata name
-OUTPUT: none
 --- */
-function showHint($metaname) {
+function hoverMetadata(name) {
+	if (name === 'reset') return;
 
 	// list of hints
 	var listHtml = '';
-	_metadata[$metaname].hint.forEach(item => {
+	_metadata.spec[name].hint.forEach(item => {
 		listHtml += `<li>${ item }</li>`;
 	});
 
 	// content
-	$('.hinttitle').html(`${ _metadata[$metaname].chinese} | ${ $metaname }`);
-	$('.hintcontent').html(`<ul>${ listHtml }</ul>`);
+	$('#hint-title').html(`${ _metadata.spec[name].zh} | ${ name }`);
+	$('#hint-content').html(`<ul>${ listHtml }</ul>`);
 
 	// position
-	var containerH = $('#optionalInterface .settingPanel').height();
-	var boxH = $('.metahintbox').height();
+	var containerH = $('#optional .content').height();
+	var boxH = $('#metadata-hintbox').height();
 	var boxY = (containerH - boxH) / 2;
-	$('.metahintbox').css('margin-top', `${ boxY }px`);
+	$('#metadata-hintbox').css('top', `${ boxY }px`);
 }
 
 
 /* ---
-add a new slot in custom metadata
-INPUT: object, html element of add button
-OUTPUT: none
+delete a mapping setting (content)
+INPUT: jquery, html element of clicked mapping
 --- */
-function addCustomSlot($this) {
-
-	// list of sheet header
-	var listItem = '';
-	_dataPool[_sheet][0].forEach(key => {
-		listItem += `<li role="presentation" onclick="selectMenuItem(this)" value="${ key }" style="display: block;">
-						${ key }
-					</li>`;
-	});
-	
-	// button
-	var buttonGroup = displayBtnGroup(listItem);
-
-	// custom metadata block
-	var block = `<div class="customObj">
-					<span>欄位名稱</span>
-					<input type="text" name="metaname">
-					<span><span class="glyphicon glyphicon-trash" onclick="deleteCustomSlot(this)"></span></span>
-					
-					<span>欄位資料</span>
-					${ buttonGroup }
-					<div></div>
-					
-					<span>超連結資料</span>
-					${ buttonGroup }
-					<label class="switch"><input type="checkbox" name="link"><span class="slider"></span></label>
-				</div>`;
-	
-	// display
-	$($this).before(block);
+function deleteMapping(span) {
+	let name = $(span).attr('name');
+	let index = $(span).attr('data-index');
+	_buffer[_sheet].removeMapping(name, index);
+	$(span).remove();
 }
 
 
 /* ---
-delete a slot in custom metadata
-INPUT: object, html element of delete button
-OUTPUT: none
+update UI of txt-td (content)
 --- */
-function deleteCustomSlot($this) {
-	$($this.parentElement.parentElement).remove();
-}
+function updateTxtUI() {
+	var target = $(`#content .setting-sheet.target .txt-td[data-index="${ _file }"]`);
 
+	// status
+	var exist = _buffer[_sheet].getImport(_file);
+	$(target).find('*:nth-child(2)').html((exist) ?'<i class="fa fa-check" aria-hidden="true"></i>' :'<span>無</span>');
 
-// * * * * * * * * * * * * * * * * content * * * * * * * * * * * * * * * * *
+	// manipulate
+	var funcs = (exist) ?'trash' :'upload';
+	$(target).children().last().attr('class', 'fa fa-' + funcs);
 
-
-/* ---
-switch to specific tab (for content interface)
-INPUT: string, key of table
-OUTPUT: none
---- */
-function changeToTab($tabKey) {
-	let settingTab = $('#contentInterface .settingTab.target');
-
-	// clear
-	$(settingTab).find('.tab div.target').removeClass('target');
-	$(settingTab).find('.tagTab.target').removeClass('target');
-
-	// find target
-	$(settingTab).find(`.tab div[key="${ $tabKey }"]`).addClass('target');
-	$(settingTab).find(`.tagTab[name="${ $tabKey }"]`).addClass('target');
+	// activate
+	activateImport(target, [funcs], false);
 }
 
 
 /* ---
-trigger when select a choice in 'content source' button group - show corresponding UI
-INPUT: string, setting value that user selected
-OUTPUT: none
+delete txt data (content)
+INPUT: 1) string, file name of deleted txt
+	   2) bool, if need double check with user
 --- */
-function showContentSetting($type) {
-	let target = $('#contentInterface .settingTab.target .tagTab.target');
-
-	// reset
-	$(target).find('.contentMapping').css('display', 'none');
-	$(target).find('.importTXT').css('display', 'none');
-
-	// from sheet
-	if ($type === 'mapping') {
-		$(target).find('.contentMapping').css('display', 'grid');
-		_showFixedY = -1;
-
-	// from txt
-	} else if ($type === 'import') {
-		$(target).find('.importTXT').css('display', 'grid');
-		let headerY = $(target).find('.txtFilesHeader').offset().top;
-		let containerY = $(target[0].parentElement).offset().top;
-		_showFixedY = headerY - containerY;
-	}
-}
-
-
-/* ---
-add a new select slot in content mapping
-INPUT: object, html element of add button
-OUTPUT: none
---- */
-function addNewSelectObj($this) {
-
-	// list of header
-	let listItem = '';
-	_dataPool[_sheet][0].forEach(header => {
-		listItem += `<li role="presentation" onclick="selectMenuItem(this)" value="${ header }" style="display: block;">${ header }</li>`;
-	});
-
-	// display UI
-	var tag = $('#contentInterface .settingTab.target .tagTab.target').attr('name');
-	var show = (tag === 'MetaTags') ?' style="display: block;"' :'';
-	var block = `<div class="selectObj" key="${ $($this.parentElement).find('.selectObj').length }">
-					${ displayBtnGroup(listItem) }
-					<input type="text" placeholder="請輸入標籤名稱（半形英文）"${ show }>
-					<span class="glyphicon glyphicon-trash" onclick="deleteSelectObj(this)"></span>
-				</div>`;
-	$($this).before(block);
-
-	// corpus seeting
-	if (tag === 'MetaTags') _corpusSetting[_sheet].tag.push({ name: '', title: '' });
-
-	// data container
-	for (let i in _fileindex[_sheet]) {
-		let j = _fileindex[_sheet][i];
-		if (tag === 'doc_content') _documents[j].doc_content.doc_content.mapping.push('');
-		else if (tag === 'MetaTags') _documents[j].doc_content.MetaTags.push({ tagname: '', data: [] });
-		else _documents[j].doc_content[tag].push([]);
-	}
-}
-
-
-/* ---
-delete a slot in content mapping
-INPUT: object, html element of delete button
-OUTPUT: none
---- */
-function deleteSelectObj($this) {
-	let tag = $('#contentInterface .settingTab.target .tagTab.target').attr('name');
-	let index = parseInt($($this.parentElement).attr('key'));
-
-	// delete corpus setting
-	if (tag === 'MetaTags') _corpusSetting[_sheet].tag.splice(index, 1);
-
-	// delete corresponded content
-	for (let i in _fileindex[_sheet]) {
-		let j = _fileindex[_sheet][i];
-		if (tag === 'doc_content') _documents[j].doc_content.doc_content.mapping.splice(index, 1);
-		else _documents[j].doc_content[tag].splice(index, 1);
-	}
-
-	// delete UI
-	$($this.parentElement).remove();
-
-	// modify UI key
-	$('#contentInterface .settingTab.target .tagTab.target .selectObj').each(function(i) {
-		$(this).attr('key', i);
-	});
-}
-
-
-/* ---
-click upload cloud icon in import txt table - upload corresponding txt file
-INPUT: object, html element of upload span
-OUTPUT: none
---- */
-function clickUploadTXT($this) {
-
-	// set target file
-	$($this.parentElement).addClass('target');
-
-	// click input
-	$('#singleTXT').click();
-}
-
-
-/* ---
-click trash can icon in import txt table - delete corresponding txt file
-INPUT: object, html element of delete span
-OUTPUT: none
---- */
-function clickDeleteTXT($this) {
-	var j = $($this.parentElement).attr('key');
-	var filename = _documents[j].attr.filename;
+function deleteTxt(filename, check) {
 
 	// check with user before delete
-	if (!confirm("確定刪除 " + filename + ".txt 嗎？")) return;
+	if (check && !confirm(`確定刪除 ${ filename }.txt 嗎？`)) return;
 	
-	// delete
-	_documents[j].doc_content.doc_content.import = [''];
-	$($this.parentElement).html(displayTXTFile(j));
+	// data
+	_buffer[_sheet].removeImport(_file);
+
+	// UI
+	updateTxtUI();
 }
 
 
 /* ---
-click eye icon in import txt table - show the content of a txt file
-INPUT: object, html element of show span
-OUTPUT: none
+show txt data in modal (content)
+INPUT: 1) string, showed txt name
+	   2) string, txt content
 --- */
-function showTXT($this) {
-	var hasContent = ($($this.parentElement).find('span[func="status"]').html() === '');
-	var j = $($this.parentElement).attr('key');
-	var filename = _documents[j].attr.filename;
+function showTxt(filename, body) {
 
 	// see if have uploaded
-	if (!hasContent) {
+	if (!body) {
 		alert("請先上傳檔案。");
 		return;
 	}
 
+	// data
+	$('#lightbox-label').html(filename + '.txt');
+	$('#lightbox-body').html(`<div style="height: 100%; padding: 1rem; overflow-y: scroll;">${ body.replace(/\n/g, '<br>') }</div>`);
+
 	// display
-	showLightBox();
-	$('#lightbox-filename > h1').html(filename);
-	$('#lightbox-text').html(`<xmp style="white-space: pre-wrap;">${ _documents[j].doc_content.doc_content.import[0] }</xmp>`);
+	$('#lightbox').modal('show');
 }
 
 
 /* ---
-click delete all button in tool bar in import txt table - delete all txt file
-INPUT: none
-OUTPUT: none
+delete all txt data (content)
 --- */
-function deleteAllTXT() {
-	if (confirm("確定刪除所有檔案嗎？")) {
-		for (let i in _fileindex[_sheet]) {
-			let j = _fileindex[_sheet][i];
-			_documents[j].doc_content.doc_content.import = [''];
-			$(`#contentInterface .settingTab.target .rowFile[key="${ j }"]`).html(displayTXTFile(j));
+function deleteTxtAll() {
+	if (confirm('確定刪除所有檔案嗎？')) {
+		let buff = _buffer[_sheet].getImport();
+		for (let index in buff) {
+			if (buff[index]) {
+				_file = index;
+				deleteTxt(false);
+			}
 		}
 	}
 }
 
 
 /* ---
-trigger when scroll the panel in content interface - show table header when header scroll out of screen
-INPUT: none
-OUTPUT: none
+trigger when user drop not match file in table row of a file
+INPUT: string, id of not matching file
 --- */
-$('#contentInterface .settingPanel').scroll(function() {
+function dropNotMatchFile(fileID) {
+	var j = _fileindex[_sheet][_file];
 
-	// fixed header style
-	var headerW = $(this).find('.settingTab.target .txtFilesHeader').width();
-	var headerX = $(this).find('.settingTab.target .txtFilesHeader').offset().left;
-	$('.txtFilesHeader.fixed').width(headerW);
-	$('.txtFilesHeader.fixed').css('left', headerX.toString() + 'px');
-
-	// not match block style
-	var containerH = $(this).height();
-	var containerW = $(this).find('.settingTab.target').width();
-	var notmatchX = $(this).find('.settingTab.target .notMatch').offset().left;
-	var notmatchW = (containerW * 0.98 - 5) / 3;
-	$('.notMatch.fixed').css('height', containerH.toString() + 'px');
-	$('.notMatch.fixed').css('width', notmatchW.toString() + 'px');
-	$('.notMatch.fixed').css('left', notmatchX.toString() + 'px');
-	$(this).find('.settingTab.target .notMatch').css('height', containerH.toString() + 'px');
-
-	// show fixed header or not
-	if (_showFixedY >= 0 && $(this).scrollTop() > _showFixedY) {
-		$('.txtFilesHeader.fixed').css('display', 'grid');
-		$('.notMatch.fixed').css('display', 'block');
-	} else {
-		$('.txtFilesHeader.fixed').css('display', 'none');
-		$('.notMatch.fixed').css('display', 'none');
+	// check cover
+	if (_buffer[_sheet].getImport(_file)) {
+		if (!confirm(`所選檔名「${ _documents[j].filename }.txt」已有資料，確定要配對嗎？`)) return;
 	}
+
+	// match
+	_buffer[_sheet].setImport(_file, _notMatch[_sheet][fileID]);
+	updateTxtUI();
+
+	// remove not matching file
+	$(`#content .setting-sheet.target .txt-buffer-item[key="${ fileID }"]`).remove();
+	$(`.txt-buffer.fixed .txt-buffer-item[key="${ fileID }"]`).remove();
+	delete _notMatch[_sheet][fileID];
+}
+
+
+/* ---
+trigger when scroll the panel in content interface - show table header when header scroll out of screen
+--- */
+$('#content .content').scroll(function() {
+	var contentL = $(this).offset().left;
+	var contentT = $(this).offset().top;
+	var contentH = $(this).css('height');
+
+	// fixed header
+	var headerT = $(this).find('.setting-sheet.target .txt-table').offset().top;
+	var headerW = $(this).find('.setting-sheet.target .txt-table').css('width');
+	$('.txt-table.fixed').css('width', headerW);
+	$('.txt-table.fixed').css('left', contentL + 'px');
+	$('.txt-table.fixed').css('top', contentT + 'px');
+
+	// fixed buffer
+	var bufferL = $(this).find('.setting-sheet.target .txt-buffer').offset().left;
+	var bufferW = $(this).find('.setting-sheet.target .txt-buffer').css('width');
+	$('.txt-buffer.fixed').css('left', bufferL + 'px');
+	$('.txt-buffer.fixed').css('top', contentT + 'px');
+	$('.txt-buffer.fixed').css('width', bufferW);
+	$('.txt-buffer.fixed').css('height', contentH);
+
+	// show fixed or not
+	if ($(this).find('.setting-sheet.target .import-obj.target').length <= 0) visibilityOfFixed(false);
+	else visibilityOfFixed(headerT < contentT);
 });
+
+
+/* ---
+show or hide fixed element
+INPUT: bool, if show
+--- */
+function visibilityOfFixed(show) {
+	if (show) {
+		$('.txt-table.fixed').show();
+		$('.txt-buffer.fixed').show();
+	} else {
+		$('.txt-table.fixed').hide();
+		$('.txt-buffer.fixed').hide();
+	}
+}
 
 
 // * * * * * * * * * * * * * * * * download * * * * * * * * * * * * * * * * *
@@ -768,14 +710,12 @@ $('#contentInterface .settingPanel').scroll(function() {
 
 /* ---
 download DocuXML to computer
-INPUT: none
-OUTPUT: none
 --- */
-$('#outputFilename button').click(function() {
+$('#output-filename button').click(function() {
 
 	// data
 	var textFileAsBlob = new Blob([_xml], { type: 'text/xml' });
-	var filename = $('#outputFilename input').val().trim();
+	var filename = $('#output-filename input').val().trim();
 	if (filename === '') filename = '我的文獻集-' + now();
 
 	// download
@@ -801,10 +741,8 @@ $('#outputFilename button').click(function() {
 
 /* ---
 upload DocuXML to DocuSky directly
-INPUT: none
-OUTPUT: none
 --- */
-$('#databaseName button').click(function($event) {
-	_docuSkyObj.manageDbList($event, uploadXML2DocuSky);
+$('#output-dbname button').click(function(event) {
+	_docuSkyObj.manageDbList(event, uploadXML2DocuSky);
 });
 

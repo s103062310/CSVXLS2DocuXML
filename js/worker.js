@@ -3,8 +3,9 @@ This file defined worker scripts to prevent UI blocked.
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 
-// include excel module
+// include module
 self.importScripts('https://oss.sheetjs.com/sheetjs/xlsx.full.min.js');
+self.importScripts('../../../packages/self-defined/docuxml.js');
 
 
 /* ---
@@ -27,7 +28,7 @@ self.addEventListener('message', function($event) {
 				content: processed data of one sheet
 			}*/
 
-			parseSheet(readExcel(data.content));			
+			readAndParseExcel(data.content);			
 			break;
 
 		case 'showsheet':
@@ -42,11 +43,11 @@ self.addEventListener('message', function($event) {
 		case 'convert':
 
 			/* data structure {
-				content: documents json,
-				corpusSetting: corpus setting json
+				docs: Documents,
+				setting: corpusMetaSetting
 			}*/
 
-			generateDocuXML(data.content, data.corpusSetting);
+			generateDocuXML(data.docs, data.setting);
 			break;
 
 		default:
@@ -60,12 +61,12 @@ self.addEventListener('message', function($event) {
 
 
 /* ---
-read excel content from row data
-INPUT: obj, row data
-OUTPUT: obj, excel work book
+read excel content from row data and parse excel data into json format (including header)
+INPUT: object, row data
+OUTPUT: (send) string, sheet name and array, cleared data
 --- */
-function readExcel($data) {
-	var wb = XLSX.read($data, { type: 'binary' });
+function readAndParseExcel(data) {
+	var wb = XLSX.read(data, { type: 'binary' });
 
 	// send progress
 	self.postMessage({
@@ -76,34 +77,23 @@ function readExcel($data) {
 	// send progress
 	self.postMessage({
 		func: 'sheetnum',
-		sheetNum: wb.SheetNames.length
+		sheetnum: wb.SheetNames.length
 	});
 
-	return wb;
-}
-
-
-/* ---
-parse excel data into json format (including header)
-INPUT: object, excel work book
-OUTPUT: (send) string, sheet name and array, cleared data
---- */
-function parseSheet($wb) {
-
 	// each sheet
-	$wb.SheetNames.forEach((sheetName, i) => {
-		let content = filterEmptyEntryandExtractHeader(XLSX.utils.sheet_to_json($wb.Sheets[sheetName]));
+	wb.SheetNames.forEach((sheetname, i) => {
+		let content = filterEmptyEntryandExtractHeader(XLSX.utils.sheet_to_json(wb.Sheets[sheetname]));
 		
 		// send progress
 		self.postMessage({
 			func: 'progress',
-			percentage: (i+1) / $wb.SheetNames.length / 2 + 0.5
+			percentage: (i+1) / wb.SheetNames.length / 2 + 0.5
 		});
 
 		// send data
 		self.postMessage({
 			func: 'sheetcontent',
-			sheetName: sheetName,
+			sheetname: sheetname,
 			content: content
 		});
 	});
@@ -121,17 +111,17 @@ check and filter empty data cell, extract and add header
 INPUT: array, parsed excel data (an element is a row in excel)
 OUTPUT: array, cleared excel data
 --- */
-function filterEmptyEntryandExtractHeader($content) {
+function filterEmptyEntryandExtractHeader(content) {
 	var header = [];
 
-	for (let i = $content.length-1; i >= 0; i--) {
+	for (let i = content.length-1; i >= 0; i--) {
 
 		// check each entry
-		Object.keys($content[i]).forEach(key => {
-			let value = $content[i][key].toString().trim();
+		Object.keys(content[i]).forEach(key => {
+			let value = content[i][key].toString().trim();
 
 			// delete empty entry
-			if (value === '') delete $content[i][key];
+			if (value === '') delete content[i][key];
 
 			// uniform key
 			else {
@@ -142,18 +132,18 @@ function filterEmptyEntryandExtractHeader($content) {
 
 				// sync key and data
 				if (newKey !== key) {
-					$content[i][newKey] = value;
-					delete $content[i][key];
+					content[i][newKey] = value;
+					delete content[i][key];
 				}
 			}
 		});
 
 		// delete empty line
-		if (Object.keys($content[i]).length <= 0) delete $content[i];
+		if (Object.keys(content[i]).length <= 0) delete content[i];
 	}
 
-	$content.splice(0, 0, header);
-	return $content;
+	content.splice(0, 0, header);
+	return content;
 }
 
 
@@ -162,9 +152,9 @@ check and filter empty data cell, extract and add header
 INPUT: array, sheet data (an element is a row in sheet)
 OUTPUT: (send) string, <table> html
 --- */
-function generateSheetTableHtml($data) {
+function generateSheetTableHtml(data) {
 
-	$data.forEach((file, i) => {
+	data.forEach((file, i) => {
 		let html = '';
 
 		// header
@@ -175,8 +165,8 @@ function generateSheetTableHtml($data) {
 
 		// content
 		} else {
-			$data[0].forEach(key => {
-				html += `<td>${ file[key] }</td>`;
+			data[0].forEach(key => {
+				html += `<td>${ (file[key]) ?file[key] :'' }</td>`;
 			});
 		}
 
@@ -192,193 +182,40 @@ function generateSheetTableHtml($data) {
 // * * * * * * * * * * * * * * * * convert * * * * * * * * * * * * * * * * *
 
 
-/* ---
-check and filter empty data cell, extract and add header
-INPUT: 1) array, documents data
-	   2) object, corpus metadata setting data
-OUTPUT: (send) string, converted DocuXML
---- */
-function generateDocuXML($data, $corpusSetting) {
-	var corpus = '';
-	var docs = '';
-
-	// each corpus
-	for (let corpusname in $corpusSetting) {
-		corpus += `<corpus name="${ corpusname }">
-						${ generateXML('metadata_field_settings', $corpusSetting[corpusname].metadata, true) }
-						${ generateTagSetting($corpusSetting[corpusname].tag) }
-					</corpus>`;
-	}
+function generateDocuXML(docs, setting) {
+	var xmlFormer = new DocuxmlFormer();
+	var xml_docs = '', xml_corpus = '';
 
 	// each document
-	$data.forEach((docObj, i) => {
-		docs += `<document${ generateAttr(docObj.attr) }>
-					${ generateMetadata(docObj) }
-					${ generateDocContent(docObj.doc_content) }
-				</document>\n`;
+	docs.forEach((docObj, i) => {
+		xml_docs += xmlFormer.formDoc(docObj, i);
 
 		// send progress
 		self.postMessage({
 			func: 'progress',
-			percentage: (i+1) / $data.length
+			percentage: (i+1) / (docs.length+1)
 		});
 	});
 
-	// whole xml
-	var xml = `<?xml version="1.0"?>
-				<ThdlPrototypeExport>
-					${ corpus }
-					<documents>${ docs }</documents>
-				</ThdlPrototypeExport>`.replace(/\s{2,}/g, '\n');
+	// each corpus
+	for (let name in setting) {
+		xml_corpus += xmlFormer.formCorpusMeta(name, setting[name]);
+	}
 
-	// send data
+	// send result
 	self.postMessage({
-		func: 'finish',
-		content: xml
+		func: 'result',
+		percentage: 1,
+		result: '<?xml version="1.0"?>\n' + 
+				xmlFormer.generateXML({
+					name: 'ThdlPrototypeExport',
+					br: true,
+
+					value: xml_corpus + xmlFormer.generateXML({
+							name: 'documents',
+							br: true,
+							value: xml_docs
+						})
+				})
 	});
-
-	// send fin
-	self.postMessage({
-		func: 'progress',
-		percentage: 1
-	});
 }
-
-
-/* ---
-generate xml attribute string from attribute object
-INPUT: object, attribute name and its value
-OUTPUT: string, xml attribute string
---- */
-function generateAttr($attr) {
-	let attrStr = '';
-	for (let name in $attr) attrStr += ` ${ name }="${ $attr[name] }"`;
-	return attrStr;
-}
-
-
-/* ---
-generate basic xml string
-INPUT: 1) string, tag name
-	   2) string/object, tag value
-	   3) boolean, if need to change line between tag and value
-OUTPUT: string, xml string
---- */
-function generateXML($tagname, $value, $br) {
-	let xml = '', attr = '';
-
-	// to leaf
-	if (typeof $value === 'string') xml = $value;
-
-	// value is still an object
-	else {
-		for (let tagname in $value) {
-			let br = (typeof $value[tagname] === 'object' && 'a' in $value[tagname]) ?true : false;
-			if (tagname === 'attr') attr = generateAttr($value[tagname]);
-			else if (tagname === 'value') xml += $value[tagname];
-			else xml += generateXML(tagname, $value[tagname], br);
-		}
-	}
-	
-	if ($br) return `<${ $tagname }${ attr }>\n${ xml }\n</${ $tagname }>\n`;
-	else return `<${ $tagname }${ attr }>${ xml }</${ $tagname }>\n`;
-}
-
-
-/* ---
-generate tag setting xml string from tags object
-INPUT: object, tag name and its value
-OUTPUT: string, xml string of tag setting
---- */
-function generateTagSetting($tags) {
-	let tagXML = '';
-	let index = 1;
-
-	for (let tagname in $tags) {
-		let value = $tags[tagname];
-		tagXML +=  `<spotlight category="${ tagname }" sub_category="-" display_order="${ index }" title="${ value }"/>\n
-					<tag type="contentTagging" name="${ tagname }" default_category="${ tagname }" default_sub_category="-"/>`;
-		index++;
-	}
-
-	return generateXML('feature_analysis', tagXML, true);
-}
-
-
-/* ---
-generate metadata xml string from document object
-INPUT: object, a whole document
-OUTPUT: string, xml string of all metadata
---- */
-function generateMetadata($docObj) {
-	let metaStr = '';
-
-	// each metadata
-	for (let tag in $docObj) {
-		if (tag === 'attr' || tag === 'doc_content') continue;
-		let br = (tag === 'xml_metadata') ?true : false;
-		metaStr += generateXML(tag, $docObj[tag], br);
-	}
-
-	return metaStr;
-}
-
-
-/* ---
-generate doc_content xml string from content object
-INPUT: object, doc_content
-OUTPUT: string, xml string of doc_content
---- */
-function generateDocContent($contentObj) {
-	let XML = '';
-
-	// each tab: doc_content, MetaTags, Comment, Events
-	for (let tab in $contentObj) {
-		if (tab === 'source') continue;
-		if (tab === 'doc_content' && $contentObj.source === 'null') continue;
-
-		let tabXML = '';
-		let data = (tab === 'doc_content') ?[ $contentObj[tab][$contentObj.source] ] :$contentObj[tab];
-
-		// each select object (setting)
-		data.forEach(obj => {
-			let objArr = (tab === 'MetaTags') ? obj.data : obj;
-			let xml = '';
-
-			// each value in a setting (;)
-			clearEmpty(objArr).forEach(value => {
-				if (tab === 'doc_content' && objArr.length === 1) xml += value + '\n';
-				else if (tab === 'doc_content') xml += generateXML('Paragraph', value, false);
-				else if (tab === 'MetaTags') xml += generateXML(obj.tagname, value, false);
-				else if (tab === 'Comment') xml += generateXML('CommentItem', { attr: { Category: '' }, value: value }, false);
-				else if (tab === 'Events') xml += generateXML('Event', { attr: { Title: '' }, value: value }, false);
-			});
-
-			// xml of a setting
-			if (xml !== '') {
-				if (tab === 'Comment' || tab === 'Events') tabXML += generateXML(tab, xml, true);
-				else tabXML += xml;
-			}
-		});
-
-		// xml of a tab
-		if (tab === 'MetaTags' && tabXML.length > 0) XML += generateXML(tab, { attr: { NoIndex: '1' }, value: tabXML }, true);
-		else XML += tabXML;
-	}
-
-	return generateXML('doc_content', { value: XML }, true);
-}
-
-
-/* ---
-remove empty element in array
-INPUT: array, original array
-OUTPUT: array, cleared array
---- */
-function clearEmpty($arr) {
-	for (let i = $arr.length-1; i >= 0; i--) {
-		if ($arr[i] === '') $arr.splice(i, 1);
-	}
-	return $arr;
-}
-

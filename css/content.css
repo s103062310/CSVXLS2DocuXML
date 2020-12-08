@@ -1,0 +1,125 @@
+.dy-obj {
+	display: none;
+}
+
+.dy-obj.target {
+	display: block;
+}
+
+/* ----- NAV ----- */
+
+.tab-nav ~ div > div{
+	margin: 1rem 0;
+}
+
+.tab-nav {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	border: solid 1px gainsboro;
+	border-radius: 5px;
+	text-align: center;
+	color: gray;
+	cursor: pointer;
+}
+
+.tab-nav-item {
+	padding: 5px;
+	display: grid;
+	border-right: solid 1px gainsboro; 
+}
+
+.tab-nav-item:last-child {
+	border: none; 
+}
+
+.tab-nav-item.target {
+	color: black;
+	background-color: gainsboro;
+}
+
+.tab-nav-item:hover {
+	color: black;
+	background-color: whitesmoke;
+}
+
+/* ----- MAPPING ----- */
+
+.add-mapping-btn {
+	margin: 3px;
+}
+
+/* ----- IMPORT ----- */
+
+.txt-board {
+	margin-top: .5rem;
+	display: grid;
+	grid-template-columns: 2fr 1fr;
+	grid-gap: 5px;
+	text-align: center;
+}
+
+.txt-table > div {
+	padding: 5px;
+	display: grid;
+	grid-template-columns: 3fr 1fr 1fr 1fr;
+}
+
+.txt-table > div > *:first-child {
+	text-align: left;
+}
+
+.txt-th {
+	background-color: gainsboro;
+}
+
+.txt-td {
+	color: darkgray;
+}
+
+.txt-td:nth-child(odd) {
+	background-color: whitesmoke;
+}
+
+.txt-td.hover {
+	border: solid red 1px;
+}
+
+.txt-td > *:first-child {
+	color: gray;
+	word-break: break-all;  /* English */
+	white-space: pre-wrap;  /* Chinese */
+}
+
+.txt-buffer {
+	padding: 10px;
+	display: flex;
+	flex-direction: column;
+	border: solid 1px gainsboro;
+	border-radius: 5px;
+	overflow-y: scroll;
+	background-color: white;
+}
+
+.txt-buffer-item {
+	padding: 5px;
+	cursor: pointer;
+	color: gray;
+	word-break: break-all;  /* English */
+	white-space: pre-wrap;  /* Chinese */
+}
+
+.txt-buffer-item:hover {
+	color: black;
+	background-color: whitesmoke;
+}
+
+.txt-table.fixed {
+	position: fixed;
+	z-index: 5;
+	margin: 0 1vh;
+}
+
+.txt-buffer.fixed {
+	position: fixed;
+	z-index: 5;
+}

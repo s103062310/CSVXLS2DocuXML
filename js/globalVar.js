@@ -2,9 +2,61 @@
 This file defines:
 1. all used data structures and global variables.
 2. initialization of the program.
-3. getter (get some information).
+3. overwirte class prototype.
 4. other small tools.
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+
+class txtBuffer {
+ 	constructor() {
+ 		this.content = {
+ 			mapping: [],		// index: txt object [index(sheet): txt]
+ 			import: {}			// index(sheet): txt
+ 		};
+
+ 		this.metatag = {
+ 			mapping: []
+ 		};
+
+ 		this.comment = {
+ 			mapping: []
+ 		};
+
+ 		this.event = {
+ 			mapping: []
+ 		};
+ 	}
+
+ 	addNewMapping(name) {
+ 		this[name].mapping.push({});
+ 		return this[name].mapping.length-1;
+ 	}
+
+ 	setMapping(name, index, id, data) {
+ 		this[name].mapping[index][id] = data;
+ 	}
+
+ 	removeMapping(name, index) {
+ 		this[name].mapping[index] = undefined;
+ 	}
+
+ 	getMapping(name) {
+ 		return this[name].mapping;
+ 	}
+
+ 	setImport(id, data) {
+ 		this.content.import[id] = data;
+ 	}
+
+ 	removeImport(id) {
+ 		delete this.content.import[id];
+ 	}
+
+ 	getImport(id) {
+ 		if (id) return this.content.import[id];
+ 		return this.content.import;
+ 	}
+ }
 
 
 // * * * * * * * * * * * * * * * * variables * * * * * * * * * * * * * * * * *
@@ -16,38 +68,51 @@ var _docuSkyObj;
 
 // switch pages
 const _procedure = ['upload', 'required', 'optional', 'custom', 'content', 'download'];
-var _current;
+var _current = _procedure[0];
+var _sheet;						// target sheet when setting
+var _file;						// target file index when uploading txt
 
 
-// row data
+// data
 const _allowedFileType = ['xls', 'xlsx', 'csv'];
-var _inputFiles = {};
-var _dataPool = [];				// filename(sheetname) >> data of each row in sheet
-
-
-// selected data
-var _selectedSheet = [];
+var _dataPool = [];				// row data: sheet id >> data of each row in sheet
+var _selectedSheet = [];		// selected sheet id
 var _fileindex = {};			// corresponded index in _dataPool: index in _documents
-var _documents = [];			// data for generate document xml
-var _corpusSetting = {};		// setting data for generate corpus metadata xml
+var _documents = [];			// array of Documents (docuxml.js)
+var _corpusSetting = {};		// CorpusMetadata (docuxml.js)
 
 
 // metadata 
-const _custom = ['自訂', '自動產生檔名'];
-var _metadata;					// data in meta.json
+var _metadata = new MetadataSpec();
 
 
 // content
-const _contentTags = { doc_content: '內文', MetaTags: '多值欄位', Comment: '註解', Events: '事件' };
-var _matching = {};
-var _notMatch = {};		// not matching blob
+const _contentTags = { 
+	content: {
+		name: 'doc_content',
+		zh: '內文'
+	}, metatag: {
+		name: 'MetaTags',
+		zh: '多值欄位'
+	}, comment: {
+		name: 'Comment',
+		zh: '註解'
+	}, event: {
+		name: 'Events',
+		zh: '事件' 
+	}
+};
+var _buffer = {};						// txtBuffer, sheet id: content buffer
+var _notMatch = {};						// sheet id: not matching blob [file id: text]
+
+
+// convert
+var _xml = '';							// final xml string
 
 
 // others
-var _sheet;				// target sheet when setting
-var _progress;			// progress recorder
-var _showFixedY = -1;	// recorded pos that fixed element should appear
-var _xml = '';			// final xml string
+var _explain = '';						// html of explain page
+var _progress = {};						// progress recorder
 
 
 // * * * * * * * * * * * * * * * * initialization * * * * * * * * * * * * * * * * *
@@ -58,70 +123,130 @@ trigger initialization until finishing initialization when file is ready
 --- */
 $(document).ready(function() {
 
-	// load metadata info
-	$.getJSON('js/meta.json', function(result) {
-		_metadata = result;
-	});
-
 	// load explain text and show
-	$('.explainDirectory').load('html/explainDir.html');
-	$('.explainContent').load('html/explain.html');
-	setTimeout(function() {
-		$('#usage').click();
-	}, 600);
-
-	// active tooltip of tool bar
-	$(function() { 
-		$("[data-toggle='tooltip']").tooltip();
+	$.get('explain.html', function(result) {
+		_explain = result;
 	});
 
 	// first page
-	_current = 'upload';
-	$('#prevPage').css('display', 'none');
+	$('#prev-btn').css('display', 'none');
 
 	// docusky widget TODO
 	_docuSkyObj = docuskyManageDbListSimpleUI;
-	_docuSkyObj.uploadProgressFunc = function($percentage){
-		$('#downloadInterface .progress-bar').attr('style', `width: ${ $percentage }%; display: grid; align-items: center;`);
-		$('#downloadInterface .progress-bar span').html(`${ $percentage } %`);
+	_docuSkyObj.uploadProgressFunc = function(percentage){
+		$('#download .main .progress-bar').attr('style', `width: ${ percentage }%;`);
+		$('#download .main .progress-bar').html(`${ percentage } %`);
 	}
+
+	// data
+	_dataPool.length = 0;
 });
 
 
-// * * * * * * * * * * * * * * * * getter * * * * * * * * * * * * * * * * *
+// * * * * * * * * * * * * * * * * prototype * * * * * * * * * * * * * * * * *
 
 
 /* ---
-get number of all sheets that are in system 
-INPUT: none
-OUTPUT: int, number of sheets
+check if specific item is in array
+INPUT: any, searched element
+OUTPUT: boolean, in = true, not in = false
 --- */
-function getAllSheetNum() {
-	return Object.values(_inputFiles).reduce((a, b) => a+b);
+Array.prototype.has = function(item) {
+	return this.indexOf(item) >= 0;
 }
 
 
 /* ---
-calculate number of target filename in all filenames (remove string in (num))
-INPUT: 1) string, target filename
-	   2) array, all filenames
-OUTPUT: int, number of target filename
+generate string in specific form
+INPUT: string, suffix of each item
+OUTPUT: string, array string
 --- */
-function getFileNum($filename, $names) {
-	var count = 0;
-
-	$names.forEach(name => {
-		let filename = name.replace(/\([0-9]+\)/, '');
-		if (filename === $filename) count++;
+Array.prototype.toListStr = function(suffix) {
+	var str = '';
+	this.forEach(item => {
+		str += '- ' + item + ((suffix) ?suffix :'') + '\n';
 	});
+	return str;
+}
 
-	return count;
+
+/* ---
+check if string is well form
+OUTPUT: bool, well form = true, not = false
+--- */
+String.prototype.isWellform = function() {
+	if (!this.hasTag()) return true;
+	return $(new DOMParser().parseFromString(this, 'text/xml')).find('parsererror').length === 0;
+}
+
+
+/* ---
+add suffix to string (used in auto generate filename)
+INPUT: 1) int/string, number/suffix
+	   2) int, padding zero to specific length
+OUTPUT: string, prefixstring_numberstring
+--- */
+String.prototype.suffix = function(num, padding) {
+
+	// padding zero
+	var numStr = num.toString();
+	for (let i = numStr.length; i < padding; i++) numStr = '0' + numStr;
+
+	// complete string
+	return this + '_' + numStr;
+}
+
+
+/* ---
+normaliza string to specific format
+INPUT: string, process mode
+OUTPUT: string, normalized string
+--- */
+String.prototype.normalize = function(mode) {
+	if (mode === 'filename') return this.normalize().replace('.txt', '').trim();
+	else if (mode === 'tag') return this.trim().replace(/\s+/g, '_');
+	else if (mode === 'metadata') return this.replace(/\n/g, '').trim().toxml();
+	else if (mode === 'content') {
+		let tagReg = /<\/?.+?\/?>/g;
+		let tags = this.match(tagReg);
+		let str = this.replace(tagReg, '▓').toxml();
+		if (tags === null) return str;	// no tags
+		for (let i = 0; i < tags.length; i++) str = str.replace('▓', tags[i]);	// put tag back
+		return str;
+	} else return this.toxml();
+}
+
+
+/* ---
+replace special char in xml format
+OUTPUT: string, filtered string
+--- */
+String.prototype.toxml = function() {
+	return  this.replace(/&/g, '&amp;')		// This MUST be the 1st replacement.
+				.replace(/'/g, '&apos;')	// The 4 other predefined entities, required.
+				.replace(/"/g, '&quot;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;');
+}
+
+
+// * * * * * * * * * * * * * * * * other small tools * * * * * * * * * * * * * * * * *
+
+
+/* ---
+check if string charactsrs are all half and english character
+INPUT: string, original string
+OUTPUT: boolean, all half and english = true, otherwise = false
+--- */
+function checkHalfAndEnglish(str) {
+	var result = str.match(/[A-Za-z0-9_]/g);
+	if (result == null || result.length != str.length) return false;
+	else return true;
 }
 
 
 /* ---
 get time now (as unique name)
-INPUT: none
 OUTPUT: string, time in string form
 --- */
 function now() {
@@ -133,158 +258,34 @@ function now() {
 }
 
 
-// * * * * * * * * * * * * * * * * other small tools * * * * * * * * * * * * * * * * *
-
-
-/* ---
-combine string with number (used in repeated filename)
-INPUT: 1) string, prefix string
-	   2) int, number
-	   3) int, padding zero to specific length
-	   4) string, style of number's string
-OUTPUT: string, prefixstring_numberstring
---- */
-function strPlusNum($str, $num, $padding, $style) {
-
-	// padding zero
-	var numStr = $num.toString();
-	for (let i = numStr.length; i < $padding; i++) numStr = '0' + numStr;
-
-	// complete string
-	if ($style === 'bracket') return $str + '(' + numStr + ')';
-	else return $str + '_' + numStr;
-}
-
-
-/* ---
-generally normalize data
-INPUT: string, data string
-OUTPUT: string, normalized data
---- */
-function normalizeData($data) {
-	if ($data === undefined) return '-';
-	return filterChar($data.toString().replace(/\n/g, '').trim());
-}
-
-
-/* ---
-normalize filename - remove .xxx
-INPUT: string, original filename
-OUTPUT: string, normalized filename
---- */
-function normalizeFilename($filename) {
-	let normalized = normalizeData($filename);
-
-	// parse filename
-	let filenameParts = normalized.split('.');
-	let fileType = filenameParts[filenameParts.length-1];
-
-	return normalized.replace(`.${ fileType }`, '');
-}
-
-
-/* ---
-normalize string in tag - space to underline
-INPUT: string, tag string
-OUTPUT: string, normalized tag
---- */
-function normalizeTag($tag) {
-	return $tag.trim().replace(/\s+/g, '_');
-}
-
-
-/* ---
-normalize doc_content data - replace special char but keep inner tag
-INPUT: string, content string
-OUTPUT: string, normalized content
---- */
-function normalizeContent($content) {
-	let tagReg = /<\/?.+?\/?>/g;
-	let tags = $content.match(tagReg);
-	let str = filterChar($content.replace(tagReg, '▓'));
-
-	// no tags
-	if (tags === null) return str;
-
-	// put tag back
-	for (let i = 0; i < tags.length; i++) str = str.replace('▓', tags[i]);
-	return str;
-}
-
-
-/* ---
-normalize items in metatags, comment, events which is split by ;
-INPUT: string, content string
-OUTPUT: array, normalized items in content
---- */
-function normalizeItems($content) {
-	let items = $content.split(';');
-
-	// filter empty
-	for (let i = length-1; i >= 0; i--) {
-		items[i] = filterChar(items[i].trim());
-		if (items[i] === '') items.splice(i, 1);
-	}
-
-	return items;
-}
-
-
-/* ---
-replace special char in xml format
-INPUT: string, original string
-OUTPUT: string, filtered string
---- */
-function filterChar($str) {
-
-	// undefined
-	if ($str === undefined) return $str;
-
-	// check type
-	if (typeof $str != 'string') $str = $str.toString();
-
-	var str = $str.replace(/&/g, '&amp;')	// This MUST be the 1st replacement.
-				  .replace(/'/g, '&apos;')	// The 4 other predefined entities, required.
-				  .replace(/"/g, '&quot;')
-				  .replace(/</g, '&lt;')
-				  .replace(/>/g, '&gt;');
-	return str;
-}
-
-
-/* ---
-generate string in specific form from array
-INPUT: array, string array
-OUTPUT: string, array string
---- */
-function array2Str($arr) {
-	var str = '';
-	$arr.forEach(item => {
-		str += `- ${ item }\n`;
-	});
-	return str;
-}
-
-
 /* ---
 update progress (data store in _progress) at specific location
 INPUT: string, selector that describes progress bar's location
 OUTPUT: none, just display progress in progress bar
 --- */
-function updateProgress($loc) {
+function updateProgress(loc) {
 
 	// calculate
 	var progresses = Object.values(_progress);
 	var percentage = (progresses.length > 0) ?Math.round(progresses.reduce((a, b) => a+b) / progresses.length * 100) :0;
 	
 	// UI
-	var progressBar = $(`${ $loc } .progress-bar`);
-	$(progressBar).css('width', `${ percentage }%`);
-	$(progressBar).html(`<span>${ percentage } %</span>`);
+	var progressBar = $(loc + ' .progress-bar');
+	$(progressBar).css('width', percentage + '%');
+	$(progressBar).html(percentage + '%');
 
 	// show or hide
-	if (checkProgress()) $(`${ $loc } .progress`).hide();
-	if (Object.keys(_progress).length <= 0) $(`${ $loc } .progress`).show();
+	if (checkProgress()) $(loc + ' .progress').hide();
+	else $(loc + ' .progress').show();
 }
 
 
+/* ---
+check if progress is finished
+OUTPUT: boolean, all finished = true, otherwise = false
+--- */
+function checkProgress() {
+	if (Object.keys(_progress).length <= 0) return false;
+	for (let f in _progress) { if (_progress[f] < 1) return false; }
+	return true;
+}

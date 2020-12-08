@@ -1,0 +1,377 @@
+@font-face {
+	font-family: msjh;
+	src: url("../assets/msjh.eot"),
+		 url("../assets/msjh.woff") format("woff"), 
+		 url("../assets/msjh.ttf") format("truetype");
+}
+
+body {
+	font-family: msjh!important;
+}
+
+table {
+	min-width: 100%;
+	width: max-content;
+	font-size: 14px;
+	border: none;
+}
+
+thead {
+	background-color: gainsboro;
+}
+
+tbody tr:nth-child(even) {
+	background-color: whitesmoke;
+}
+
+table th, 
+table td {
+	max-width: 500px;
+	padding: 5px;
+	line-height: 2em;
+	border-bottom: solid 1px gainsboro;
+}
+
+button {
+	border: 1px solid gainsboro!important;
+}
+
+input[type="file"],
+.button-input input {
+	display: none;
+}
+
+i,
+nav i:hover,
+button i:hover,
+.explain i:hover,
+.txt-td i.fa-check {
+	margin: auto;
+	font-size: 1rem!important;
+	text-indent: 0;
+	cursor: inherit;
+}
+
+i:hover {
+	font-size: 1.3rem!important;
+	cursor: pointer;
+}
+
+i.fa-check {
+	color: limegreen;
+}
+
+i.fa-remove {
+	color: indianred;
+}
+
+p {
+	margin: 1rem;
+	margin-top: 1rem!important;
+	text-indent: 2rem;
+}
+
+b {
+	color: #31708F;
+}
+
+em {
+	color: #A94442;
+	font-style: normal;
+	font-weight: 700;
+}
+
+/* ----- HEADER ----- */
+
+header {
+	position: fixed;
+	left: 0;
+	right: 0;
+	top: 0;
+	height: 5vh;
+	display: grid!important;
+	grid-template-columns: auto 5vh 5vh 5vh;
+	box-shadow: 0 1px 3px rgba(0,0,0,.3);
+	font-size: 3vh;
+	text-align: center;
+	z-index: 10;
+}
+
+header span {
+	height: 100%;
+	position: relative;
+	display: grid;
+	align-items: center;
+}
+
+.header-btn {
+	color: gray;
+}
+
+.header-btn:hover {
+	color: white;
+	background-color: darkgray;
+	cursor: pointer;
+}
+
+.header-btn:hover > .tooltip-box {
+	display: block;
+}
+
+.tooltip-box {
+	display: none;
+	position: absolute;
+	top: 6vh;
+	width: max-content;
+	height: max-content;
+	background: rgba(0,0,0,.75);
+	border-radius: 5px;
+}
+
+.tooltip-text {
+	display: grid;
+	margin: 1vh;
+	font-size: 2vh;
+	color: white;
+}
+
+.arrow-t {
+	position: absolute;
+	top: -10px;
+	width: 0px;
+	height: 0px;
+	border-width: 5px;
+	border-style: solid;
+	border-color: transparent transparent rgba(0,0,0,.75) transparent;
+}
+
+/* ----- PROGRESS ----- */
+
+nav {
+	width: 88vw;
+	height: 8vh;
+	position: fixed;
+	left: 0;
+	right: 0;
+	top: 5vh;
+	margin: 0 auto;
+	display: grid!important;
+	grid-template-columns: 4vh auto 4vh auto 4vh auto 4vh auto 4vh auto 4vh;
+	align-items: center;
+	font-size: medium;
+	z-index: 5;
+}
+
+nav > div {
+	display: grid;
+	align-items: center;
+	text-align: center;
+	color: darkgray;
+	background-color: gainsboro;
+}
+
+nav > div:nth-child(odd) {
+	height: 4vh;
+	border-radius: 999em;
+}
+
+nav > div:nth-child(even) {
+	width: 105%;
+	height: 2vh;
+	align-self: center;
+	transform: translateX(-2.5%);
+	z-index: -5;
+}
+
+nav > div.target {
+	color: white;
+	background-color: darkgray;
+}
+
+nav > div:nth-child(odd).target span {
+	width: 2vh;
+    height: 2vh;
+    margin: auto;
+    border-radius: 999em;
+    background-color: white;
+}
+
+nav i.fa-check {
+	color: white;
+}
+
+/* ----- PAGE BUTTON ----- */
+
+.page-btn {
+	width: 6vw;
+	height: 95vh;
+	position: fixed;
+	top: 5vh;
+	display: grid;
+	align-items: center;
+	text-align: center;
+	cursor: pointer;
+}
+
+.page-btn i {
+	font-size: x-large!important;
+}
+
+.page-btn:hover i {
+	font-size: xx-large!important;
+}
+
+#prev-btn {
+	left: 0;
+}
+
+#next-btn {
+	right: 0;
+}
+
+/* ----- MAIN TOOL ----- */
+
+main {
+	width: 88vw;
+	height: 87vh;
+	position: fixed;
+	left: 6vw;
+	top: 13vh;
+}
+
+section {
+	height: 85vh;
+	position: absolute;
+	left: 0;
+	right: 0;
+	display: none!important;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+section.target {
+	display: flex!important;
+}
+
+.board {
+	background-color: #FCF8E3;
+	border-radius: 10px;
+}
+
+.board > h3 {
+	margin: 1rem 0;
+	text-align: center;
+}
+
+.board > ul {
+	width: fit-content;
+	max-width: 65vw;
+	margin: 1rem auto;
+}
+
+.main {
+	position: relative;
+	flex-grow: 1;
+	overflow: auto;
+}
+
+.directory {
+	display: flex;
+	flex-direction: column;
+	border-radius: 5px;
+	box-shadow: 1px 0 5px rgb(0 0 0 / 50%);
+	overflow-y: scroll;
+}
+
+.dir-item {
+	padding: .5rem;
+	align-items: center;
+	border-bottom: 1px solid gainsboro;
+	word-break: break-all;
+	cursor: pointer;
+	color: gray;
+}
+
+.dir-item:hover {
+	color: black;
+	background-color: whitesmoke;
+}
+
+/* ----- EXPLAIN ----- */
+
+.explain {
+	height: 100%;
+}
+
+.explain .directory {
+	width: 25%;
+	position: absolute;
+	left: 1rem;
+	top: 1rem;
+	bottom: 1rem;
+}
+
+.explain .dir-item {
+	display: flex;
+	text-align: left;
+}
+
+.explain .dir-item .level1 {
+	margin-left: .5rem;
+}
+
+.explain .dir-item .level2 {
+	margin-left: 1.5rem;
+}
+
+.explain .dir-item span:first-child {
+	margin-right: .5rem;
+}
+
+.explain .content {
+	height: 100%;
+	padding: 1rem;
+	margin-left: calc(25% + 1rem + 5px);
+}
+
+.explain-section {
+	display: flex;
+	flex-direction: column;
+	margin-bottom: 4rem;
+}
+
+.explain-multi-col {
+	margin-top: 2rem;
+	display: grid;
+	align-items: center;
+}
+
+.explain h4 {
+	margin-top: 3rem;
+	margin-bottom: 1rem;
+	text-align: center;
+}
+
+.explain h5 {
+	text-indent: 1rem;
+	font-weight: bold;
+}
+
+.explain img {
+	margin: auto;
+	display: grid;
+}
+
+.step-overview {
+	padding: 1rem;
+	color: indianred;
+	font-size: medium; 
+	border: indianred 2px dashed; 
+}
+
+.notice {
+	margin: 1rem;
+	padding: 1rem;
+	border: black 1px dashed;
+	font-style: italic;
+}
