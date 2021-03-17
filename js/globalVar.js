@@ -136,7 +136,7 @@ $(document).ready(function() {
 	_docuSkyObj.uploadProgressFunc = function(percentage){
 		$('#download .main .progress-bar').attr('style', `width: ${ percentage }%;`);
 		$('#download .main .progress-bar').html(`${ percentage } %`);
-	}
+	};
 
 	// data
 	_dataPool.length = 0;

@@ -99,9 +99,11 @@ fill in corpus and filename in each document (filename must be unique in whole x
 OUTPUT: bool, filename legal = true, not legal = false
 --- */
 function fillRequiredData() {
-	var allFilenames = [];
+	var allFilenames = {};
 	var serial = {};
-	var pass = true;
+	var corpusNotFill = [];
+	var filenameNotFill = [];
+	var filenameNotUnique = [];
 
 	// each sheet
 	$('#required .setting-sheet').each(function() {
@@ -121,35 +123,23 @@ function fillRequiredData() {
 			if (corpusChoice === 'udef') corpus = corpusInput;													// 自訂
 			else if (!_dataPool[sheet][0].has(corpusChoice)) corpus = corpusChoice;								// 檔案名稱 or 資料表名稱
 			else if (data = _dataPool[sheet][i][corpusChoice]) corpus = data.toString().normalize('metadata');	// 欄位名稱
-			else {
-				alert(`資料表「${ sheet }」第 ${ i } 列的文獻集名稱未填寫。`);
-				pass = false;
-				return false;	// break
-			}
+			else corpusNotFill.push(`資料表「${ sheet }」第 ${ i } 筆`);
 
 			// corpus setting
-			if (!(corpus in _corpusSetting)) _corpusSetting[corpus] = new CorpusMetadata();
+			if (corpus && !(corpus in _corpusSetting)) _corpusSetting[corpus] = new CorpusMetadata();
 
 			// filename
-			if (filenameChoice === 'udef') {									// 自動產生檔名
+			if (filenameChoice === 'udef') {																	// 自動產生檔名
 				serial[filenameInput]++;
 				filename = filenameInput.suffix(serial[filenameInput], 4);		
-			} else if (data = _dataPool[sheet][i][filenameChoice]) {			// 欄位名稱
-				filename = data.toString().normalize('filename');				
-			} else {
-				alert(`資料表「${ sheet }」第 ${ i } 列的文件唯一編號未填寫。`);
-				pass = false;
-				return false;	// break
+			} else if (data = _dataPool[sheet][i][filenameChoice]) filename = data.toString().normalize('filename'); // 欄位名稱
+			else filenameNotFill.push(`資料表「${ sheet }」第 ${ i } 筆`);
+
+			// filename not unique or record filename
+			if (filename) {
+				if (filename in allFilenames) filenameNotUnique.push(`資料表「${ sheet }」第 ${ allFilenames[filename] } / ${ i } 筆 (${ filename })`);
+				else allFilenames[filename] = i;
 			}
-
-			// filename not unique
-			if (allFilenames.has(filename)) {
-				alert(`資料表「${ sheet }」中包含重複檔名。(${ filename })`);
-				pass = false;
-				return false;	// break
-
-			// record filename
-			} else allFilenames.push(filename);
 
 			// document content
 			_documents[index].filename = filename;
@@ -157,7 +147,34 @@ function fillRequiredData() {
 		}
 	});
 
-	return pass;
+	// error message
+	var msg = '';
+
+	if (corpusNotFill.length > 0) {
+		msg = '以下資料的文獻集名稱未填寫：\n';
+		corpusNotFill.forEach(row => {
+			msg += '- ' + row + '\n';
+		});
+		alert(msg);
+	}
+
+	if (filenameNotFill.length > 0) {
+		msg = '以下資料的文件唯一編號未填寫：\n';
+		corpusNotFill.forEach(row => {
+			msg += '- ' + row + '\n';
+		});
+		alert(msg);
+	}
+
+	if (filenameNotUnique.length > 0) {
+		msg = '以下資料包含重複檔名：\n';
+		filenameNotUnique.forEach(row => {
+			msg += '- ' + row + '\n';
+		});
+		alert(msg);
+	}
+
+	return msg === '';
 }
 
 
@@ -354,6 +371,7 @@ INPUT: 1) string, setting mapping for which tab
 OUTPUT: bool, success = true, fail = false, success will influence if UI to change
 --- */
 function setContentByMapping(name, index, header) {
+	var error = [];
 
 	// each document
 	for (let i in _fileindex[_sheet]) {
@@ -369,13 +387,10 @@ function setContentByMapping(name, index, header) {
 				let str = data.toString();
 
 				// not well form
-				if (!str.isWellform()) {
-					alert(`doc_content：資料表「 ${ _sheet } 」的第 ${ i } 筆資料內容 (${ filename }) 不符合 well form 格式。`);
-					return false;
-				}
+				if (!str.isWellform()) error.push(`資料表「 ${ _sheet } 」第 ${ i } 筆 (${ filename })`);
 
 				// set
-				_buffer[_sheet].setMapping(name, index, i, str);
+				else _buffer[_sheet].setMapping(name, index, i, str);
 
 			// metatag, comment, event: array
 			} else {
@@ -390,19 +405,13 @@ function setContentByMapping(name, index, header) {
 					if (item === '') continue; 
 
 					// metatag: cannot include tag
-					if (name === 'metatag' && item.hasTag()) {
-						alert(`MetaTags：資料表「 ${ _sheet } 」的第 ${ i } 筆資料 (${ filename }) 不得包含 </> 標籤。`);
-						return false;
-					}
+					if (name === 'metatag' && item.hasTag()) error.push(`資料表「 ${ _sheet } 」第 ${ i } 筆 (${ filename })`);						
 
 					// comment & event: not well form
-					if (!item.isWellform()) {
-						alert(`${ name }：資料表「 ${ _sheet } 」的第 ${ i } 筆資料 (${ filename }) 不符合 well form 格式。`);
-						return false;
-					}
+					else if (name !== 'metatag' && !item.isWellform()) error.push(`資料表「 ${ _sheet } 」第 ${ i } 筆 (${ filename })`);
 
 					// pass check
-					passData.push(item.normalize());
+					else passData.push(item.normalize());
 				}
 
 				// set
@@ -413,7 +422,19 @@ function setContentByMapping(name, index, header) {
 		} else _buffer[_sheet].setMapping(name, index, i, data);
 	}
 
-	return true;
+	// error message
+	var msg = '';
+
+	if (error.length > 0) {
+		if (name === 'metatag') msg = '以下資料不符合 well form 格式：\n';
+		else msg = '以下資料不得包含 </> 標籤：\n';
+		error.forEach(row => {
+			msg += '- ' + row + '\n';
+		});
+		alert(msg);
+	}
+
+	return msg === '';
 }
 
 

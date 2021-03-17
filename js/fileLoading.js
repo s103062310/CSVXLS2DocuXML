@@ -376,9 +376,9 @@ function uploadXML2DocuSky() {
 	};
 
 	// progress bar
-	_progress = _docuSkyObj.uploadProgressId;
+	_progress.upload = _docuSkyObj.uploadProgressId;
 	_docuSkyObj.uploadProgressId = 'myUploadProgressId';
-	$("#download .progress").show();
+	$("#download .main .progress").show();
 
 	// upload
 	_docuSkyObj.uploadMultipart(formData, succUploadFunc, failUploadFunc);
@@ -391,8 +391,8 @@ success function of uploadXML2DocuSky()
 function succUploadFunc() {
 	
 	// progress bar
-	_docuSkyObj.uploadProgressId = _progress;
-	$("#download .progress").hide();
+	_docuSkyObj.uploadProgressId = _progress.upload;
+	$("#download .main .progress").hide();
 
 	// message
 	alert("已成功上傳檔案至 DocuSky。");
