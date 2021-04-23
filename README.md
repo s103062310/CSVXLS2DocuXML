@@ -9,7 +9,9 @@
 > 2020.07.14 | v.2.3, fix: hintbox, default adjust, and json file  
 > 2020.09.04 | v.2.4, fix: bugs & some UI  
 > 2020.11.18 | v.3.0  
-> 2021.03.03 | v.3.1, fix: update bootstrap and apply docuxml.js
+> 2021.03.03 | v.3.1, fix: update bootstrap and apply docuxml.js  
+> 2021.04.08 | V.3.2, mod: show all detecting error at once  
+> 2021.04.23 | v.3.3, fix: bugs of & => &amp;
 
 ## Introduction of Interface (page)
 1. **upload** => load csv/excel files

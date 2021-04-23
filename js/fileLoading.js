@@ -185,7 +185,6 @@ function loadTxtSingle(file) {
 	var j = _fileindex[_sheet][_file];
 
 	// check filename
-	console.log()
 	if (file.name !== (_documents[j].filename + '.txt') && !confirm(`欲上傳的檔案「 ${ file.name } 」與所選檔名「 ${ _documents[j].filename }.txt 」不符，要繼續上傳嗎？`)) return;
 
 	// callback
@@ -296,11 +295,11 @@ function loadTxtMultiple(files) {
 			if (Object.keys(fileindex).has(filename)) {
 
 				// already exist
-				if (_buffer[_sheet].getImport(fileindex[filename])) covered[filename] = data.normalize('content');
+				if (_buffer[_sheet].getImport(fileindex[filename])) covered[filename] = data.normalize();
 
 				// still empty
 				else {
-					_buffer[_sheet].setImport(fileindex[filename], data.normalize('content'));
+					_buffer[_sheet].setImport(fileindex[filename], data.normalize());
 
 					// UI
 					_file = fileindex[filename];

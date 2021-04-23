@@ -354,7 +354,7 @@ function setCustomMetadata(sheet, name, dataHeader, haslink, linkHeader) {
 		let j = _fileindex[sheet][i];
 		let data = _dataPool[sheet][i];
 		let value = ((data[dataHeader]) ?data[dataHeader].toString() :'-').normalize('metadata');
-		let link = (haslink) ?((data[linkHeader]) ?data[linkHeader].toString() :'-') :undefined;
+		let link = (haslink) ?((data[linkHeader]) ?data[linkHeader].toString().normalize('metadata') :'-') :undefined;
 		_documents[j].setUdefMetadata(((name.indexOf('Udef_') < 0) ?'Udef_' :'') + name, value, link);
 	}
 }
@@ -390,7 +390,7 @@ function setContentByMapping(name, index, header) {
 				if (!str.isWellform()) error.push(`資料表「 ${ _sheet } 」第 ${ i } 筆 (${ filename })`);
 
 				// set
-				else _buffer[_sheet].setMapping(name, index, i, str);
+				else _buffer[_sheet].setMapping(name, index, i, str.normalize());
 
 			// metatag, comment, event: array
 			} else {
@@ -505,7 +505,7 @@ function setDocContent(metatagName) {
 						// collect text - ignore undefined
 						if (content) {
 							content.forEach(setting => {
-								if (setting[i]) paragraph.push(setting[i]);
+								if (setting && setting[i]) paragraph.push(setting[i]);
 							});
 						}
 
@@ -534,7 +534,7 @@ function setDocContent(metatagName) {
 					_buffer[sheet].getMapping(tab).forEach((setting, k) => {
 
 						// ignore undefined
-						if (setting[i]) {
+						if (setting && setting[i]) {
 
 							// create entry
 							if (tab === 'comment') index = _documents[j].addCommentEntry();
