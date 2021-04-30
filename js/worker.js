@@ -25,10 +25,12 @@ self.addEventListener('message', function($event) {
 		case 'parseexcel':
 
 			/* data structure {
+				format: csv or excel
 				content: processed data of one sheet
 			}*/
-
-			readAndParseExcel(data.content);			
+		
+			if (data.format === 'csv') parseCSV(data.content); 
+			else readAndParseExcel(data.content);
 			break;
 
 		case 'showsheet':
@@ -60,6 +62,85 @@ self.addEventListener('message', function($event) {
 // * * * * * * * * * * * * * * * * upload * * * * * * * * * * * * * * * * *
 
 
+/* --- now not used (merge in excel parser package)
+parse csv data into json format (including header)
+INPUT: string, csv string
+OUTPUT: (send) string, sheet name and array, cleared data
+--- */
+function parseCSV(data) {
+
+	// send sheet num
+	self.postMessage({
+		func: 'sheetnum',
+		sheetnum: 1
+	});
+
+	var content = [];
+	var rows = data.split('\r');
+
+	// header
+	content.push(rows[0].split(','));
+
+	// content
+	for (let i = 1; i < rows.length; i++) {
+
+		// send progress
+		self.postMessage({
+			func: 'progress',
+			percentage: i / rows.length
+		});
+
+		// filter empty row
+		if (rows[i].indexOf(',') < 0) continue;
+
+		let parsed = rows[i].split(',');
+		let row = {};
+		let quot = false;
+		let temp;
+		let j = 0;
+
+		parsed.forEach(substr => {
+			if (!quot && substr[0] !== '"') {
+				row[content[0][j]] = substr.trim('\n').trim();
+				j++;
+
+			} else {
+
+				// open
+				if (!quot) {
+					temp = substr.replace(/"/g, '');
+					if (substr[substr.length-1] !== '"') quot = !quot;
+
+				// close
+				} else if (quot && substr[substr.length-1] === '"') {
+					temp += ',' + substr.replace('"', '');
+					row[content[0][j]] = temp;
+					j++;
+					quot = !quot;
+
+				// middle in quot
+				} else temp += ',' + substr;
+			}
+		});
+
+		content.push(row);
+	}
+
+	// send data
+	self.postMessage({
+		func: 'sheetcontent',
+		sheetname: 'csv sheet',
+		content: content
+	});
+
+	// send fin
+	self.postMessage({
+		func: 'progress',
+		percentage: 1
+	});
+}
+
+
 /* ---
 read excel content from row data and parse excel data into json format (including header)
 INPUT: object, row data
@@ -74,7 +155,7 @@ function readAndParseExcel(data) {
 		percentage: 0.5
 	});
 
-	// send progress
+	// send sheet num
 	self.postMessage({
 		func: 'sheetnum',
 		sheetnum: wb.SheetNames.length

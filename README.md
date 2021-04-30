@@ -11,7 +11,8 @@
 > 2020.11.18 | v.3.0  
 > 2021.03.03 | v.3.1, fix: update bootstrap and apply docuxml.js  
 > 2021.04.08 | V.3.2, mod: show all detecting error at once  
-> 2021.04.23 | v.3.3, fix: bugs of & => &amp;
+> 2021.04.23 | v.3.3, fix: bugs of & => &amp;  
+> 2021.04.30 | v.3.4, fix: csv encoding  
 
 ## Introduction of Interface (page)
 1. **upload** => load csv/excel files

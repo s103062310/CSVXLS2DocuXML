@@ -133,12 +133,14 @@ function loadExcel(files) {
 			// send
 			worker.postMessage({ 
 				func: 'parseexcel',
+				format: filetype,
 				content: event1.target.result
 			});
 		};
 
 		// load
-		reader.readAsBinaryString(file);
+		if (filetype === 'csv') reader.readAsText(file);
+		else reader.readAsBinaryString(file);
 	}
 
 	// show wrong type warning
