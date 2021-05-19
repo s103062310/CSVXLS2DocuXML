@@ -1,8 +1,8 @@
 @font-face {
 	font-family: msjh;
-	src: url("../assets/msjh.eot"),
-		 url("../assets/msjh.woff") format("woff"), 
-		 url("../assets/msjh.ttf") format("truetype");
+	src: url("../../../fonts/msjh/msjh.eot"),
+		 url("../../../fonts/msjh/msjh.woff") format("woff"), 
+		 url("../../../fonts/msjh/msjh.ttf") format("truetype");
 }
 
 body {
