@@ -449,7 +449,7 @@ function checkContentPage() {
 	// each sheet
 	$('#content .setting-sheet').each(function() {
 		let sheet = $(this).attr('name');
-		metatagName[sheet] = [];
+		metatagName[sheet] = {};
 
 		// each metatag input
 		$(this).find('input').each(function(i) {
@@ -465,7 +465,8 @@ function checkContentPage() {
 				return false;		// break
 			}
 
-			metatagName[sheet].push(value);
+			let index = $(this).closest('.obj-item').attr('data-index');
+			metatagName[sheet][index] = value;
 		});
 
 		if (!pass) return false;	// break
@@ -529,6 +530,9 @@ function setDocContent(metatagName) {
 
 				// metatag, comment, event
 				} else {
+
+					// clear
+					_documents[j].reset(tab + 's');
 
 					// each mapping
 					_buffer[sheet].getMapping(tab).forEach((setting, k) => {

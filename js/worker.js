@@ -269,7 +269,7 @@ function generateDocuXML(docs, setting) {
 
 	// each document
 	docs.forEach((docObj, i) => {
-		xml_docs += xmlFormer.formDoc(docObj, i);
+		xml_docs += xmlFormer.formDoc(docObj);
 
 		// send progress
 		self.postMessage({

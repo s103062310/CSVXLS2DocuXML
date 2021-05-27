@@ -118,6 +118,16 @@ var _progress = {};						// progress recorder
 // * * * * * * * * * * * * * * * * initialization * * * * * * * * * * * * * * * * *
 
 
+// google analytics
+if (typeof gtagEventLog == 'function') {
+	gtagEventLog({
+		action: 'view',
+		category: 'tool',
+		label: '表格文本轉換工具'
+	});
+}
+
+
 /* ---
 trigger initialization until finishing initialization when file is ready
 --- */
