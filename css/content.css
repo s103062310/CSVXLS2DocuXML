@@ -14,7 +14,7 @@
 
 .tab-nav {
 	display: grid;
-	grid-template-columns: repeat(4, 1fr);
+	grid-template-columns: repeat(3, 1fr);
 	border: solid 1px gainsboro;
 	border-radius: 5px;
 	text-align: center;
