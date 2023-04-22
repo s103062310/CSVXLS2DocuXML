@@ -97,9 +97,6 @@ const _contentTags = {
 	}, comment: {
 		name: 'Comment',
 		zh: '註解'
-	}, event: {
-		name: 'Events',
-		zh: '事件' 
 	}
 };
 var _buffer = {};						// txtBuffer, sheet id: content buffer
@@ -119,7 +116,7 @@ var _progress = {};						// progress recorder
 
 
 // google analytics
-if (typeof gtagEventLog == 'function') {
+if (typeof gtagEventLog == 'function' && location.hostname === 'docusky.org.tw') {
 	gtagEventLog({
 		action: 'view',
 		category: 'tool',
