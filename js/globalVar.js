@@ -183,7 +183,7 @@ OUTPUT: bool, well form = true, not = false
 --- */
 String.prototype.isWellform = function() {
 	if (!this.hasTag()) return true;
-	return $(new DOMParser().parseFromString(this, 'text/xml')).find('parsererror').length === 0;
+	return $(new DOMParser().parseFromString('<p>'+this+'</p>', 'text/xml')).find('parsererror').length === 0;
 }
 
 
@@ -230,10 +230,8 @@ OUTPUT: string, filtered string
 --- */
 String.prototype.toxml = function() {
 	return  this.replace(/&/g, '&amp;')		// This MUST be the 1st replacement.
-				.replace(/'/g, '&apos;')	// The 4 other predefined entities, required.
-				.replace(/"/g, '&quot;')
-				.replace(/</g, '&lt;')
-				.replace(/>/g, '&gt;');
+				.replace(/'/g, '&apos;')
+
 }
 
 
