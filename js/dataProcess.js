@@ -426,8 +426,8 @@ function setContentByMapping(name, index, header) {
 	var msg = '';
 
 	if (error.length > 0) {
-		if (name === 'metatag') msg = '以下資料不符合 well form 格式：\n';
-		else msg = '以下資料不得包含 </> 標籤：\n';
+		if (name === 'metatag') msg = '以下資料不得包含 </> 標籤：\n';
+		else msg = '以下資料不符合 well form 格式：\n';
 		error.forEach(row => {
 			msg += '- ' + row + '\n';
 		});

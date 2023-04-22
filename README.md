@@ -16,6 +16,7 @@
 > 2021.05.19 | v.3.5, fix: update new links  
 > 2021.05.28 | v.3.6, fix: bugs and scheme  
 > 2021.08.21 | v.3.7, mod: remove event section  
+> 2023.04.22 | v.3.8, mod: allow tag content  
 
 ## Introduction of Interface (page)
 1. **upload** => load csv/excel files
