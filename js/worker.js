@@ -75,12 +75,13 @@ function parseCSV(data) {
 		sheetnum: 1
 	});
 
-	var content = [];
-	var rows = data.split('\r');
+	const content = [];
+	const rows = data.split('\r');
 
 	// header
-	content.push(rows[0].split(','));
-
+	const header = rows[0].split(',').map(field => field.trim('"'));
+	content.push(header);
+	
 	// content
 	for (let i = 1; i < rows.length; i++) {
 
@@ -93,37 +94,12 @@ function parseCSV(data) {
 		// filter empty row
 		if (rows[i].indexOf(',') < 0) continue;
 
-		let parsed = rows[i].split(',');
-		let row = {};
-		let quot = false;
-		let temp;
-		let j = 0;
-
-		parsed.forEach(substr => {
-			if (!quot && substr[0] !== '"') {
-				row[content[0][j]] = substr.trim('\n').trim();
-				j++;
-
-			} else {
-
-				// open
-				if (!quot) {
-					temp = substr.replace(/"/g, '');
-					if (substr[substr.length-1] !== '"') quot = !quot;
-
-				// close
-				} else if (quot && substr[substr.length-1] === '"') {
-					temp += ',' + substr.replace('"', '');
-					row[content[0][j]] = temp;
-					j++;
-					quot = !quot;
-
-				// middle in quot
-				} else temp += ',' + substr;
-			}
+		const row = rows[i].split(',');
+		const parsedRow = {};
+		row.forEach((field, j) => {
+			parsedRow[header[j]] = field.trim('\s').trim('"')
 		});
-
-		content.push(row);
+		content.push(parsedRow);
 	}
 
 	// send data
