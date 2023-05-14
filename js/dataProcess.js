@@ -499,34 +499,36 @@ function setDocContent(metatagName) {
 
 				// content
 				if (tab === 'content') {
-					let combineMapping = function() {
-						let paragraph = [];
-						let xml = '';
+					const combineMapping = function() {
+						const paragraph = []
 
 						// collect text - ignore undefined
 						if (content) {
 							content.forEach(setting => {
-								if (setting && setting[i]) paragraph.push(setting[i]);
-							});
+								if (setting && setting[i]) paragraph.push(setting[i])
+							})
 						}
 
-						// xml
-						paragraph.forEach(str => {
-							xml += xmlFormer.generateXML({
-								name: 'Paragraph', 
-								value: str, 
-								br: false, 
-								single: false
-							});
-						});
-
-						if (paragraph.length === 0) return '';
-						//else if (paragraph.length === 1) return paragraph[0] + '\n';
-						else return xml;
+						if (paragraph.length === 0) {
+							return ''
+						} else if (paragraph.length === 1) {
+							return paragraph[0];
+						} else {
+							let xml = ''
+							paragraph.forEach(str => {
+								xml += xmlFormer.generateXML({
+									name: 'Paragraph', 
+									value: str, 
+									br: false, 
+									single: false
+								})
+							})
+							return xml
+						}
 					}
 
-					let text = (source === 'import') ?content[i] :combineMapping();
-					_documents[j].setDocContent((text) ?(text + ((source === 'import') ?'\n' :'')) :'');
+					const text = (source === 'import') ?content[i] :combineMapping()
+					_documents[j].setDocContent((text) ?(text + ((source === 'import') ?'\n' :'')) :'')
 
 				// metatag, comment, event
 				} else {

@@ -182,8 +182,34 @@ check if string is well form
 OUTPUT: bool, well form = true, not = false
 --- */
 String.prototype.isWellform = function() {
-	if (!this.hasTag()) return true;
-	return $(new DOMParser().parseFromString('<p>'+this+'</p>', 'text/xml')).find('parsererror').length === 0;
+	if (!this.hasTag()) {
+		return true
+	}
+
+	const tags = [...this.matchAll(/<[^<>]*>/g)].map(tag => tag[0])
+	const stack = []
+
+	tags.forEach(tag => {
+		const isSelfClosed = tag.match(/\/\s*?>/) !== null
+		if (!isSelfClosed) {
+			const name = tag.match(/\w+/)
+			const isClosedTag = tag.match(/<\s*?\//) !== null
+			if (!isClosedTag) {
+				stack.push(name)
+			} else {
+				const top = stack.pop()
+				if (top !== name) {
+					return false
+				}
+			}
+		}
+	})
+
+	if (stack.length > 0) {
+		return false
+	} else {
+		return true
+	}
 }
 
 
