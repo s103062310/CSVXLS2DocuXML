@@ -97,7 +97,7 @@ function parseCSV(data) {
 		const row = rows[i].split(',');
 		const parsedRow = {};
 		row.forEach((field, j) => {
-			parsedRow[header[j]] = field.trim('\s').trim('"')
+			parsedRow[header[j]] = field.trim('\s').trim('"').trim('\s')
 		});
 		content.push(parsedRow);
 	}
