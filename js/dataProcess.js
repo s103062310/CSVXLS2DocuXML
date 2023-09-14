@@ -511,8 +511,6 @@ function setDocContent(metatagName) {
 
 						if (paragraph.length === 0) {
 							return ''
-						} else if (paragraph.length === 1) {
-							return paragraph[0];
 						} else {
 							let xml = ''
 							paragraph.forEach(str => {
