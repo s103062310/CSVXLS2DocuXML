@@ -5,7 +5,7 @@ This file defined worker scripts to prevent UI blocked.
 
 // include module
 self.importScripts('https://oss.sheetjs.com/sheetjs/xlsx.full.min.js');
-self.importScripts('../../../packages/self-defined/docuxml.js');
+self.importScripts('https://docusky.org.tw/DocuSky/packages/self-defined/docuxml.js');
 
 
 /* ---

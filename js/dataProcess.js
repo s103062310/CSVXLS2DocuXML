@@ -514,12 +514,14 @@ function setDocContent(metatagName) {
 						} else {
 							let xml = ''
 							paragraph.forEach(str => {
-								xml += xmlFormer.generateXML({
-									name: 'Paragraph', 
-									value: str, 
-									br: false, 
-									single: false
-								})
+								const hasParagraph = str.trim()[0] === '<' && str.substring(0, str.indexOf('>')).indexOf('Paragraph') > 0
+								if (hasParagraph) xml += str
+								else xml += xmlFormer.generateXML({
+										name: 'Paragraph', 
+										value: str, 
+										br: false, 
+										single: false
+									})
 							})
 							return xml
 						}

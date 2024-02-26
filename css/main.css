@@ -1,8 +1,8 @@
 @font-face {
 	font-family: msjh;
-	src: url("../../../fonts/msjh/msjh.eot"),
-		 url("../../../fonts/msjh/msjh.woff") format("woff"), 
-		 url("../../../fonts/msjh/msjh.ttf") format("truetype");
+	src: url("https://docusky.org.tw/DocuSky/fonts/msjh/msjh.eot"),
+		 url("https://docusky.org.tw/DocuSky/fonts/msjh/msjh.woff") format("woff"), 
+		 url("https://docusky.org.tw/DocuSky/fonts/msjh/msjh.ttf") format("truetype");
 }
 
 body {
