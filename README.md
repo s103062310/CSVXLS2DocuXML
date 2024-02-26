@@ -1,24 +1,26 @@
 # CSVXLS2DocuXML
-[Develop Weekly Progress](https://hackmd.io/@DocuSky/Hy8191XGH)
 
-> 2019.11.28 | v.1.0  
-> 2019.12.19 | v.1.1, add: upload multiple txt at once  
-> 2020.02.10 | v.2.0  
-> 2020.04.08 | v.2.1, add: functions in upload .xls and .txt  
-> 2020.07.03 | v.2.2, fix: bugs and update explanation, add: some functions in setting  
-> 2020.07.14 | v.2.3, fix: hintbox, default adjust, and json file  
-> 2020.09.04 | v.2.4, fix: bugs & some UI  
-> 2020.11.18 | v.3.0  
-> 2021.03.03 | v.3.1, fix: update bootstrap and apply docuxml.js  
-> 2021.04.08 | V.3.2, mod: show all detecting error at once  
-> 2021.04.23 | v.3.3, fix: bugs of & => &amp;  
-> 2021.04.30 | v.3.4, fix: csv encoding  
-> 2021.05.19 | v.3.5, fix: update new links  
-> 2021.05.28 | v.3.6, fix: bugs and scheme  
-> 2021.08.21 | v.3.7, mod: remove event section  
-> 2023.04.22 | v.3.8, mod: allow tag content  
-> 2023.05.14 | v.3.9, fix: csv uploading  
+## Change Log
+
+> 2024.02.26 | v.3.11, mod: url, not use paragraph tag if already has  
 > 2023.09.15 | v.3.10, add: paragraph tag when num is one  
+> 2023.05.14 | v.3.9, fix: csv uploading  
+> 2023.04.22 | v.3.8, mod: allow tag content  
+> 2021.08.21 | v.3.7, mod: remove event section  
+> 2021.05.28 | v.3.6, fix: bugs and scheme  
+> 2021.05.19 | v.3.5, fix: update new links  
+> 2021.04.30 | v.3.4, fix: csv encoding  
+> 2021.04.23 | v.3.3, fix: bugs of & => &amp;  
+> 2021.04.08 | V.3.2, mod: show all detecting error at once  
+> 2021.03.03 | v.3.1, fix: update bootstrap and apply docuxml.js  
+> 2020.11.18 | v.3.0  
+> 2020.09.04 | v.2.4, fix: bugs & some UI  
+> 2020.07.14 | v.2.3, fix: hintbox, default adjust, and json file  
+> 2020.07.03 | v.2.2, fix: bugs and update explanation, add: some functions in setting  
+> 2020.04.08 | v.2.1, add: functions in upload .xls and .txt  
+> 2020.02.10 | v.2.0  
+> 2019.12.19 | v.1.1, add: upload multiple txt at once  
+> 2019.11.28 | v.1.0  
 
 ## Introduction of Interface (page)
 1. **upload** => load csv/excel files
