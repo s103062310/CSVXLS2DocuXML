@@ -572,6 +572,12 @@ convert _documents to DocuXML
 --- */
 function convertToXML() {
 	var worker = new Worker('js/worker.js');
+	const totalDocs = _documents.length; // <-- 新增：取得總筆數
+
+	// 開始處理時，確保按鈕是禁用狀態，並顯示初始訊息
+    $('#output-filename button, #output-dbname button').prop('disabled', true);
+    $('#progress-filename').text(`正在準備轉換... (共 ${totalDocs} 筆資料)`); 
+
 
 	// progress bar
 	_progress.convert = 0;
@@ -580,21 +586,47 @@ function convertToXML() {
 	// receive
 	worker.addEventListener('message', function(event) {
 
-		/* data structure {
-			func: functions,
+		/* 新的 data structure {
+			func: 'progress' | 'result',
 			percentage: percentage, (func = progress)
-			result: converted xml string, (func = result)
+			fullXml: '...', (func = result)
+			previewXml: '...' (func = result)
 		} */
 
 		// show xml
+		// 收到最終結果
 		if (event.data.func === 'result') {
-			_xml = event.data.result;
-			$('#XMLoutput').html(_xml);
-		}
+			//_xml = event.data.result;
+			_xml = event.data.fullXml;
+			const previewXml = event.data.previewXml;
+			
+			// 使用 setTimeout(..., 0) 來延遲耗時的DOM操作
+			// 這會將操作放到事件佇列的末尾，讓UI更新（如進度條）先完成
+			setTimeout(function() {
+				// 更新預覽畫面
+				$('#XMLoutput').text(previewXml);
+				
+				// 啟用按鈕
+				$('#output-filename button, #output-dbname button').prop('disabled', false);
+				 $('#progress-filename').text(`處理完成！ (共 ${totalDocs} 筆資料)`);
+			}, 0);
 
-		// display progress bar
-		_progress.convert = event.data.percentage;
-		updateProgress('#download .board');
+		} 
+		// 處理 'progress' 訊息
+		else if (event.data.func === 'progress') {
+				_progress.convert = event.data.percentage;
+				updateProgress('#download .board');
+
+				// 如果訊息中包含檔名和計數，則更新顯示
+				if (event.data.filename) {
+					let progressText = '正在處理: ' + event.data.filename;
+					if (event.data.currentIndex && event.data.totalDocs) {
+						progressText += ` ( ${event.data.currentIndex} / ${event.data.totalDocs} )`;
+					}
+					$('#progress-filename').text(progressText);
+				}
+	 }
+
 
 	}, false);
 

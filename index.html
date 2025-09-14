@@ -12,13 +12,13 @@
 	<meta property="og:image" content="images/cover.jpeg"/>
 
 	<!-- browser tab -->
-	<link rel="icon" href="https://docusky.org.tw/DocuSky/images/logo/icon.png">
+	<link rel="icon" href="../../images/logo/icon.png">
 	<title>表格文本轉換工具</title>
 
 	<!-- DOCUSKY WIDGET API: https://docusky.org.tw/Docusky v.s. ../.. -->
-	<script src="https://docusky.org.tw/DocuSky/packages/self-defined/docuxml.js"></script>
-	<script src="https://docusky.org.tw/DocuSky/packages/jquery/v.2.2.4/jquery.min.js"></script>
-	<script src="https://docusky.org.tw/DocuSky/js.ui/docusky.ui.manageDbListSimpleUI.js"></script>
+	<script src="../../packages/self-defined/docuxml.js"></script>
+	<script src="../../packages/jquery/v.2.2.4/jquery.min.js"></script>
+	<script src="../../js.ui/docusky.ui.manageDbListSimpleUI.js"></script>
 
 	<!-- ASSETS -->
 	
@@ -35,7 +35,7 @@
 
 	<!-- google analytics -->
 	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-109249169-1"></script>
-	<script src="https://docusky.org.tw/DocuSky/packages/self-defined/googleAnalytics.js"></script>
+	<script src="../../packages/self-defined/googleAnalytics.js"></script>
 	
 </head>
 
@@ -246,19 +246,22 @@
 				</div>
 			</div>
 
+					<p id="progress-filename" style="text-align: center; margin-top: 5px; color: #6c757d; height: 20px;"></p>
+
 			<!-- content -->
 			<div class="main output">
 				
+			
 				<div id="output-filename" class="input-btn">
 					<h5 style="margin: 0;">輸出檔案名稱</h5>
 					<input type="text" class="form-control">
-					<button type="button" class="btn btn-light"><i class="fa fa-download" aria-hidden="true"></i> 下載</button>
+					<button type="button" class="btn btn-light" disabled><i class="fa fa-download" aria-hidden="true"></i> 下載</button>
 				</div>
 
 				<div id="output-dbname" class="input-btn">
 					<h5 style="margin: 0;">資料庫名稱</h5>
 					<input type="text" class="form-control">
-					<button type="button" class="btn btn-light"><i class="fa fa-cloud-upload" aria-hidden="true"></i> 建庫到 DocuSky 上</button>
+					<button type="button" class="btn btn-light" disabled><i class="fa fa-cloud-upload" aria-hidden="true"></i> 建庫到 DocuSky 上</button>
 				</div>
 
 				<div class="progress" style="display: none;">
@@ -277,8 +280,10 @@
 				</div>
 
 				<div style="margin-top: 2em;">
-					<h4>XML 預覽</h4>
-					<xmp id="XMLoutput"></xmp>
+					<h4>XML 預覽<button id="toggle-xml-preview" type="button" class="btn btn-sm btn-secondary ml-2">顯示預覽</button></h4>
+					<div id="xml-preview-wrapper" style="display: none;">
+						<xmp id="XMLoutput"></xmp>
+					</div>
 				</div>
 
 			</div>

@@ -284,6 +284,11 @@ function showSheet(sheet) {
 /* ---
 activate UI interacted functions
 --- */
+//yao
+
+/* ---
+activate UI interacted functions
+--- */
 function activate() {
 
 	// sheet navigation
@@ -318,7 +323,93 @@ function activate() {
 
 	// dropdown
 	activateDropdown('body');
+
+
+	// ======================================================================
+	// ===== 全新的高效能事件委派 (Event Delegation) 區塊 =====
+	// ======================================================================
+	
+	// 選擇一個靜態的父層容器來監聽所有動態子元素的事件
+	const contentPanel = $('#content .content');
+
+	// --- 點擊事件委派 (Clicks) ---
+	contentPanel.on('click', '.txt-td .fa', function(event) {
+		const icon = $(this);
+		const targetRow = icon.closest('.txt-td');
+		_file = targetRow.attr('data-index');
+		const j = _fileindex[_sheet][_file];
+
+		if (icon.hasClass('fa-eye')) {
+			showTxt(_documents[j].filename, _buffer[_sheet].getImport(_file));
+		} else if (icon.hasClass('fa-upload')) {
+			$('#txt-single').click();
+		} else if (icon.hasClass('fa-trash')) {
+			deleteTxt(_documents[j].filename, true);
+		}
+	});
+
+	// --- 拖曳事件委派 (Drag and Drop) ---
+
+	// Drag Over
+	contentPanel.on('dragover', '.txt-td', function(event) {
+		event.preventDefault();
+		event.stopPropagation();
+		$(this).addClass('hover');
+	});
+
+	// Drag Leave
+	contentPanel.on('dragleave', '.txt-td', function(event) {
+		event.preventDefault();
+		event.stopPropagation();
+		$(this).removeClass('hover');
+	});
+
+	// Drop
+	contentPanel.on('drop', '.txt-td', function(event) {
+		event.preventDefault();
+		event.stopPropagation();
+		const targetRow = $(this);
+		targetRow.removeClass('hover');
+		_file = targetRow.attr('data-index');
+		dropNotMatchFile(event.originalEvent.dataTransfer.getData('text/plain'));
+	});
 }
+
+// function activate() {
+
+// 	// sheet navigation
+// 	$('.dir-item').click(function(event) {
+// 		changeToSheet($(event.target).closest('.dir-item').attr('key'));
+// 	});
+
+// 	// tab navigation
+// 	$('.tab-nav-item').click(function(event) {
+// 		changeToTab($(event.target).closest('.tab-nav-item'));
+// 	});
+
+// 	// hintbox
+// 	$('#optional .dropdown-item').hover(function(event) {
+// 		hoverMetadata($(event.target).closest('.dropdown-item').attr('value'));
+// 	});
+
+// 	// import - delete all
+// 	$('.delete-txt-all').click(function() {
+// 		deleteTxtAll();
+// 	});
+
+// 	// import - upload multiple
+// 	$('.upload-txt-multiple').click(function() {
+// 		$('#txt-multiple').click();
+// 	});
+
+// 	// import - delete all
+// 	$('.upload-txt-whole').click(function() {
+// 		$('#txt-whole').click();
+// 	});
+
+// 	// dropdown
+// 	activateDropdown('body');
+// }
 
 
 /* ---
@@ -354,51 +445,51 @@ INPUT: 1) jquery/string, selector of activated range
 	   2) array(string), id of activated item
 	   3) bool, if need to activate drag function
 --- */
-function activateImport(span, items, drag) {
-	items.forEach(id => {
-		let target = $(span).find('.fa-' + id);
+// function activateImport(span, items, drag) {
+// 	items.forEach(id => {
+// 		let target = $(span).find('.fa-' + id);
 
-		// clear
-		$(target).prop('onclick', null).off('click');
+// 		// clear
+// 		$(target).prop('onclick', null).off('click');
 
-		// bind
-		$(target).click(function(event) {
-			_file = $(event.target).closest('.txt-td').attr('data-index');
-			let j = _fileindex[_sheet][_file];
-			if (id === 'eye') showTxt(_documents[j].filename, _buffer[_sheet].getImport(_file));
-			else if (id === 'upload') $('#txt-single').click();
-			else if (id === 'trash') deleteTxt(_documents[j].filename, true);
-		});
-	});
+// 		// bind
+// 		$(target).click(function(event) {
+// 			_file = $(event.target).closest('.txt-td').attr('data-index');
+// 			let j = _fileindex[_sheet][_file];
+// 			if (id === 'eye') showTxt(_documents[j].filename, _buffer[_sheet].getImport(_file));
+// 			else if (id === 'upload') $('#txt-single').click();
+// 			else if (id === 'trash') deleteTxt(_documents[j].filename, true);
+// 		});
+// 	});
 
-	if (drag) {
-		let targets = $('#content .txt-td');
+// 	if (drag) {
+// 		let targets = $('#content .txt-td');
 
-		// drag over
-		$(targets).on('dragover', function(event) {
-			event.preventDefault();
-			event.stopPropagation();
-			$(event.target).closest('.txt-td').addClass('hover');
-		});
+// 		// drag over
+// 		$(targets).on('dragover', function(event) {
+// 			event.preventDefault();
+// 			event.stopPropagation();
+// 			$(event.target).closest('.txt-td').addClass('hover');
+// 		});
 
-		// drag leave
-		$(targets).on('dragleave', function(event) {
-			event.preventDefault();
-			event.stopPropagation();
-			$(event.target).closest('.txt-td').removeClass('hover');
-		});
+// 		// drag leave
+// 		$(targets).on('dragleave', function(event) {
+// 			event.preventDefault();
+// 			event.stopPropagation();
+// 			$(event.target).closest('.txt-td').removeClass('hover');
+// 		});
 
-		// drop
-		$(targets).on('drop', function(event) {
-			event.preventDefault();
-			event.stopPropagation();
-			let target = $(event.target).closest('.txt-td');
-			$(target).removeClass('hover');
-			_file = $(target).attr('data-index');
-			dropNotMatchFile(event.originalEvent.dataTransfer.getData('text/plain'));
-		});
-	}
-}
+// 		// drop
+// 		$(targets).on('drop', function(event) {
+// 			event.preventDefault();
+// 			event.stopPropagation();
+// 			let target = $(event.target).closest('.txt-td');
+// 			$(target).removeClass('hover');
+// 			_file = $(target).attr('data-index');
+// 			dropNotMatchFile(event.originalEvent.dataTransfer.getData('text/plain'));
+// 		});
+// 	}
+// }
 
 
 /* ---
@@ -746,3 +837,18 @@ $('#output-dbname button').click(function(event) {
 	_docuSkyObj.manageDbList(event, uploadXML2DocuSky);
 });
 
+/* ---
+Toggle XML Preview Visibility
+--- */
+$('#toggle-xml-preview').on('click', function() {
+	const previewWrapper = $('#xml-preview-wrapper');
+	const button = $(this);
+
+	if (previewWrapper.is(':visible')) {
+		previewWrapper.hide();
+		button.text('顯示預覽');
+	} else {
+		previewWrapper.show();
+		button.text('隱藏預覽');
+	}
+});

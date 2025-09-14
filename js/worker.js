@@ -240,39 +240,114 @@ function generateSheetTableHtml(data) {
 
 
 function generateDocuXML(docs, setting) {
-	var xmlFormer = new DocuxmlFormer();
-	var xml_docs = '', xml_corpus = '';
+    var xmlFormer = new DocuxmlFormer();
+	var xml_docs_array = []; // **優化點：** 使用陣列代替字串拼接
+    var xml_corpus = '';
+	const totalDocs = docs.length; // **修改點：** 取得總筆數
 
-	// each document
-	docs.forEach((docObj, i) => {
-		xml_docs += xmlFormer.formDoc(docObj);
+    // each document
+    docs.forEach((docObj, i) => {
+        //xml_docs += xmlFormer.formDoc(docObj);
+		xml_docs_array.push(xmlFormer.formDoc(docObj)); // **優化點：** 推入陣列
 
-		// send progress
-		self.postMessage({
-			func: 'progress',
-			percentage: (i+1) / (docs.length+1)
-		});
+        // send progress
+        self.postMessage({
+            func: 'progress',
+             percentage: (i + 1) / (totalDocs + 1),
+			filename: docObj.filename,
+			currentIndex: i + 1, // 新增目前筆數
+            totalDocs: totalDocs   // 新增總筆數
+        });
+    });
+
+	 const xml_docs = xml_docs_array.join(''); // **優化點：** 最後一次性合併
+
+    // each corpus
+    for (let name in setting) {
+        xml_corpus += xmlFormer.formCorpusMeta(name, setting[name]);
+    }
+
+	// **新增：** 在完成繁重工作前，傳送最後的狀態訊息
+	self.postMessage({
+		func: 'progress',
+		percentage: 0.99, // 接近完成
+		filename: "正在彙整最終 XML 檔案...",
+		currentIndex: totalDocs,
+        totalDocs: totalDocs
 	});
 
-	// each corpus
-	for (let name in setting) {
-		xml_corpus += xmlFormer.formCorpusMeta(name, setting[name]);
-	}
+    // 1. 組裝完整的 XML 字串
+    const fullXml = '<?xml version="1.0"?>\n' + 
+                xmlFormer.generateXML({
+                    name: 'ThdlPrototypeExport',
+                    br: true,
 
-	// send result
+                    value: xml_corpus + xmlFormer.generateXML({
+                            name: 'documents',
+                            br: true,
+                            value: xml_docs
+                        })
+                });
+    
+    // 2. 建立預覽用的 XML 字串
+    let previewXml = '';
+    const parts = fullXml.split('</document>');
+    if (parts.length > 12) { // 文件數量大於 10 筆
+        const previewParts = parts.slice(0, 10);
+        previewXml = previewParts.join('</document>') + '</document>\n';
+        previewXml += '    <!-- ... 以及更多文件 ... -->\n';
+        previewXml += '</DocuXML>';
+    } else {
+        previewXml = fullXml;
+    }
+
+    // 3. 將最終結果傳回
+    self.postMessage({
+        func: 'result',
+        fullXml: fullXml,
+        previewXml: previewXml
+    });
+
+	// 4. 確保進度條最後會更新到 100%
 	self.postMessage({
-		func: 'result',
-		percentage: 1,
-		result: '<?xml version="1.0"?>\n' + 
-				xmlFormer.generateXML({
-					name: 'ThdlPrototypeExport',
-					br: true,
-
-					value: xml_corpus + xmlFormer.generateXML({
-							name: 'documents',
-							br: true,
-							value: xml_docs
-						})
-				})
+		func: 'progress',
+		percentage: 1
 	});
 }
+	// function generateDocuXML(docs, setting) {
+	// 	var xmlFormer = new DocuxmlFormer();
+	// 	var xml_docs = '', xml_corpus = '';
+
+	// 	// each document
+	// 	docs.forEach((docObj, i) => {
+	// 		xml_docs += xmlFormer.formDoc(docObj);
+
+	// 		// send progress
+	// 		self.postMessage({
+	// 			func: 'progress',
+	// 			percentage: (i+1) / (docs.length+1)
+	// 		});
+	// 	});
+
+	// 	// each corpus
+	// 	for (let name in setting) {
+	// 		xml_corpus += xmlFormer.formCorpusMeta(name, setting[name]);
+	// 	}
+
+	// 	// send result
+	// 	self.postMessage({
+	// 		func: 'result',
+	// 		percentage: 1,
+	// 		result: '<?xml version="1.0"?>\n' + 
+	// 				xmlFormer.generateXML({
+	// 					name: 'ThdlPrototypeExport',
+	// 					br: true,
+
+	// 					value: xml_corpus + xmlFormer.generateXML({
+	// 							name: 'documents',
+	// 							br: true,
+	// 							value: xml_docs
+	// 						})
+	// 				})
+	// 	});
+	// }
