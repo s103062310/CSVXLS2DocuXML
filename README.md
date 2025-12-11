@@ -2,6 +2,7 @@
 
 ## Change Log
 
+> 2025.12.11 | v.3.12, fix: update schema document link  
 > 2024.02.26 | v.3.11, mod: url, not use paragraph tag if already has  
 > 2023.09.15 | v.3.10, add: paragraph tag when num is one  
 > 2023.05.14 | v.3.9, fix: csv uploading  
