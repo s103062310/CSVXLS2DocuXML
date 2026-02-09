@@ -374,8 +374,10 @@ function displayContentPage() {
 
 		// display txt table
 		let tablePanel = $(sheetPanel).find('.txt-table');
+		let tableRowsHtml = []; // 1. 建立一個空陣列來存放 HTML 字串 yao
 		Object.keys(_fileindex[sheet]).forEach(index => {
-			$(tablePanel).append(`
+			// 2. 在迴圈中，將每一行的 HTML 字串推入陣列
+			tableRowsHtml.push(`
 				<div class="txt-td" data-index="${ index }">
 					<span></span>
 					<span>無</span>
@@ -384,6 +386,20 @@ function displayContentPage() {
 				</div>
 			`);
 		});
+
+		// 3. 迴圈結束後，將陣列合併成一個大字串，並執行一次 append 操作
+		$(tablePanel).append(tableRowsHtml.join(''));
+
+		// Object.keys(_fileindex[sheet]).forEach(index => {
+		// 	$(tablePanel).append(`
+		// 		<div class="txt-td" data-index="${ index }">
+		// 			<span></span>
+		// 			<span>無</span>
+		// 			<i class="fa fa-eye" aria-hidden="true"></i>
+		// 			<i class="fa fa-upload" aria-hidden="true"></i>
+		// 		</div>
+		// 	`);
+		// });
 	});
 
 	// other display setting
@@ -417,7 +433,7 @@ function displayContentPage() {
 	});
 
 	// activate table functions
-	activateImport('body', ['eye', 'upload'], true);
+	//activateImport('body', ['eye', 'upload'], true);
 }
 
 
